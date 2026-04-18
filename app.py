@@ -503,17 +503,22 @@ with st.sidebar:
             st.rerun()
 
     _cur_mode = st.session_state.get("app_mode_radio", "analyze")
-
-    # Visual state — active button sinks in (inset shadow, green), inactive pops up
     _a_active = _cur_mode == "analyze"
     _d_active = _cur_mode == "discover"
-    _btn_base = "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;width:100%;padding:0.5rem 0;border-radius:3px;text-align:center;cursor:default;"
-    _a_style  = _btn_base + ("background:#2d6a4f;color:#f7f5f0;border:1px solid #1e5a3f;box-shadow:inset 0 2px 4px rgba(0,0,0,0.35),inset 0 1px 2px rgba(0,0,0,0.2);" if _a_active else "background:#f7f5f0;color:#8a8072;border:1px solid #c8bfb2;box-shadow:0 2px 0 #b0a898,0 1px 4px rgba(0,0,0,0.1);")
-    _d_style  = _btn_base + ("background:#2d6a4f;color:#f7f5f0;border:1px solid #1e5a3f;box-shadow:inset 0 2px 4px rgba(0,0,0,0.35),inset 0 1px 2px rgba(0,0,0,0.2);" if _d_active else "background:#f7f5f0;color:#8a8072;border:1px solid #c8bfb2;box-shadow:0 2px 0 #b0a898,0 1px 4px rgba(0,0,0,0.1);")
+
+    _pressed  = "background:#2d6a4f;color:#f7f5f0;border:1px solid #1e5a3f;box-shadow:inset 0 3px 5px rgba(0,0,0,0.4);"
+    _raised   = "background:#f7f5f0;color:#8a8072;border:1px solid #c8bfb2;box-shadow:0 3px 0 #b0a898;"
+    _base     = "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;width:100%;padding:0.5rem 0;border-radius:3px;text-align:center;"
+
     st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:-2.2rem;margin-bottom:0.75rem;">
-  <div style="{_a_style}">ANALYZE</div>
-  <div style="{_d_style}">DISCOVER</div>
+<style>
+div[data-testid="stButton"] button[kind="secondary"][data-testid="baseButton-secondary"]:has(+ [data-testid="stButton"]) {{display:none !important;}}
+[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] div[data-testid="stColumn"]:nth-child(1) button {{display:none !important;}}
+[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] div[data-testid="stColumn"]:nth-child(2) button {{display:none !important;}}
+</style>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
+  <div style="{_base}{_pressed if _a_active else _raised}">ANALYZE</div>
+  <div style="{_base}{_pressed if _d_active else _raised}">DISCOVER</div>
 </div>""", unsafe_allow_html=True)
 
     app_mode = "  🔍  Discovery  " if _cur_mode == "discover" else "  ⬡  Lab  "
