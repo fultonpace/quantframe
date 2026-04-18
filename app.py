@@ -878,6 +878,77 @@ if "Discovery" in app_mode:
     # ── Placeholder for idle card ─────────────────────────────────────────────
     _disc_top = st.empty()
 
+    # ── Live time estimate ────────────────────────────────────────────────────
+    SECS_PER_ITER = 2.5
+    est_secs = disc_iterations * SECS_PER_ITER
+    est_mins = est_secs / 60
+    est_hrs  = est_mins / 60
+
+    if est_secs < 60:
+        est_str = f"~{int(est_secs)} seconds"; est_col = "#2d6a4f"; est_msg = "Quick run ☑"
+    elif est_mins < 3:
+        est_str = f"~{est_mins:.1f} minutes";  est_col = "#2d6a4f"; est_msg = "Grab a sip of water 💧"
+    elif est_mins < 7:
+        est_str = f"~{est_mins:.0f} minutes";  est_col = "#b5873a"; est_msg = "Go get a coffee ☕"
+    elif est_mins < 12:
+        est_str = f"~{est_mins:.0f} minutes";  est_col = "#b5873a"; est_msg = "Take a walk outside 🚶"
+    elif est_mins < 20:
+        est_str = f"~{est_mins:.0f} minutes";  est_col = "#c0392b"; est_msg = "Call your mom 📞"
+    elif est_mins < 35:
+        est_str = f"~{est_mins:.0f} minutes";  est_col = "#c0392b"; est_msg = "Watch an episode of something 📺"
+    elif est_mins < 60:
+        est_str = f"~{est_mins:.0f} minutes";  est_col = "#c0392b"; est_msg = "Hit the gym 🏋️ — seriously"
+    elif est_hrs < 2:
+        est_str = f"~{est_hrs:.1f} hours";     est_col = "#c0392b"; est_msg = "Take a nap. A real one. 😴"
+    elif est_hrs < 3:
+        est_str = f"~{est_hrs:.1f} hours";     est_col = "#c0392b"; est_msg = "Watch a full movie 🎬"
+    else:
+        est_str = f"~{est_hrs:.1f} hours";     est_col = "#c0392b"; est_msg = "Read War and Peace 📖"
+
+    universe_size = len(SECTORS[disc_sector]) if SECTORS[disc_sector] else 490
+
+    # ── Metric cards ─────────────────────────────────────────────────────────
+    st.markdown(f"""
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1rem 0;">
+  <div class="metric-card">
+    <div class="metric-label">Estimated Runtime</div>
+    <div class="metric-value" style="font-size:1.1rem;color:{est_col};">{est_str}</div>
+    <div class="metric-sub" style="color:{est_col};margin-top:0.3rem;">{est_msg}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Universe Size</div>
+    <div class="metric-value" style="font-size:1.2rem;">{universe_size} tickers</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Combinations Tested</div>
+    <div class="metric-value" style="font-size:1.2rem;">{disc_iterations:,}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Search Space</div>
+    <div class="metric-value" style="font-size:1.2rem;color:#8a8072;">&#8776;10&#185;&#178;</div>
+    <div class="metric-sub">combinatorially vast</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    # ── Sector Legend ─────────────────────────────────────────────────────────
+    SECTOR_COLORS = {
+        "Technology": "#4a7c9e", "Healthcare": "#2d6a4f", "Financials": "#6b3fa0",
+        "Energy": "#c0392b", "Consumer Staples": "#b5873a",
+        "Industrials": "#5a7a6a", "Consumer Discret": "#c9a84c",
+    }
+    with st.expander("📋  Sector Universe Reference", expanded=False):
+        st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:#8a8072;margin-bottom:1rem;">Tickers in each sector filter. Selecting a sector dramatically reduces runtime by narrowing the search universe from ~490 to ~20–30 stocks.</div>', unsafe_allow_html=True)
+        leg_cols = st.columns(2)
+        for i, (sname, tlist) in enumerate([(k, v) for k, v in SECTORS.items() if v is not None]):
+            with leg_cols[i % 2]:
+                scolor = SECTOR_COLORS.get(sname, "#8a8072")
+                st.markdown(
+                    '<div style="background:#ffffff;border:1px solid #e0d9ce;border-left:3px solid ' + scolor + ';border-radius:0 4px 4px 0;padding:0.75rem 1rem;margin-bottom:0.75rem;">'
+                    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;font-weight:600;color:' + scolor + ';letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem;">' + sname + ' &middot; ' + str(len(tlist)) + ' tickers</div>'
+                    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:#8a8072;line-height:1.8;word-break:break-word;">' + '  &middot;  '.join(tlist) + '</div></div>',
+                    unsafe_allow_html=True)
+
     # ── Now fill the top placeholder with idle card, or run ───────────────────
     if not run_discovery:
         import math as _math
