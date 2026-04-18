@@ -876,9 +876,20 @@ div[data-testid="stRadio"] > label { display: none !important; }
 if "app_mode_radio" not in st.session_state:
     st.session_state.app_mode_radio = "  ⬡  Portfolio Lab  "
 
-app_mode = st.radio("Mode", ["  ⬡  Portfolio Lab  ", "  🔍  Discovery Mode  "],
-                    horizontal=True, label_visibility="collapsed",
-                    key="app_mode_radio")
+_col_mode, _col_run = st.columns([6, 1])
+with _col_mode:
+    app_mode = st.radio("Mode", ["  ⬡  Portfolio Lab  ", "  🔍  Discovery Mode  "],
+                        horizontal=True, label_visibility="collapsed",
+                        key="app_mode_radio")
+with _col_run:
+    _is_discovery = "Discovery" in st.session_state.get("app_mode_radio", "")
+    if _is_discovery:
+        if st.button("🔍  Run", key="btn_disc_top"):
+            st.session_state.run_discovery = True
+    else:
+        if st.button("▶  Run", key="btn_run_top"):
+            st.session_state.run_optimization = True
+
 st.session_state.app_mode  = app_mode
 st.session_state._app_mode = app_mode
 
@@ -889,17 +900,8 @@ st.markdown('<hr class="divider" style="margin-top:0.75rem;">', unsafe_allow_htm
 # ══════════════════════════════════════════════════════════════════════════════
 if "Discovery" in app_mode:
     st.session_state.run_optimization = False  # reset so switching back shows idle Portfolio Lab
-    # ── Runtime warning ───────────────────────────────────────────────────────
-    st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#8a3030;
-            background:#fdf0ef;border:1px solid #e8c4c0;border-radius:4px;
-            padding:0.65rem 1rem;margin-bottom:1.25rem;">
-  ⚠&nbsp;&nbsp;Each iteration fetches live data and runs SLSQP.
-  Large runs can take <b>10–30+ minutes</b>. Estimated time updates below as you adjust settings.
-</div>
-""", unsafe_allow_html=True)
 
-    # ── Discovery controls ────────────────────────────────────────────────────
+    # ── Discovery controls — defined first so variables exist for the idle card ──
     SECTORS = {
         "All S&P 500 (~490 tickers)": None,
         "Technology":      ["AAPL","MSFT","NVDA","AVGO","META","GOOGL","AMZN","AMD","QCOM","AMAT","MU","INTC","KLAC","LRCX","ADI","MCHP","SNPS","CDNS","ORCL","IBM","CRM","ADBE","NOW","INTU","PANW","CRWD","FTNT","ANET","HPE","TXN"],
@@ -1032,9 +1034,17 @@ if "Discovery" in app_mode:
         except Exception:
             _combo_str = "vast"; _cov_str = "<0.01%"
 
+        # ── Warning + idle card — always at top of content ────────────────────
         st.markdown(
             f"""
-<div style="max-width:640px;margin:3rem auto;font-family:'IBM Plex Mono',monospace;
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#8a3030;
+            background:#fdf0ef;border:1px solid #e8c4c0;border-radius:4px;
+            padding:0.65rem 1rem;margin-bottom:1rem;">
+  ⚠&nbsp;&nbsp;<b>Warning:</b> larger runs can take 30+ minutes.
+  Check estimated run time before executing.
+</div>
+
+<div style="max-width:640px;margin:0 auto 2rem auto;font-family:'IBM Plex Mono',monospace;
             background:#ffffff;border:1px solid #e0d9ce;border-radius:6px;
             padding:2rem 2.25rem;">
 
@@ -1289,51 +1299,54 @@ if not run_btn:
 
     st.markdown(
         f"""
-<div style="max-width:640px;margin:3rem auto;font-family:'IBM Plex Mono',monospace;
-            background:#ffffff;border:1px solid #e0d9ce;border-radius:6px;
-            padding:2rem 2.25rem;">
+<div style="max-width:640px;margin:1.5rem auto 2rem auto;font-family:'IBM Plex Mono',monospace;">
 
-  <div style="font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;
-              color:#8a8072;margin-bottom:0.3rem;">Ready to optimize</div>
-  <div style="font-size:1rem;font-weight:600;color:#1a1a18;margin-bottom:1.25rem;">
-    Mean-Variance Optimization</div>
+  <div style="background:#ffffff;border:1px solid #e0d9ce;border-radius:6px;
+              padding:2rem 2.25rem;">
 
-  <div style="font-size:0.72rem;color:#4a4a45;line-height:1.9;margin-bottom:1.5rem;">
-    SLSQP will maximize <b style="color:#2d6a4f;">( wᵀμ − rƒ ) / √(wᵀΣw)</b>
-    over your <b style="color:#1a1a18;">{_n_assets}-asset universe</b>,
-    subject to Σwᵢ = 1, wᵢ ≤ <b style="color:#1a1a18;">{_wt_pct}%</b>,
-    and at most <b style="color:#1a1a18;">N = {max_assets}</b> holdings.
-    Three portfolios are computed — Max Sharpe, Min Variance, Equal Weight —
-    with <b style="color:{_preset_color};">{_preset_display} ({_lam_display})</b>
-    as your primary selection across all tabs.
-  </div>
+    <div style="font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;
+                color:#8a8072;margin-bottom:0.3rem;">Ready to optimize</div>
+    <div style="font-size:1rem;font-weight:600;color:#1a1a18;margin-bottom:1.25rem;">
+      Mean-Variance Optimization</div>
 
-  <div style="display:flex;gap:2rem;padding-top:1rem;border-top:1px solid #e0d9ce;">
-    <div>
-      <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                  color:#8a8072;margin-bottom:0.2rem;">Assets</div>
-      <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_n_assets}</div>
+    <div style="font-size:0.72rem;color:#4a4a45;line-height:1.9;margin-bottom:1.5rem;">
+      SLSQP will maximize <b style="color:#2d6a4f;">( wᵀμ − rƒ ) / √(wᵀΣw)</b>
+      over your <b style="color:#1a1a18;">{_n_assets}-asset universe</b>,
+      subject to Σwᵢ = 1, wᵢ ≤ <b style="color:#1a1a18;">{_wt_pct}%</b>,
+      and at most <b style="color:#1a1a18;">N = {max_assets}</b> holdings.
+      Three portfolios are computed — Max Sharpe, Min Variance, Equal Weight —
+      with <b style="color:{_preset_color};">{_preset_display} ({_lam_display})</b>
+      as your primary selection across all tabs.
     </div>
-    <div>
-      <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                  color:#8a8072;margin-bottom:0.2rem;">Max weight</div>
-      <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_wt_pct}%</div>
+
+    <div style="display:flex;gap:2rem;padding-top:1rem;border-top:1px solid #e0d9ce;">
+      <div>
+        <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
+                    color:#8a8072;margin-bottom:0.2rem;">Assets</div>
+        <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_n_assets}</div>
+      </div>
+      <div>
+        <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
+                    color:#8a8072;margin-bottom:0.2rem;">Max weight</div>
+        <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_wt_pct}%</div>
+      </div>
+      <div>
+        <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
+                    color:#8a8072;margin-bottom:0.2rem;">Max holdings</div>
+        <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{max_assets}</div>
+      </div>
+      <div>
+        <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
+                    color:#8a8072;margin-bottom:0.2rem;">Risk-free rate</div>
+        <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_rf_pct}%</div>
+      </div>
+      <div>
+        <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
+                    color:#8a8072;margin-bottom:0.2rem;">VaR conf.</div>
+        <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_conf_pct}%</div>
+      </div>
     </div>
-    <div>
-      <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                  color:#8a8072;margin-bottom:0.2rem;">Max holdings</div>
-      <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{max_assets}</div>
-    </div>
-    <div>
-      <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                  color:#8a8072;margin-bottom:0.2rem;">Risk-free rate</div>
-      <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_rf_pct}%</div>
-    </div>
-    <div>
-      <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                  color:#8a8072;margin-bottom:0.2rem;">VaR conf.</div>
-      <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_conf_pct}%</div>
-    </div>
+
   </div>
 
 </div>
