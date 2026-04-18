@@ -574,6 +574,12 @@ with st.sidebar:
                           step=0.05, format="%.2f", disabled=wt_opt)
     max_weight = 1.0 if wt_opt else slider_wt
 
+    slider_min_wt = st.slider("Min Single Asset Weight", 0.00, 0.20,
+                              value=0.0,
+                              step=0.01, format="%.2f", disabled=wt_opt,
+                              help="Forces each active holding to carry at least this weight. Prevents token allocations and biasing towards too few stocks.")
+    min_weight = 0.0 if wt_opt else slider_min_wt
+
     # ── Diversification ───────────────────────────────────────────────────────
     st.markdown("---")
     st.markdown("## Diversification")
@@ -1283,13 +1289,15 @@ if not run_btn:
         '<div style="font-size:0.72rem;color:#4a4a45;line-height:1.9;margin-bottom:1.5rem;">'
         'SLSQP will maximize <b style="color:#2d6a4f;">( w&#7488;&#956; &#8722; r&#402; ) / &#8730;(w&#7488;&#931;w)</b> '
         f'over your <b style="color:#1a1a18;">{_n_assets}-asset universe</b>, '
-        f'subject to &#8721;w&#7522; = 1, w&#7522; &#8804; <b style="color:#1a1a18;">{_wt_pct}%</b>, '
+        f'subject to &#8721;w&#7522; = 1, '
+        f'<b style="color:#1a1a18;">{int(min_weight*100)}%</b> &#8804; w&#7522; &#8804; <b style="color:#1a1a18;">{_wt_pct}%</b>, '
         f'and at most <b style="color:#1a1a18;">N = {max_assets}</b> holdings. '
         'Three portfolios are computed — Max Sharpe, Min Variance, Equal Weight — '
         f'with <b style="color:{_preset_color};">{_preset_display} ({_lam_display})</b> as your primary selection across all tabs.'
         '</div>'
-        '<div style="display:flex;gap:2rem;padding-top:1rem;border-top:1px solid #e0d9ce;">'
+        '<div style="display:flex;gap:2rem;padding-top:1rem;border-top:1px solid #e0d9ce;flex-wrap:wrap;">'
         f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Assets</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_n_assets}</div></div>'
+        f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Min weight</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{int(min_weight*100)}%</div></div>'
         f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Max weight</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_wt_pct}%</div></div>'
         f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Max holdings</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{max_assets}</div></div>'
         f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Risk-free rate</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_rf_pct}%</div></div>'
@@ -1318,7 +1326,7 @@ n       = len(valid_tickers)
 
 # ── Optimization ──────────────────────────────────────────────────────────────
 with st.spinner("Running optimization…"):
-    bounds      = tuple((0.0, max_weight) for _ in range(n))
+    bounds      = tuple((min_weight, max_weight) for _ in range(n))
     constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1}]
     w0          = np.ones(n) / n
     n_keep      = min(max_assets, n)
@@ -1327,7 +1335,13 @@ with st.spinner("Running optimization…"):
         top = np.argsort(w_full)[-k:]
         w   = np.zeros(len(w_full))
         w[top] = w_full[top]
-        return w / w.sum()
+        # Enforce min_weight on retained positions
+        if min_weight > 0:
+            for idx in top:
+                if w[idx] < min_weight:
+                    w[idx] = min_weight
+        total = w.sum()
+        return w / total if total > 0 else w
 
     # ── Max Sharpe (Optimal Risky / Tangency) ─────────────────────────────────
     # Run UNCONSTRAINED first to compute Effective N
