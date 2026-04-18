@@ -514,11 +514,11 @@ with st.sidebar:
     col_m1, col_m2 = st.columns([1, 1])
     with col_m1:
         st.markdown(f'<div style="{_P if _cur_mode == "analyze" else _R}">ANALYZE</div>', unsafe_allow_html=True)
-        if st.button("ANALYZE", key="btn_mode_analyze", use_container_width=True):
+        if st.button("​", key="btn_mode_analyze", use_container_width=True):
             st.session_state.app_mode_radio = "analyze"
     with col_m2:
         st.markdown(f'<div style="{_P if _cur_mode == "discover" else _R}">DISCOVER</div>', unsafe_allow_html=True)
-        if st.button("DISCOVER", key="btn_mode_discover", use_container_width=True):
+        if st.button("​", key="btn_mode_discover", use_container_width=True):
             st.session_state.app_mode_radio = "discover"
     _cur_mode = st.session_state.app_mode_radio
 
