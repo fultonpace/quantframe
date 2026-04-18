@@ -495,32 +495,20 @@ with st.sidebar:
         st.session_state.suggested_n    = 8
         st.session_state.max_assets_val = 8
 
-    # Shared styles for pressed/raised toggle — used for ANALYZE/DISCOVER only
-    _P = ("display:block;width:100%;text-align:center;padding:0.45rem 0;"
-          "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;"
-          "letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;"
-          "background:#2d6a4f;color:#f7f5f0;border:1px solid #1a5c3a;"
-          "box-shadow:inset 0 3px 6px rgba(0,0,0,0.5),inset 0 1px 2px rgba(0,0,0,0.3);"
-          "transform:translateY(2px);margin-bottom:0.25rem;")
-    _R = ("display:block;width:100%;text-align:center;padding:0.45rem 0;"
-          "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;"
-          "letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;"
-          "background:#ffffff;color:#8a8072;border:1px solid #c8bfb2;"
-          "box-shadow:0 4px 0 #a8a098,0 1px 3px rgba(0,0,0,0.1);"
-          "transform:translateY(0);margin-bottom:0.25rem;")
-
-    # ── Mode switcher — HTML visual only, st.button hidden below for click ────
     _cur_mode = st.session_state.app_mode_radio
     col_m1, col_m2 = st.columns([1, 1])
     with col_m1:
-        st.markdown(f'<div style="{_P if _cur_mode == "analyze" else _R}">ANALYZE</div>', unsafe_allow_html=True)
-        if st.button("​", key="btn_mode_analyze", use_container_width=True):
+        if st.button("ANALYZE", key="btn_mode_analyze", use_container_width=True):
             st.session_state.app_mode_radio = "analyze"
     with col_m2:
-        st.markdown(f'<div style="{_P if _cur_mode == "discover" else _R}">DISCOVER</div>', unsafe_allow_html=True)
-        if st.button("​", key="btn_mode_discover", use_container_width=True):
+        if st.button("DISCOVER", key="btn_mode_discover", use_container_width=True):
             st.session_state.app_mode_radio = "discover"
     _cur_mode = st.session_state.app_mode_radio
+    st.markdown(f"""
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.1rem;margin-bottom:0.4rem;">
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if _cur_mode == 'analyze' else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if _cur_mode == 'analyze' else 'none'};"></div></div>
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if _cur_mode == 'discover' else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if _cur_mode == 'discover' else 'none'};"></div></div>
+</div>""", unsafe_allow_html=True)
 
     app_mode = "  🔍  Discovery  " if _cur_mode == "discover" else "  ⬡  Lab  "
     st.session_state.app_mode  = app_mode
