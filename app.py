@@ -782,8 +782,6 @@ with col_title:
   Created by <span style="color:#2d6a4f;font-weight:500;">Fulton Pace</span>
   <span style="color:#d6cfc4;margin:0 0.5rem;">·</span>
   Market data via <span style="color:#b5873a;font-weight:500;">Yahoo Finance</span>
-  <span style="color:#d6cfc4;margin:0 0.5rem;">·</span>
-  <span style="color:#b0a898;">For educational purposes only. Not financial advice.</span>
 </div>
 """, unsafe_allow_html=True)
 with col_badge:
