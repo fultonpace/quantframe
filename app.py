@@ -510,21 +510,23 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
 </div>
 """, unsafe_allow_html=True)
 
-    # 5 presets in ascending risk order
+    # 5 presets in ascending risk order + Variable option
     RISK_PRESETS = [
         ("NO GUTS — Min Variance Portfolio",      "minvar",   None,  "#7c6af7"),
         ("STEADY — Low Risk  (λ=10)",             "steady",   10.0,  "#5b8af0"),
         ("AVERAGE — Moderate  (λ=4)",             "average",  4.0,   "#00d4aa"),
         ("HIGH ROLLER — Aggressive  (λ=1.5)",     "roller",   1.5,   "#f0c27f"),
         ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal",  None,  "#ff6b6b"),
+        ("VARIABLE — Custom λ",                   "custom",   4.0,   "#e2e2f0"),
     ]
     PRESET_LABELS = [p[0] for p in RISK_PRESETS]
+    key_to_idx    = {p[1]: i for i, p in enumerate(RISK_PRESETS)}
 
     if "risk_preset" not in st.session_state:
         st.session_state.risk_preset = "average"
+    if "risk_lambda_val" not in st.session_state:
+        st.session_state.risk_lambda_val = 4.0
 
-    # Map key → index for selectbox default
-    key_to_idx = {p[1]: i for i, p in enumerate(RISK_PRESETS)}
     default_idx = key_to_idx.get(st.session_state.risk_preset, 2)
 
     selected_label = st.selectbox(
@@ -532,52 +534,73 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
         PRESET_LABELS,
         index=default_idx,
         label_visibility="collapsed",
+        key="risk_dropdown",
     )
     active_preset = RISK_PRESETS[PRESET_LABELS.index(selected_label)]
+
+    # When dropdown changes to a non-Variable preset, snap slider to that λ
+    if active_preset[1] != "custom" and active_preset[2] is not None:
+        st.session_state.risk_lambda_val = active_preset[2]
+    elif active_preset[1] == "minvar" or active_preset[1] == "optimal":
+        pass  # no lambda to snap to
+
     st.session_state.risk_preset = active_preset[1]
-    risk_lambda = active_preset[2]
-    risk_color  = active_preset[3]
+    risk_color = active_preset[3]
 
     # Active preset pill
+    short_name = active_preset[0].split("—")[0].strip()
+    sub_name   = active_preset[0].split("—")[1].strip() if "—" in active_preset[0] else ""
     st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
             padding:0.45rem 0.75rem;margin-top:0.25rem;margin-bottom:0.5rem;
             background:#0d0d14;border-left:2px solid {risk_color};border-radius:0 3px 3px 0;">
-  <span style="color:{risk_color};font-weight:600;">{active_preset[0].split('—')[0].strip()}</span>
-  <span style="color:#6b6b8a;"> · {active_preset[0].split('—')[1].strip() if '—' in active_preset[0] else ''}</span>
+  <span style="color:{risk_color};font-weight:600;">{short_name}</span>
+  <span style="color:#6b6b8a;"> · {sub_name}</span>
 </div>""", unsafe_allow_html=True)
 
-    # Custom λ slider — disabled when dropdown preset is used
-    use_custom_lambda = st.toggle("Use custom λ instead", value=False,
-        help="Override the preset with a manual risk aversion value.")
+    # Lambda slider — always visible
+    # Disabled (grayed) for minvar and optimal since λ is irrelevant there
+    slider_disabled = active_preset[1] in ("minvar", "optimal")
 
-    if use_custom_lambda:
-        custom_lambda = st.slider(
-            "Custom λ (risk aversion)", 0.5, 15.0,
-            float(risk_lambda) if risk_lambda else 4.0,
-            0.5, format="%.1f",
-            help="λ=0.5 = maximum risk, λ=15 = near min variance.",
-        )
-        effective_lambda = custom_lambda
-        lambda_source    = "custom"
-    else:
-        st.slider(
-            "Custom λ (risk aversion)", 0.5, 15.0,
-            float(risk_lambda) if risk_lambda else 4.0,
-            0.5, format="%.1f", disabled=True,
-        )
+    slider_val = st.slider(
+        "λ (risk aversion coefficient)",
+        0.5, 15.0,
+        value=st.session_state.risk_lambda_val,
+        step=0.5,
+        format="%.1f",
+        disabled=slider_disabled,
+        help="λ=0.5 → maximum risk. λ=15 → near min variance. Moving this sets dropdown to VARIABLE.",
+    )
+
+    # If slider moved away from preset's λ → snap dropdown to VARIABLE
+    if not slider_disabled and active_preset[1] != "custom":
+        expected = active_preset[2]
+        if expected is not None and abs(slider_val - expected) > 0.01:
+            st.session_state.risk_preset      = "custom"
+            st.session_state.risk_lambda_val  = slider_val
+            st.rerun()
+
+    if slider_disabled:
         st.markdown("""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#3a3a5a;
             padding:0.3rem 0.6rem;background:#0a0a0f;border:1px solid #1a1a28;
             border-radius:3px;margin-top:0.25rem;">
-  ◆ Slider disabled — using preset profile
+  ◆ λ not applicable for this portfolio
 </div>""", unsafe_allow_html=True)
-        if risk_lambda is None:
-            effective_lambda = None
-            lambda_source    = active_preset[1]
-        else:
-            effective_lambda = risk_lambda
-            lambda_source    = active_preset[1]
+
+    # Store slider value
+    st.session_state.risk_lambda_val = slider_val
+
+    # Resolve final lambda + source
+    if active_preset[1] == "minvar":
+        effective_lambda = None
+        lambda_source    = "minvar"
+    elif active_preset[1] == "optimal":
+        effective_lambda = None
+        lambda_source    = "optimal"
+    else:
+        effective_lambda = slider_val
+        lambda_source    = active_preset[1]
 
     st.markdown("---")
     run_btn = st.button("▶  Run Optimization")
