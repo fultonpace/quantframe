@@ -488,26 +488,32 @@ with st.sidebar:
         st.session_state.app_mode = "Portfolio Lab"
 
     if "app_mode_radio" not in st.session_state:
-        st.session_state.app_mode_radio = "  ⬡  Portfolio Lab  "
-
-    # ── Mode switcher — ANALYZE / DISCOVER buttons ───────────────────────────
-    if "app_mode_radio" not in st.session_state:
         st.session_state.app_mode_radio = "analyze"
 
+    # ── Mode switcher — tape-machine press style ──────────────────────────────
     _cur_mode = st.session_state.get("app_mode_radio", "analyze")
     col_m1, col_m2 = st.columns([1, 1])
     with col_m1:
         if st.button("ANALYZE", key="btn_mode_analyze"):
             st.session_state.app_mode_radio = "analyze"
+            st.rerun()
     with col_m2:
         if st.button("DISCOVER", key="btn_mode_discover"):
             st.session_state.app_mode_radio = "discover"
+            st.rerun()
 
     _cur_mode = st.session_state.get("app_mode_radio", "analyze")
+
+    # Visual state — active button sinks in (inset shadow, green), inactive pops up
+    _a_active = _cur_mode == "analyze"
+    _d_active = _cur_mode == "discover"
+    _btn_base = "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;width:100%;padding:0.5rem 0;border-radius:3px;text-align:center;cursor:default;"
+    _a_style  = _btn_base + ("background:#2d6a4f;color:#f7f5f0;border:1px solid #1e5a3f;box-shadow:inset 0 2px 4px rgba(0,0,0,0.35),inset 0 1px 2px rgba(0,0,0,0.2);" if _a_active else "background:#f7f5f0;color:#8a8072;border:1px solid #c8bfb2;box-shadow:0 2px 0 #b0a898,0 1px 4px rgba(0,0,0,0.1);")
+    _d_style  = _btn_base + ("background:#2d6a4f;color:#f7f5f0;border:1px solid #1e5a3f;box-shadow:inset 0 2px 4px rgba(0,0,0,0.35),inset 0 1px 2px rgba(0,0,0,0.2);" if _d_active else "background:#f7f5f0;color:#8a8072;border:1px solid #c8bfb2;box-shadow:0 2px 0 #b0a898,0 1px 4px rgba(0,0,0,0.1);")
     st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.4rem;margin-bottom:0.25rem;">
-  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if _cur_mode == 'analyze' else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if _cur_mode == 'analyze' else 'none'};transition:all 0.2s;"></div></div>
-  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if _cur_mode == 'discover' else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if _cur_mode == 'discover' else 'none'};transition:all 0.2s;"></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:-2.2rem;margin-bottom:0.75rem;">
+  <div style="{_a_style}">ANALYZE</div>
+  <div style="{_d_style}">DISCOVER</div>
 </div>""", unsafe_allow_html=True)
 
     app_mode = "  🔍  Discovery  " if _cur_mode == "discover" else "  ⬡  Lab  "
@@ -553,7 +559,7 @@ with st.sidebar:
         period = period_map[period_label]
 
         confidence = st.slider("VaR / CVaR Confidence", 0.90, 0.99, 0.95, 0.01, format="%.2f")
-        rf_input   = st.number_input("Risk-Free Rate (%)", 0.0, 10.0, RF_RATE * 100, 0.25, format="%.2f")
+        rf_input   = st.slider("Risk-Free Rate (%)", 0.0, 8.0, RF_RATE * 100, 0.25, format="%.2f")
         rf = rf_input / 100
 
         # ── Weight Constraint ─────────────────────────────────────────────────
