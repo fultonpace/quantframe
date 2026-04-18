@@ -30,15 +30,15 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
 :root {
-    --bg:        #0a0a0f;
-    --surface:   #111118;
-    --border:    #1e1e2e;
-    --accent:    #00d4aa;
-    --accent2:   #7c6af7;
-    --accent3:   #f0c27f;
-    --text:      #e2e2f0;
-    --muted:     #6b6b8a;
-    --danger:    #ff6b6b;
+    --bg:        #f7f5f0;
+    --surface:   #ffffff;
+    --border:    #e0d9ce;
+    --accent:    #2d6a4f;
+    --accent2:   #b5873a;
+    --accent3:   #c9a84c;
+    --text:      #1a1a18;
+    --muted:     #8a8072;
+    --danger:    #c0392b;
     --mono:      'IBM Plex Mono', monospace;
     --sans:      'IBM Plex Sans', sans-serif;
 }
@@ -196,8 +196,8 @@ html, body, [class*="css"] {
 [data-testid="stSelectbox"] > div > div,
 [data-testid="stTextInput"] > div > div > input,
 [data-testid="stNumberInput"] > div > div > input {
-    background: #16161f !important;
-    border: 1px solid #2a2a3e !important;
+    background: #f7f5f0 !important;
+    border: 1px solid #c8bfb2 !important;
     color: var(--text) !important;
     font-family: var(--mono) !important;
     font-size: 0.8rem !important;
@@ -287,41 +287,41 @@ html, body, [class*="css"] {
     transition: background 0.15s ease, color 0.15s ease,
                 transform 0.1s ease, box-shadow 0.1s ease,
                 border-color 0.15s ease;
-    box-shadow: 0 3px 0 rgba(0,212,170,0.35), 0 1px 6px rgba(0,0,0,0.4);
+    box-shadow: 0 3px 0 rgba(45,106,79,0.35), 0 1px 6px rgba(0,0,0,0.4);
 }
 .stButton > button:hover {
-    background: rgba(0,212,170,0.08);
-    border-color: #00f0c0;
-    color: #00f0c0;
-    box-shadow: 0 3px 0 rgba(0,240,192,0.4), 0 2px 12px rgba(0,212,170,0.15);
+    background: rgba(45,106,79,0.08);
+    border-color: #1e8f62;
+    color: #1e8f62;
+    box-shadow: 0 3px 0 rgba(30,143,98,0.4), 0 2px 12px rgba(45,106,79,0.15);
     transform: translateY(-1px);
 }
 .stButton > button:active,
 .stButton > button:focus:not(:focus-visible) {
-    background: rgba(0,212,170,0.18);
-    color: #00d4aa;
+    background: rgba(45,106,79,0.18);
+    color: #2d6a4f;
     border-color: var(--accent);
     transform: translateY(2px);
-    box-shadow: 0 0px 0 rgba(0,212,170,0.2), 0 1px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 0px 0 rgba(45,106,79,0.2), 0 1px 4px rgba(0,0,0,0.3);
 }
 /* Run Optimization — filled primary */
 [data-testid="stSidebar"] .stButton:last-of-type > button {
     background: var(--accent);
     color: var(--bg);
     border-color: var(--accent);
-    box-shadow: 0 4px 0 rgba(0,150,110,0.6), 0 2px 8px rgba(0,212,170,0.2);
+    box-shadow: 0 4px 0 rgba(20,90,60,0.6), 0 2px 8px rgba(45,106,79,0.2);
 }
 [data-testid="stSidebar"] .stButton:last-of-type > button:hover {
-    background: #00f0c0;
-    border-color: #00f0c0;
+    background: #1e8f62;
+    border-color: #1e8f62;
     color: var(--bg);
-    box-shadow: 0 4px 0 rgba(0,170,130,0.6), 0 4px 16px rgba(0,212,170,0.25);
+    box-shadow: 0 4px 0 rgba(25,110,75,0.6), 0 4px 16px rgba(45,106,79,0.25);
     transform: translateY(-1px);
 }
 [data-testid="stSidebar"] .stButton:last-of-type > button:active {
-    background: #00b894;
+    background: #1a7a52;
     transform: translateY(3px);
-    box-shadow: 0 1px 0 rgba(0,100,80,0.5);
+    box-shadow: 0 1px 0 rgba(15,70,45,0.5);
 }
 /* Toggle */
 [data-testid="stToggle"] { accent-color: var(--accent) !important; }
@@ -340,32 +340,32 @@ html, body, [class*="css"] {
     text-transform: uppercase;
     padding: 0.2rem 0.6rem;
     border-radius: 2px;
-    background: rgba(0,212,170,0.15);
+    background: rgba(45,106,79,0.15);
     color: var(--accent);
-    border: 1px solid rgba(0,212,170,0.3);
+    border: 1px solid rgba(45,106,79,0.3);
 }
 .badge-warn {
-    background: rgba(240,194,127,0.15);
+    background: rgba(201,168,76,0.15);
     color: var(--accent3);
-    border-color: rgba(240,194,127,0.3);
+    border-color: rgba(201,168,76,0.3);
 }
 .badge-danger {
-    background: rgba(255,107,107,0.15);
+    background: rgba(192,57,43,0.15);
     color: var(--danger);
-    border-color: rgba(255,107,107,0.3);
+    border-color: rgba(192,57,43,0.3);
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 PLOT_LAYOUT = dict(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="IBM Plex Mono", color="#6b6b8a", size=11),
+    paper_bgcolor="rgba(247,245,240,0)",
+    plot_bgcolor="rgba(247,245,240,0)",
+    font=dict(family="IBM Plex Mono", color="#8a8072", size=11),
     margin=dict(l=50, r=30, t=40, b=50),
-    xaxis=dict(gridcolor="#1e1e2e", zerolinecolor="#1e1e2e", linecolor="#1e1e2e"),
-    yaxis=dict(gridcolor="#1e1e2e", zerolinecolor="#1e1e2e", linecolor="#1e1e2e"),
-    legend=dict(bgcolor="rgba(0,0,0,0)", bordercolor="#1e1e2e"),
+    xaxis=dict(gridcolor="#e0d9ce", zerolinecolor="#e0d9ce", linecolor="#e0d9ce"),
+    yaxis=dict(gridcolor="#e0d9ce", zerolinecolor="#e0d9ce", linecolor="#e0d9ce"),
+    legend=dict(bgcolor="rgba(247,245,240,0)", bordercolor="#e0d9ce"),
 )
 
 PRESET_UNIVERSES = {
@@ -529,36 +529,31 @@ with st.sidebar:
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.4rem;margin-bottom:0.5rem;">
   <div style="text-align:center;">
     <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
-                background:{'#00d4aa' if wt_opt else 'transparent'};
-                box-shadow:{'0 0 6px #00d4aa' if wt_opt else 'none'};
+                background:{'#2d6a4f' if wt_opt else 'transparent'};
+                box-shadow:{'0 0 6px #2d6a4f' if wt_opt else 'none'};
                 transition:all 0.2s;"></div>
   </div>
   <div style="text-align:center;">
     <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
-                background:{'transparent' if wt_opt else '#00d4aa'};
-                box-shadow:{'none' if wt_opt else '0 0 6px #00d4aa'};
+                background:{'transparent' if wt_opt else '#2d6a4f'};
+                box-shadow:{'none' if wt_opt else '0 0 6px #2d6a4f'};
                 transition:all 0.2s;"></div>
   </div>
 </div>""", unsafe_allow_html=True)
 
-    if st.session_state.optimize_weights:
-        max_weight = 1.0
-        st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#3a3a5a;
-            padding:0.3rem 0.6rem;background:#0a0a0f;border:1px solid #1a1a28;
-            border-radius:3px;margin-bottom:0.25rem;">
+    wt_opt = st.session_state.optimize_weights
+    # Status + slider always rendered, only disabled state changes — zero layout shift
+    st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
+            padding:0.3rem 0.6rem;background:#f7f5f0;border:1px solid #d6cfc4;
+            border-radius:3px;margin-bottom:0.25rem;min-height:1.55rem;
+            color:{'#b0a898' if wt_opt else 'transparent'};">
   ◆ Unconstrained — optimizer controls allocation
 </div>""", unsafe_allow_html=True)
-        st.slider("Max Single Asset Weight", 0.10, 1.0, 1.0, 0.05,
-                  format="%.2f", disabled=True, label_visibility="collapsed")
-    else:
-        st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#3a3a5a;
-            padding:0.3rem 0.6rem;background:#0a0a0f;border:1px solid transparent;
-            border-radius:3px;margin-bottom:0.25rem;">
-  &nbsp;
-</div>""", unsafe_allow_html=True)
-        max_weight = st.slider("Max Single Asset Weight", 0.10, 1.0, 0.40, 0.05, format="%.2f")
+    slider_wt = st.slider("Max Single Asset Weight", 0.10, 1.0,
+                          value=1.0 if wt_opt else 0.40,
+                          step=0.05, format="%.2f", disabled=wt_opt)
+    max_weight = 1.0 if wt_opt else slider_wt
 
     # ── Diversification ───────────────────────────────────────────────────────
     st.markdown("---")
@@ -583,59 +578,58 @@ with st.sidebar:
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.4rem;margin-bottom:0.5rem;">
   <div style="text-align:center;">
     <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
-                background:{'#00d4aa' if n_opt else 'transparent'};
-                box-shadow:{'0 0 6px #00d4aa' if n_opt else 'none'};
+                background:{'#2d6a4f' if n_opt else 'transparent'};
+                box-shadow:{'0 0 6px #2d6a4f' if n_opt else 'none'};
                 transition:all 0.2s;"></div>
   </div>
   <div style="text-align:center;">
     <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
-                background:{'transparent' if n_opt else '#00d4aa'};
-                box-shadow:{'none' if n_opt else '0 0 6px #00d4aa'};
+                background:{'transparent' if n_opt else '#2d6a4f'};
+                box-shadow:{'none' if n_opt else '0 0 6px #2d6a4f'};
                 transition:all 0.2s;"></div>
   </div>
 </div>""", unsafe_allow_html=True)
 
     st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#6b6b8a;
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;
             line-height:1.55;margin:0.4rem 0 0.6rem 0;padding:0.5rem 0.65rem;
-            background:#0a0a0f;border:1px solid #1a1a28;border-radius:3px;">
-  <b style="color:#e2e2f0;">OPTIMIZE N</b> sets holdings to the portfolio's
-  <b style="color:#00d4aa;">effective N</b> = 1/Σwᵢ² — the number of
+            background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;">
+  <b style="color:#1a1a18;">OPTIMIZE N</b> sets holdings to the portfolio's
+  <b style="color:#2d6a4f;">effective N</b> = 1/Σwᵢ² — the number of
   assets the optimizer naturally concentrates into.
 </div>""", unsafe_allow_html=True)
 
-    if st.session_state.optimize_n:
-        sn = st.session_state.suggested_n
-        st.markdown(f"""
+    n_opt = st.session_state.optimize_n
+    sn    = st.session_state.suggested_n
+
+    # Status line — always same height, content changes color not presence
+    st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
-            padding:0.3rem 0.65rem;background:#0a0a0f;
-            border:1px solid #1a1a28;border-radius:3px;margin-bottom:0.25rem;">
-  <span style="color:#6b6b8a;">Effective N = </span>
-  <span style="color:#00d4aa;font-weight:600;">{sn}</span>
-  <span style="color:#6b6b8a;"> (auto)</span>
+            padding:0.3rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;
+            border-radius:3px;margin-bottom:0.25rem;min-height:1.55rem;">
+  <span style="color:{'#8a8072' if n_opt else 'transparent'};">Effective N = </span>
+  <span style="color:{'#2d6a4f' if n_opt else 'transparent'};font-weight:600;">{sn}</span>
+  <span style="color:{'#8a8072' if n_opt else 'transparent'};"> (auto)</span>
 </div>""", unsafe_allow_html=True)
+
+    # Slider — always rendered, disabled when optimize is active
+    slider_n = st.slider("Max Holdings (N)", min_value=2, max_value=20,
+                         value=sn if n_opt else st.session_state.max_assets_val,
+                         step=1, disabled=n_opt)
+    if n_opt:
         max_assets = sn
-        st.slider("Max Holdings (N)", min_value=2, max_value=20, value=sn,
-                  step=1, disabled=True, label_visibility="collapsed")
     else:
-        st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
-            padding:0.3rem 0.65rem;background:#0a0a0f;
-            border:1px solid transparent;border-radius:3px;margin-bottom:0.25rem;">
-  &nbsp;
-</div>""", unsafe_allow_html=True)
-        max_assets = st.slider("Max Holdings (N)", min_value=2, max_value=20,
-                               value=st.session_state.max_assets_val, step=1)
-        st.session_state.max_assets_val = max_assets
+        max_assets = slider_n
+        st.session_state.max_assets_val = slider_n
 
     # ── Risk Tolerance ────────────────────────────────────────────────────────
     st.markdown("---")
     st.markdown("## Risk Tolerance")
     st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#8a8072;
             line-height:1.6;margin-bottom:0.75rem;">
-Selects a portfolio on the efficient frontier via a <b style="color:#e2e2f0;">utility function</b>:<br>
-<span style="color:#00d4aa;">max U = μ − (λ/2)σ²</span><br>
+Selects a portfolio on the efficient frontier via a <b style="color:#1a1a18;">utility function</b>:<br>
+<span style="color:#2d6a4f;">max U = μ − (λ/2)σ²</span><br>
 where λ is your risk aversion coefficient.<br>
 Higher λ → closer to Min Variance.<br>
 Lower λ → closer to Max Sharpe (Optimal Risky).
@@ -644,12 +638,12 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
 
     # 5 presets in ascending risk order + Variable option
     RISK_PRESETS = [
-        ("NO GUTS — Min Variance Portfolio",      "minvar",   None,  "#7c6af7"),
-        ("STEADY — Low Risk  (λ=10)",             "steady",   10.0,  "#5b8af0"),
-        ("AVERAGE — Moderate  (λ=4)",             "average",  4.0,   "#00d4aa"),
-        ("HIGH ROLLER — Aggressive  (λ=1.5)",     "roller",   1.5,   "#f0c27f"),
-        ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal",  None,  "#ff6b6b"),
-        ("VARIABLE — Custom λ",                   "custom",   4.0,   "#e2e2f0"),
+        ("NO GUTS — Min Variance Portfolio",      "minvar",   None,  "#b5873a"),
+        ("STEADY — Low Risk  (λ=10)",             "steady",   10.0,  "#c9a84c"),
+        ("AVERAGE — Moderate  (λ=4)",             "average",  4.0,   "#2d6a4f"),
+        ("HIGH ROLLER — Aggressive  (λ=1.5)",     "roller",   1.5,   "#c9a84c"),
+        ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal",  None,  "#c0392b"),
+        ("VARIABLE — Custom λ",                   "custom",   4.0,   "#1a1a18"),
     ]
     PRESET_LABELS = [p[0] for p in RISK_PRESETS]
     key_to_idx    = {p[1]: i for i, p in enumerate(RISK_PRESETS)}
@@ -685,9 +679,9 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
     st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
             padding:0.45rem 0.75rem;margin-top:0.25rem;margin-bottom:0.5rem;
-            background:#0d0d14;border-left:2px solid {risk_color};border-radius:0 3px 3px 0;">
+            background:#f0ece4;border-left:2px solid {risk_color};border-radius:0 3px 3px 0;">
   <span style="color:{risk_color};font-weight:600;">{short_name}</span>
-  <span style="color:#6b6b8a;"> · {sub_name}</span>
+  <span style="color:#8a8072;"> · {sub_name}</span>
 </div>""", unsafe_allow_html=True)
 
     # Lambda slider — always visible
@@ -714,15 +708,15 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
 
     if slider_disabled:
         st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#3a3a5a;
-            padding:0.3rem 0.6rem;background:#0a0a0f;border:1px solid #1a1a28;
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#b0a898;
+            padding:0.3rem 0.6rem;background:#f7f5f0;border:1px solid #d6cfc4;
             border-radius:3px;margin-top:0.25rem;">
   ◆ λ not applicable for this portfolio
 </div>""", unsafe_allow_html=True)
     else:
         st.markdown("""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
-            padding:0.3rem 0.6rem;background:#0a0a0f;border:1px solid transparent;
+            padding:0.3rem 0.6rem;background:#f7f5f0;border:1px solid transparent;
             border-radius:3px;margin-top:0.25rem;">
   &nbsp;
 </div>""", unsafe_allow_html=True)
@@ -777,9 +771,9 @@ st.markdown('<hr class="divider">', unsafe_allow_html=True)
 if not run_btn:
     st.markdown("""
 <div style="text-align:center; padding: 5rem 2rem; font-family: 'IBM Plex Mono', monospace;">
-    <div style="font-size:3rem; margin-bottom:1rem; color:#1e1e2e;">⬡</div>
-    <div style="font-size:0.9rem; color:#6b6b8a; letter-spacing:0.15em; text-transform:uppercase;">
-        Configure your universe in the sidebar<br>and press <span style="color:#00d4aa;">▶ Run Optimization</span>
+    <div style="font-size:3rem; margin-bottom:1rem; color:#e0d9ce;">⬡</div>
+    <div style="font-size:0.9rem; color:#8a8072; letter-spacing:0.15em; text-transform:uppercase;">
+        Configure your universe in the sidebar<br>and press <span style="color:#2d6a4f;">▶ Run Optimization</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -872,66 +866,66 @@ _preset_sub = active_preset[0].split("—")[1].strip() if "—" in active_preset
 _preset_col = active_preset[3]
 
 st.markdown(f"""
-<div style="background:#0d0d14;border:1px solid #1e1e2e;border-radius:4px;
+<div style="background:#f0ece4;border:1px solid #e0d9ce;border-radius:4px;
             padding:1rem 1.5rem;margin-bottom:1.5rem;
             display:grid;grid-template-columns:repeat(7,1fr);gap:1rem;">
   <div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
-                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+                letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.3rem;">
       Data Source</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#00d4aa;font-weight:600;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#2d6a4f;font-weight:600;">
       Yahoo Finance</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">via yfinance</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#8a8072;">via yfinance</div>
   </div>
   <div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
-                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+                letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.3rem;">
       Date Range</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#e2e2f0;font-weight:500;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#1a1a18;font-weight:500;">
       {_date_start}</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">→ {_date_end}</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#8a8072;">→ {_date_end}</div>
   </div>
   <div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
-                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+                letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.3rem;">
       Observations</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#e2e2f0;font-weight:500;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#1a1a18;font-weight:500;">
       {_n_obs:,}</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">trading days</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#8a8072;">trading days</div>
   </div>
   <div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
-                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+                letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.3rem;">
       Universe</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#e2e2f0;font-weight:500;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#1a1a18;font-weight:500;">
       {len(valid_tickers)} assets</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#8a8072;">
       {', '.join(valid_tickers)}</div>
   </div>
   <div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
-                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+                letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.3rem;">
       Active Holdings</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#00d4aa;font-weight:600;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#2d6a4f;font-weight:600;">
       {len(_active)} / {len(valid_tickers)}</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#8a8072;">
       N={n_keep} constraint</div>
   </div>
   <div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
-                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+                letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.3rem;">
       Risk Profile</div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;font-weight:600;
                 color:{_preset_col};">{_preset_lbl}</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">{_preset_sub}</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#8a8072;">{_preset_sub}</div>
   </div>
   <div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
-                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+                letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.3rem;">
       Last Fetched</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#e2e2f0;font-weight:500;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#1a1a18;font-weight:500;">
       {_now}</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">adj. close prices</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#8a8072;">adj. close prices</div>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -978,8 +972,8 @@ with tab1:
         mode="markers+text",
         text=valid_tickers,
         textposition="top center",
-        textfont=dict(size=10, color="#6b6b8a", family="IBM Plex Mono"),
-        marker=dict(size=9, color="#1e1e2e", line=dict(color="#6b6b8a", width=1.5)),
+        textfont=dict(size=10, color="#8a8072", family="IBM Plex Mono"),
+        marker=dict(size=9, color="#e0d9ce", line=dict(color="#8a8072", width=1.5)),
         name="Individual Assets",
         hovertemplate="<b>%{text}</b><br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
     ))
@@ -988,7 +982,7 @@ with tab1:
     fig.add_trace(go.Scatter(
         x=frontier_vols * 100, y=frontier_rets * 100,
         mode="lines",
-        line=dict(color="rgba(0,212,170,0.4)", width=2),
+        line=dict(color="rgba(45,106,79,0.4)", width=2),
         name="Efficient Frontier",
         hovertemplate="Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
     ))
@@ -1000,15 +994,15 @@ with tab1:
         fig.add_trace(go.Scatter(
             x=cml_x * 100, y=cml_y * 100,
             mode="lines",
-            line=dict(color="rgba(124,106,247,0.5)", width=1.5, dash="dash"),
+            line=dict(color="rgba(181,135,58,0.5)", width=1.5, dash="dash"),
             name="Capital Market Line",
         ))
 
     # Portfolio markers — always show Min Var + Optimal Risky, then highlight user's selection
     port_points = [
-        (v_sh, r_sh, "Optimal Risky (Max Sharpe)", "#00d4aa", "star",    18),
-        (v_mv, r_mv, "Min Variance Portfolio",      "#7c6af7", "diamond", 16),
-        (v_eq, r_eq, "Equal Weight",                "#f0c27f", "circle",  12),
+        (v_sh, r_sh, "Optimal Risky (Max Sharpe)", "#2d6a4f", "star",    18),
+        (v_mv, r_mv, "Min Variance Portfolio",      "#b5873a", "diamond", 16),
+        (v_eq, r_eq, "Equal Weight",                "#c9a84c", "circle",  12),
     ]
     for v_, r_, name_, color_, sym_, sz_ in port_points:
         fig.add_trace(go.Scatter(
@@ -1018,7 +1012,7 @@ with tab1:
             textposition="top right",
             textfont=dict(size=9, color=color_, family="IBM Plex Mono"),
             marker=dict(size=sz_, color=color_, symbol=sym_,
-                        line=dict(color="white", width=1)),
+                        line=dict(color="#f7f5f0", width=1)),
             name=name_,
             hovertemplate=f"<b>{name_}</b><br>Vol: {v_*100:.2f}%<br>Return: {r_*100:.2f}%<br>Sharpe: {(r_-rf)/v_:.3f}<extra></extra>",
         ))
@@ -1033,14 +1027,14 @@ with tab1:
             textposition="bottom right",
             textfont=dict(size=9, color=_preset_col, family="IBM Plex Mono"),
             marker=dict(size=16, color=_preset_col, symbol="pentagon",
-                        line=dict(color="white", width=1.5)),
+                        line=dict(color="#f7f5f0", width=1.5)),
             name=f"Selected: {_preset_lbl}",
             hovertemplate=f"<b>Your Portfolio</b><br>λ={effective_lambda}<br>Vol: {v_ut*100:.2f}%<br>Return: {r_ut*100:.2f}%<br>Sharpe: {s_ut:.3f}<extra></extra>",
         ))
 
     layout = dict(**PLOT_LAYOUT)
     layout.update(dict(
-        title=dict(text="Efficient Frontier & Portfolio Compositions", font=dict(size=13, color="#e2e2f0")),
+        title=dict(text="Efficient Frontier & Portfolio Compositions", font=dict(size=13, color="#1a1a18")),
         xaxis_title="Annualized Volatility (%)",
         yaxis_title="Annualized Return (%)",
         height=520,
@@ -1053,9 +1047,9 @@ with tab1:
 
     # Build card list — insert user portfolio if it's not one of the named ones
     card_list = [
-        ("Min Variance",        w_minvol,  r_mv, v_mv, s_mv, "#7c6af7"),
-        ("Equal Weight",        w_eq,      r_eq, v_eq, s_eq, "#f0c27f"),
-        ("Optimal Risky",       w_sharpe,  r_sh, v_sh, s_sh, "#00d4aa"),
+        ("Min Variance",        w_minvol,  r_mv, v_mv, s_mv, "#b5873a"),
+        ("Equal Weight",        w_eq,      r_eq, v_eq, s_eq, "#c9a84c"),
+        ("Optimal Risky",       w_sharpe,  r_sh, v_sh, s_sh, "#2d6a4f"),
     ]
     if is_custom:
         card_list.insert(2, (f"Your Portfolio\n({_preset_lbl})", w_primary, r_ut, v_ut, s_ut, _preset_col))
@@ -1069,7 +1063,7 @@ with tab1:
 <div class="metric-card" style="--accent:{color};{border_style}">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
   <div class="metric-label" style="white-space:pre;">{label}</div>
-  {'<span class="badge" style="background:rgba(0,0,0,0.3);color:' + color + ';border-color:' + color + '60;">ACTIVE</span>' if is_selected else ''}
+  {'<span class="badge" style="background:rgba(45,106,79,0.12);color:' + color + ';border-color:' + color + '60;">ACTIVE</span>' if is_selected else ''}
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
   <div>
@@ -1105,9 +1099,9 @@ with tab1:
     fig2 = go.Figure()
     for name, color in [
         ("Your Portfolio", _preset_col),
-        ("Optimal Risky",  "#00d4aa"),
-        ("Min Variance",   "#7c6af7"),
-        ("Equal Wt",       "#f0c27f"),
+        ("Optimal Risky",  "#2d6a4f"),
+        ("Min Variance",   "#b5873a"),
+        ("Equal Wt",       "#c9a84c"),
     ]:
         fig2.add_trace(go.Bar(
             name=name, x=df_w["Ticker"], y=df_w[name],
@@ -1117,7 +1111,7 @@ with tab1:
     fig2.update_layout(**{**PLOT_LAYOUT,
         "barmode":"group","height":340,
         "yaxis_title":"Weight (%)",
-        "title":dict(text="Portfolio Weight Comparison", font=dict(size=12,color="#e2e2f0")),
+        "title":dict(text="Portfolio Weight Comparison", font=dict(size=12,color="#1a1a18")),
     })
     st.plotly_chart(fig2, use_container_width=True)
 
@@ -1166,7 +1160,7 @@ with tab2:
         fig3.add_trace(go.Histogram(
             x=port_ret_arr * 100,
             nbinsx=60,
-            marker_color="rgba(0,212,170,0.5)",
+            marker_color="rgba(45,106,79,0.5)",
             marker_line_width=0,
             name="Daily Returns",
         ))
@@ -1176,19 +1170,19 @@ with tab2:
         y_norm = y_norm * len(port_ret_arr) * (port_ret_arr.max() - port_ret_arr.min()) / 60
         fig3.add_trace(go.Scatter(
             x=x_norm*100, y=y_norm,
-            line=dict(color="#7c6af7", width=2),
+            line=dict(color="#b5873a", width=2),
             name="Normal Fit",
         ))
         # VaR line
-        fig3.add_vline(x=-var_h*100, line_color="#ff6b6b", line_dash="dash", line_width=1.5,
-                       annotation_text=f"VaR {confidence:.0%}", annotation_font_color="#ff6b6b",
+        fig3.add_vline(x=-var_h*100, line_color="#c0392b", line_dash="dash", line_width=1.5,
+                       annotation_text=f"VaR {confidence:.0%}", annotation_font_color="#c0392b",
                        annotation_font_size=10)
-        fig3.add_vline(x=-cvar_h*100, line_color="#f0c27f", line_dash="dot", line_width=1.5,
-                       annotation_text="CVaR", annotation_font_color="#f0c27f",
+        fig3.add_vline(x=-cvar_h*100, line_color="#c9a84c", line_dash="dot", line_width=1.5,
+                       annotation_text="CVaR", annotation_font_color="#c9a84c",
                        annotation_font_size=10, annotation_position="bottom right")
         fig3.update_layout(**{**PLOT_LAYOUT,
             "height":340,"title":dict(text="Return Distribution (Max Sharpe Portfolio)",
-            font=dict(size=12,color="#e2e2f0")),
+            font=dict(size=12,color="#1a1a18")),
             "xaxis_title":"Daily Return (%)", "yaxis_title":"Frequency",
         })
         st.plotly_chart(fig3, use_container_width=True)
@@ -1202,12 +1196,12 @@ with tab2:
         fig4.add_trace(go.Scatter(
             x=drawdown.index, y=drawdown.values,
             fill="tozeroy",
-            fillcolor="rgba(255,107,107,0.15)",
-            line=dict(color="#ff6b6b", width=1.5),
+            fillcolor="rgba(192,57,43,0.15)",
+            line=dict(color="#c0392b", width=1.5),
             name="Drawdown",
         ))
         fig4.update_layout(**{**PLOT_LAYOUT,
-            "height":340,"title":dict(text="Drawdown Profile",font=dict(size=12,color="#e2e2f0")),
+            "height":340,"title":dict(text="Drawdown Profile",font=dict(size=12,color="#1a1a18")),
             "yaxis_title":"Drawdown (%)",
         })
         st.plotly_chart(fig4, use_container_width=True)
@@ -1218,7 +1212,7 @@ with tab2:
     fig5 = go.Figure(go.Heatmap(
         z=corr.values,
         x=corr.columns, y=corr.index,
-        colorscale=[[0,"#7c6af7"],[0.5,"#111118"],[1,"#00d4aa"]],
+        colorscale=[[0,"#b5873a"],[0.5,"#ffffff"],[1,"#2d6a4f"]],
         zmid=0, zmin=-1, zmax=1,
         text=np.round(corr.values, 2),
         texttemplate="%{text}",
@@ -1226,7 +1220,7 @@ with tab2:
         showscale=True,
     ))
     fig5.update_layout(**{**PLOT_LAYOUT,
-        "height":380,"title":dict(text="Asset Return Correlations",font=dict(size=12,color="#e2e2f0")),
+        "height":380,"title":dict(text="Asset Return Correlations",font=dict(size=12,color="#1a1a18")),
     })
     st.plotly_chart(fig5, use_container_width=True)
 
@@ -1254,7 +1248,7 @@ with tab2:
         g = int(180 * (1 - t))
         return f"rgba({r},{g},80,0.25)"
 
-    cell_colors = [["#111118"] * len(df_risk) for _ in range(6)]
+    cell_colors = [["#ffffff"] * len(df_risk) for _ in range(6)]
     cell_colors[5] = [_rc_color(v) for v in rc_vals]
 
     fig_tbl = go.Figure(go.Table(
@@ -1262,16 +1256,16 @@ with tab2:
         header=dict(
             values=["<b>Asset</b>","<b>Weight %</b>","<b>Ann. Return %</b>",
                     "<b>Ann. Vol %</b>","<b>Sharpe</b>","<b>Risk Contrib %</b>"],
-            fill_color="#0d0d14",
-            line_color="#2a2a3e",
-            font=dict(family="IBM Plex Mono", size=11, color="#00d4aa"),
+            fill_color="#f0ece4",
+            line_color="#c8bfb2",
+            font=dict(family="IBM Plex Mono", size=11, color="#2d6a4f"),
             align="center", height=32,
         ),
         cells=dict(
             values=[df_risk[c].tolist() for c in df_risk.columns],
             fill_color=cell_colors,
-            line_color="#1e1e2e",
-            font=dict(family="IBM Plex Mono", size=11, color="#e2e2f0"),
+            line_color="#e0d9ce",
+            font=dict(family="IBM Plex Mono", size=11, color="#1a1a18"),
             align="center", height=28,
         )
     ))
@@ -1314,33 +1308,33 @@ with tab3:
                          vertical_spacing=0.06)
 
     fig6.add_trace(go.Scatter(x=cum_port.index,  y=cum_port.values,
-        name="Max Sharpe Portfolio", line=dict(color="#00d4aa", width=2)), row=1, col=1)
+        name="Max Sharpe Portfolio", line=dict(color="#2d6a4f", width=2)), row=1, col=1)
     fig6.add_trace(go.Scatter(x=cum_bench.index, y=cum_bench.values,
-        name="SPY", line=dict(color="#6b6b8a", width=1.5, dash="dash")), row=1, col=1)
+        name="SPY", line=dict(color="#8a8072", width=1.5, dash="dash")), row=1, col=1)
 
     fig6.add_trace(go.Scatter(x=roll_beta.index, y=roll_beta["beta"],
-        name="Beta", line=dict(color="#7c6af7", width=1.8),
-        fill="tozeroy", fillcolor="rgba(124,106,247,0.1)"), row=2, col=1)
-    fig6.add_hline(y=1.0, line_color="#6b6b8a", line_dash="dot", line_width=1, row=2, col=1)
+        name="Beta", line=dict(color="#b5873a", width=1.8),
+        fill="tozeroy", fillcolor="rgba(181,135,58,0.1)"), row=2, col=1)
+    fig6.add_hline(y=1.0, line_color="#8a8072", line_dash="dot", line_width=1, row=2, col=1)
 
     fig6.add_trace(go.Scatter(x=roll_sharpe.index, y=roll_sharpe.values,
-        name="Sharpe", line=dict(color="#f0c27f", width=1.8),
-        fill="tozeroy", fillcolor="rgba(240,194,127,0.1)"), row=3, col=1)
-    fig6.add_hline(y=0, line_color="#6b6b8a", line_dash="dot", line_width=1, row=3, col=1)
+        name="Sharpe", line=dict(color="#c9a84c", width=1.8),
+        fill="tozeroy", fillcolor="rgba(201,168,76,0.1)"), row=3, col=1)
+    fig6.add_hline(y=0, line_color="#8a8072", line_dash="dot", line_width=1, row=3, col=1)
 
     fig6.add_trace(go.Scatter(x=roll_vol.index, y=roll_vol.values,
-        name="Volatility (%)", line=dict(color="#ff6b6b", width=1.8),
-        fill="tozeroy", fillcolor="rgba(255,107,107,0.1)"), row=4, col=1)
+        name="Volatility (%)", line=dict(color="#c0392b", width=1.8),
+        fill="tozeroy", fillcolor="rgba(192,57,43,0.1)"), row=4, col=1)
 
     fig6.update_layout(**{**PLOT_LAYOUT,
         "height": 900,
         "showlegend": True,
         "title": dict(text="Rolling Factor Analytics · Max Sharpe Portfolio vs SPY",
-                      font=dict(size=13, color="#e2e2f0")),
+                      font=dict(size=13, color="#1a1a18")),
     })
     for i in range(1, 5):
-        fig6.update_xaxes(gridcolor="#1e1e2e", row=i, col=1)
-        fig6.update_yaxes(gridcolor="#1e1e2e", row=i, col=1)
+        fig6.update_xaxes(gridcolor="#e0d9ce", row=i, col=1)
+        fig6.update_yaxes(gridcolor="#e0d9ce", row=i, col=1)
 
     st.plotly_chart(fig6, use_container_width=True)
 
@@ -1452,15 +1446,15 @@ with tab4:
         if v > 0.01:
             t = min(v / 40, 1.0)
             return f"rgba(0,{int(180*t+40)},{int(120*t+50)},0.25)"
-        return "#0d0d14"
+        return "#f0ece4"
 
     user_col = f"{_preset_lbl} (%)"
     alloc_colors = [
-        ["#111118"] * len(df_alloc),
+        ["#ffffff"] * len(df_alloc),
         [_wt_color(v) for v in df_alloc[user_col]],
         [_wt_color(v) for v in df_alloc["Optimal Risky (%)"]],
         [_wt_color(v) for v in df_alloc["Min Variance (%)"]],
-        ["#111118"] * len(df_alloc),
+        ["#ffffff"] * len(df_alloc),
     ]
     fig_alloc = go.Figure(go.Table(
         columnwidth=[60, 100, 100, 90, 100],
@@ -1472,18 +1466,18 @@ with tab4:
                 "<b>Min Variance</b>",
                 "<b>Equal Weight</b>",
             ],
-            fill_color="#0d0d14",
-            line_color="#2a2a3e",
+            fill_color="#f0ece4",
+            line_color="#c8bfb2",
             font=dict(family="IBM Plex Mono", size=11, color=[
-                "#6b6b8a", _preset_col, "#00d4aa", "#7c6af7", "#f0c27f"
+                "#8a8072", _preset_col, "#2d6a4f", "#b5873a", "#c9a84c"
             ]),
             align="center", height=32,
         ),
         cells=dict(
             values=[df_alloc[c].tolist() for c in df_alloc.columns],
             fill_color=alloc_colors,
-            line_color="#1e1e2e",
-            font=dict(family="IBM Plex Mono", size=11, color="#e2e2f0"),
+            line_color="#e0d9ce",
+            font=dict(family="IBM Plex Mono", size=11, color="#1a1a18"),
             align="center", height=28,
         )
     ))
@@ -1493,10 +1487,10 @@ with tab4:
     # Methodology note
     st.markdown('<div class="section-header">Methodology Notes</div>', unsafe_allow_html=True)
     st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;line-height:1.8;color:#6b6b8a;
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;line-height:1.8;color:#8a8072;
             background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1.25rem;">
 
-<span style="color:#00d4aa;">OPTIMIZATION</span>  
+<span style="color:#2d6a4f;">OPTIMIZATION</span>  
 Mean-variance optimization via SLSQP (Markowitz, 1952). Expected returns estimated from historical 
 sample mean; covariance from historical sample covariance. Annualized assuming 252 trading days.
 Box constraints enforce 0 ≤ wᵢ ≤ max_weight with full-investment constraint Σwᵢ = 1.
@@ -1505,20 +1499,20 @@ retained and re-normalized. This is mathematically equivalent to a thresholded t
 and is standard practice for small universes.
 
 <br><br>
-<span style="color:#7c6af7;">RISK METRICS</span>  
+<span style="color:#b5873a;">RISK METRICS</span>  
 VaR and CVaR computed via historical simulation — no distributional assumption imposed.  
 Sortino uses downside deviation (returns below Rf) as denominator.  
 Beta estimated via 60-day rolling OLS covariance ratio against SPY.
 Omega ratio = E[gains above Rf] / E[losses below Rf].
 
 <br><br>
-<span style="color:#f0c27f;">DATA</span>  
+<span style="color:#c9a84c;">DATA</span>  
 Source: Yahoo Finance via yfinance. Adjusted close prices (splits + dividends).  
 Lookback options: 1Y through Max (full history). Cached 1 hour per session.  
 Benchmark: SPY (SPDR S&P 500 ETF Trust).
 
 <br><br>
-<span style="color:#ff6b6b;">LIMITATIONS</span>  
+<span style="color:#c0392b;">LIMITATIONS</span>  
 Sample covariance is a noisy estimator — longer lookbacks reduce variance but may include 
 structural breaks. Ledoit-Wolf shrinkage not applied (future work).  
 Cardinality constraint via thresholding is a heuristic; true cardinality-constrained MVO is NP-hard.  
