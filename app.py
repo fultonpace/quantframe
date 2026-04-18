@@ -556,13 +556,13 @@ with st.sidebar:
 </div>""", unsafe_allow_html=True)
 
     wt_opt = st.session_state.optimize_weights
-    # Status + slider always rendered, only disabled state changes — zero layout shift
     st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
-            padding:0.3rem 0.6rem;background:#f7f5f0;border:1px solid #d6cfc4;
-            border-radius:3px;margin-bottom:0.25rem;min-height:1.55rem;
-            color:{'#b0a898' if wt_opt else 'transparent'};">
-  ◆ Unconstrained — optimizer controls allocation
+            padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-bottom:0.25rem;
+            background:{'#f0ece4' if wt_opt else 'transparent'};
+            border:1px solid {'#d6cfc4' if wt_opt else 'transparent'};
+            color:{'#8a8072' if wt_opt else 'transparent'};">
+  {'◆ Unconstrained — optimizer controls allocation' if wt_opt else '◆'}
 </div>""", unsafe_allow_html=True)
     slider_wt = st.slider("Max Single Asset Weight", 0.10, 1.0,
                           value=1.0 if wt_opt else 0.40,
@@ -722,17 +722,17 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
 
     if slider_disabled:
         st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#b0a898;
-            padding:0.3rem 0.6rem;background:#f7f5f0;border:1px solid #d6cfc4;
-            border-radius:3px;margin-top:0.25rem;">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
+            padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-top:0.25rem;
+            background:#f0ece4;border:1px solid #d6cfc4;color:#8a8072;">
   ◆ λ not applicable for this portfolio
 </div>""", unsafe_allow_html=True)
     else:
-        st.markdown("""
+        st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
-            padding:0.3rem 0.6rem;background:#f7f5f0;border:1px solid transparent;
-            border-radius:3px;margin-top:0.25rem;">
-  &nbsp;
+            padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-top:0.25rem;
+            background:#f0ece4;border:1px solid #d6cfc4;color:#8a8072;">
+  Higher λ → less risk, closer to Min Variance &nbsp;·&nbsp; Lower λ → more risk, closer to Optimal Risky
 </div>""", unsafe_allow_html=True)
 
     # Store slider value
