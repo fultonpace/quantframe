@@ -490,8 +490,31 @@ with st.sidebar:
     if "app_mode_radio" not in st.session_state:
         st.session_state.app_mode_radio = "analyze"
 
-    # ── Mode switcher — tape-machine press style ──────────────────────────────
+    # ── Mode switcher ─────────────────────────────────────────────────────────
     _cur_mode = st.session_state.get("app_mode_radio", "analyze")
+
+    st.markdown(f"""
+<style>
+[data-testid="stSidebar"] [data-testid="stButton"]:has(button[key="btn_mode_analyze"]) button,
+[data-testid="stSidebar"] [data-testid="stButton"]:has(button[key="btn_mode_discover"]) button {{
+    width:100%; border-radius:3px; font-family:'IBM Plex Mono',monospace;
+    font-size:0.68rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
+    padding:0.5rem 0; transition:none;
+}}
+[data-testid="stSidebar"] [data-testid="stButton"]:has(button[key="btn_mode_analyze"]) button {{
+    background:{'#2d6a4f' if _cur_mode == 'analyze' else '#f7f5f0'} !important;
+    color:{'#f7f5f0' if _cur_mode == 'analyze' else '#8a8072'} !important;
+    border:1px solid {'#1e5a3f' if _cur_mode == 'analyze' else '#c8bfb2'} !important;
+    box-shadow:{'inset 0 3px 5px rgba(0,0,0,0.4)' if _cur_mode == 'analyze' else '0 3px 0 #b0a898'} !important;
+}}
+[data-testid="stSidebar"] [data-testid="stButton"]:has(button[key="btn_mode_discover"]) button {{
+    background:{'#2d6a4f' if _cur_mode == 'discover' else '#f7f5f0'} !important;
+    color:{'#f7f5f0' if _cur_mode == 'discover' else '#8a8072'} !important;
+    border:1px solid {'#1e5a3f' if _cur_mode == 'discover' else '#c8bfb2'} !important;
+    box-shadow:{'inset 0 3px 5px rgba(0,0,0,0.4)' if _cur_mode == 'discover' else '0 3px 0 #b0a898'} !important;
+}}
+</style>""", unsafe_allow_html=True)
+
     col_m1, col_m2 = st.columns([1, 1])
     with col_m1:
         if st.button("ANALYZE", key="btn_mode_analyze"):
@@ -503,23 +526,6 @@ with st.sidebar:
             st.rerun()
 
     _cur_mode = st.session_state.get("app_mode_radio", "analyze")
-    _a_active = _cur_mode == "analyze"
-    _d_active = _cur_mode == "discover"
-
-    _pressed  = "background:#2d6a4f;color:#f7f5f0;border:1px solid #1e5a3f;box-shadow:inset 0 3px 5px rgba(0,0,0,0.4);"
-    _raised   = "background:#f7f5f0;color:#8a8072;border:1px solid #c8bfb2;box-shadow:0 3px 0 #b0a898;"
-    _base     = "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;width:100%;padding:0.5rem 0;border-radius:3px;text-align:center;"
-
-    st.markdown(f"""
-<style>
-div[data-testid="stButton"] button[kind="secondary"][data-testid="baseButton-secondary"]:has(+ [data-testid="stButton"]) {{display:none !important;}}
-[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] div[data-testid="stColumn"]:nth-child(1) button {{display:none !important;}}
-[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] div[data-testid="stColumn"]:nth-child(2) button {{display:none !important;}}
-</style>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
-  <div style="{_base}{_pressed if _a_active else _raised}">ANALYZE</div>
-  <div style="{_base}{_pressed if _d_active else _raised}">DISCOVER</div>
-</div>""", unsafe_allow_html=True)
 
     app_mode = "  🔍  Discovery  " if _cur_mode == "discover" else "  ⬡  Lab  "
     st.session_state.app_mode  = app_mode
