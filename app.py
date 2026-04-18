@@ -1270,8 +1270,10 @@ if "Discovery" in app_mode:
 if not run_btn:
     _n_assets       = len(tickers)
     _wt_pct         = int(max_weight * 100)
+    _min_wt_pct     = int(min_weight * 100)
     _rf_pct         = f"{rf*100:.2f}"
     _conf_pct       = int(confidence * 100)
+    _effective_n    = min(max_assets, _n_assets)
     if effective_lambda is not None:
         _lam_display = f"λ = {effective_lambda:.1f}"
     elif lambda_source == "minvar":
@@ -1290,16 +1292,16 @@ if not run_btn:
         'SLSQP will maximize <b style="color:#2d6a4f;">( w&#7488;&#956; &#8722; r&#402; ) / &#8730;(w&#7488;&#931;w)</b> '
         f'over your <b style="color:#1a1a18;">{_n_assets}-asset universe</b>, '
         f'subject to &#8721;w&#7522; = 1, '
-        f'<b style="color:#1a1a18;">{int(min_weight*100)}%</b> &#8804; w&#7522; &#8804; <b style="color:#1a1a18;">{_wt_pct}%</b>, '
-        f'and at most <b style="color:#1a1a18;">N = {max_assets}</b> holdings. '
+        f'<b style="color:#1a1a18;">{_min_wt_pct}%</b> &#8804; w&#7522; &#8804; <b style="color:#1a1a18;">{_wt_pct}%</b>, '
+        f'and at most <b style="color:#1a1a18;">N = {_effective_n}</b> holdings. '
         'Three portfolios are computed — Max Sharpe, Min Variance, Equal Weight — '
         f'with <b style="color:{_preset_color};">{_preset_display} ({_lam_display})</b> as your primary selection across all tabs.'
         '</div>'
         '<div style="display:flex;gap:2rem;padding-top:1rem;border-top:1px solid #e0d9ce;flex-wrap:wrap;">'
         f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Assets</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_n_assets}</div></div>'
-        f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Min weight</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{int(min_weight*100)}%</div></div>'
+        f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Min weight</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_min_wt_pct}%</div></div>'
         f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Max weight</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_wt_pct}%</div></div>'
-        f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Max holdings</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{max_assets}</div></div>'
+        f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Max holdings</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_effective_n}</div></div>'
         f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Risk-free rate</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_rf_pct}%</div></div>'
         f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">VaR conf.</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_conf_pct}%</div></div>'
         '</div></div></div>'
