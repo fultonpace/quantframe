@@ -782,6 +782,11 @@ with col_title:
   Created by <span style="color:#2d6a4f;font-weight:500;">Fulton Pace</span>
   <span style="color:#d6cfc4;margin:0 0.5rem;">·</span>
   Market data via <span style="color:#b5873a;font-weight:500;">Yahoo Finance</span>
+  <span style="color:#d6cfc4;margin:0 0.5rem;">·</span>
+  <a href="https://github.com/fultonpace/quantframe" target="_blank"
+     style="color:#4a7c9e;text-decoration:none;font-weight:500;">
+    Open source code ↗
+  </a>
 </div>
 """, unsafe_allow_html=True)
 with col_badge:
@@ -875,7 +880,7 @@ if "Discovery" in app_mode:
     with col_d2:
         disc_port_size = st.slider("Portfolio Size (N stocks)", 5, 20, 10, 1)
     with col_d3:
-        disc_iterations = st.slider("Iterations", 10, 500, 50, 10)
+        disc_iterations = st.slider("Iterations", 10, 5000, 50, 10)
     with col_d4:
         disc_start = st.selectbox("Lookback Start", ["2018-01-01","2019-01-01","2020-01-01","2021-01-01"], index=0)
 
@@ -883,25 +888,56 @@ if "Discovery" in app_mode:
     SECS_PER_ITER = 2.5
     est_secs  = disc_iterations * SECS_PER_ITER
     est_mins  = est_secs / 60
+    est_hrs   = est_mins / 60
+
     if est_secs < 60:
         est_str = f"~{int(est_secs)} seconds"
         est_col = "#2d6a4f"
-    elif est_mins < 5:
+        est_msg = "Quick run ☑"
+    elif est_mins < 3:
         est_str = f"~{est_mins:.1f} minutes"
+        est_col = "#2d6a4f"
+        est_msg = "Grab a sip of water 💧"
+    elif est_mins < 7:
+        est_str = f"~{est_mins:.0f} minutes"
         est_col = "#b5873a"
-    elif est_mins < 15:
+        est_msg = "Go get a coffee ☕"
+    elif est_mins < 12:
+        est_str = f"~{est_mins:.0f} minutes"
+        est_col = "#b5873a"
+        est_msg = "Take a walk outside 🚶"
+    elif est_mins < 20:
         est_str = f"~{est_mins:.0f} minutes"
         est_col = "#c0392b"
-    else:
-        est_str = f"~{est_mins:.0f} minutes — go get coffee ☕"
+        est_msg = "Call your mom 📞"
+    elif est_mins < 35:
+        est_str = f"~{est_mins:.0f} minutes"
         est_col = "#c0392b"
+        est_msg = "Watch an episode of something 📺"
+    elif est_mins < 60:
+        est_str = f"~{est_mins:.0f} minutes"
+        est_col = "#c0392b"
+        est_msg = "Hit the gym 🏋️ — seriously"
+    elif est_hrs < 2:
+        est_str = f"~{est_hrs:.1f} hours"
+        est_col = "#c0392b"
+        est_msg = "Take a nap. A real one. 😴"
+    elif est_hrs < 3:
+        est_str = f"~{est_hrs:.1f} hours"
+        est_col = "#c0392b"
+        est_msg = "Watch a full movie 🎬"
+    else:
+        est_str = f"~{est_hrs:.1f} hours"
+        est_col = "#c0392b"
+        est_msg = "Read War and Peace 📖"
 
     universe_size = len(SECTORS[disc_sector]) if SECTORS[disc_sector] else 490
     st.markdown(f"""
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1rem 0;">
   <div class="metric-card">
     <div class="metric-label">Estimated Runtime</div>
-    <div class="metric-value" style="font-size:1.2rem;color:{est_col};">{est_str}</div>
+    <div class="metric-value" style="font-size:1.1rem;color:{est_col};">{est_str}</div>
+    <div class="metric-sub" style="color:{est_col};margin-top:0.3rem;">{est_msg}</div>
   </div>
   <div class="metric-card">
     <div class="metric-label">Universe Size</div>
@@ -920,6 +956,42 @@ if "Discovery" in app_mode:
 """, unsafe_allow_html=True)
 
     run_discovery = st.button("🔍  Run Discovery", key="btn_discovery")
+
+    # ── Sector Legend — always visible ────────────────────────────────────────
+    with st.expander("📋  Sector Universe Reference", expanded=False):
+        st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;
+            margin-bottom:1rem;">
+  Tickers in each sector filter. Selecting a sector dramatically reduces runtime
+  by narrowing the search universe from ~490 to ~20–30 stocks.
+</div>""", unsafe_allow_html=True)
+        SECTOR_COLORS = {
+            "Technology":       "#4a7c9e",
+            "Healthcare":       "#2d6a4f",
+            "Financials":       "#6b3fa0",
+            "Energy":           "#c0392b",
+            "Consumer Staples": "#b5873a",
+            "Industrials":      "#5a7a6a",
+            "Consumer Discret": "#c9a84c",
+        }
+        leg_cols = st.columns(2)
+        sector_items_top = [(k, v) for k, v in SECTORS.items() if v is not None]
+        for i, (sname, tlist) in enumerate(sector_items_top):
+            col = leg_cols[i % 2]
+            scolor = SECTOR_COLORS.get(sname, "#8a8072")
+            with col:
+                st.markdown(f"""
+<div style="background:#ffffff;border:1px solid #e0d9ce;border-left:3px solid {scolor};
+            border-radius:0 4px 4px 0;padding:0.75rem 1rem;margin-bottom:0.75rem;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;font-weight:600;
+              color:{scolor};letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem;">
+    {sname} · {len(tlist)} tickers
+  </div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:#8a8072;
+              line-height:1.8;word-break:break-word;">
+    {"  ·  ".join(tlist)}
+  </div>
+</div>""", unsafe_allow_html=True)
 
     if not run_discovery:
         st.markdown("""
