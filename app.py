@@ -490,47 +490,32 @@ with st.sidebar:
     if "app_mode_radio" not in st.session_state:
         st.session_state.app_mode_radio = "  ⬡  Portfolio Lab  "
 
-    # ── Mode switcher in sidebar ──────────────────────────────────────────────
-    st.markdown("""
-<style>
-div[data-testid="stRadio"] > div {
-    display: flex !important; flex-direction: row !important; gap: 0 !important;
-}
-div[data-testid="stRadio"] label {
-    font-family: 'IBM Plex Mono', monospace !important;
-    font-size: 0.62rem !important;
-    letter-spacing: 0.08em !important;
-    text-transform: uppercase !important;
-    padding: 0.4rem 0.75rem !important;
-    border: 1px solid #e0d9ce !important;
-    border-right: none !important;
-    cursor: pointer !important;
-    color: #8a8072 !important;
-    background: #ffffff !important;
-    transition: all 0.15s !important;
-    margin: 0 !important;
-    flex: 1 !important;
-    text-align: center !important;
-}
-div[data-testid="stRadio"] label:first-of-type { border-radius: 3px 0 0 3px !important; }
-div[data-testid="stRadio"] label:last-of-type  { border-right: 1px solid #e0d9ce !important; border-radius: 0 3px 3px 0 !important; }
-div[data-testid="stRadio"] label[data-selected="true"],
-div[data-testid="stRadio"] label:has(input:checked) {
-    background: #2d6a4f !important; color: #ffffff !important; border-color: #2d6a4f !important;
-}
-div[data-testid="stRadio"] input { display: none !important; }
-div[data-testid="stRadio"] > label { display: none !important; }
-</style>
-""", unsafe_allow_html=True)
+    # ── Mode switcher — ANALYZE / DISCOVER buttons ───────────────────────────
+    if "app_mode_radio" not in st.session_state:
+        st.session_state.app_mode_radio = "analyze"
 
-    app_mode = st.radio("Mode", ["  ⬡  Lab  ", "  🔍  Discovery  "],
-                        horizontal=True, label_visibility="collapsed",
-                        key="app_mode_radio")
+    _cur_mode = st.session_state.get("app_mode_radio", "analyze")
+    col_m1, col_m2 = st.columns([1, 1])
+    with col_m1:
+        if st.button("ANALYZE", key="btn_mode_analyze"):
+            st.session_state.app_mode_radio = "analyze"
+    with col_m2:
+        if st.button("DISCOVER", key="btn_mode_discover"):
+            st.session_state.app_mode_radio = "discover"
+
+    _cur_mode = st.session_state.get("app_mode_radio", "analyze")
+    st.markdown(f"""
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.4rem;margin-bottom:0.25rem;">
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if _cur_mode == 'analyze' else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if _cur_mode == 'analyze' else 'none'};transition:all 0.2s;"></div></div>
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if _cur_mode == 'discover' else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if _cur_mode == 'discover' else 'none'};transition:all 0.2s;"></div></div>
+</div>""", unsafe_allow_html=True)
+
+    app_mode = "  🔍  Discovery  " if _cur_mode == "discover" else "  ⬡  Lab  "
     st.session_state.app_mode  = app_mode
     st.session_state._app_mode = app_mode
 
     _sidebar_mode    = app_mode
-    _is_disc_sidebar = "Discovery" in _sidebar_mode
+    _is_disc_sidebar = _cur_mode == "discover"
 
     st.markdown("---")
 
@@ -838,14 +823,15 @@ st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
 # ── Mode badge + run button ───────────────────────────────────────────────────
 if "app_mode_radio" not in st.session_state:
-    st.session_state.app_mode_radio = "  ⬡  Lab  "
+    st.session_state.app_mode_radio = "analyze"
 
-app_mode = st.session_state.get("app_mode_radio", "  ⬡  Lab  ")
+_cur_mode     = st.session_state.get("app_mode_radio", "analyze")
+app_mode      = "  🔍  Discovery  " if _cur_mode == "discover" else "  ⬡  Lab  "
 st.session_state.app_mode  = app_mode
 st.session_state._app_mode = app_mode
 
-_is_discovery = "Discovery" in app_mode
-_mode_label   = "🔍  Discovery Mode" if _is_discovery else "⬡  Portfolio Lab"
+_is_discovery = _cur_mode == "discover"
+_mode_label   = "🔍  Discover" if _is_discovery else "⬡  Analyze"
 _mode_color   = "#4a7c9e" if _is_discovery else "#2d6a4f"
 
 _col_badge, _col_run = st.columns([6, 1])
@@ -869,7 +855,7 @@ st.markdown('<hr class="divider" style="margin-top:0.5rem;">', unsafe_allow_html
 # ══════════════════════════════════════════════════════════════════════════════
 # DISCOVERY MODE
 # ══════════════════════════════════════════════════════════════════════════════
-if "Discovery" in app_mode:
+if _cur_mode == "discover":
     st.session_state.run_optimization = False
 
     SECTORS = {
