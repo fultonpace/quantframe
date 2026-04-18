@@ -487,7 +487,49 @@ with st.sidebar:
     if "app_mode" not in st.session_state:
         st.session_state.app_mode = "Portfolio Lab"
 
-    _sidebar_mode = st.session_state.get("app_mode_radio", "  ⬡  Portfolio Lab  ")
+    if "app_mode_radio" not in st.session_state:
+        st.session_state.app_mode_radio = "  ⬡  Portfolio Lab  "
+
+    # ── Mode switcher in sidebar ──────────────────────────────────────────────
+    st.markdown("""
+<style>
+div[data-testid="stRadio"] > div {
+    display: flex !important; flex-direction: row !important; gap: 0 !important;
+}
+div[data-testid="stRadio"] label {
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 0.62rem !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    padding: 0.4rem 0.75rem !important;
+    border: 1px solid #e0d9ce !important;
+    border-right: none !important;
+    cursor: pointer !important;
+    color: #8a8072 !important;
+    background: #ffffff !important;
+    transition: all 0.15s !important;
+    margin: 0 !important;
+    flex: 1 !important;
+    text-align: center !important;
+}
+div[data-testid="stRadio"] label:first-of-type { border-radius: 3px 0 0 3px !important; }
+div[data-testid="stRadio"] label:last-of-type  { border-right: 1px solid #e0d9ce !important; border-radius: 0 3px 3px 0 !important; }
+div[data-testid="stRadio"] label[data-selected="true"],
+div[data-testid="stRadio"] label:has(input:checked) {
+    background: #2d6a4f !important; color: #ffffff !important; border-color: #2d6a4f !important;
+}
+div[data-testid="stRadio"] input { display: none !important; }
+div[data-testid="stRadio"] > label { display: none !important; }
+</style>
+""", unsafe_allow_html=True)
+
+    app_mode = st.radio("Mode", ["  ⬡  Lab  ", "  🔍  Discovery  "],
+                        horizontal=True, label_visibility="collapsed",
+                        key="app_mode_radio")
+    st.session_state.app_mode  = app_mode
+    st.session_state._app_mode = app_mode
+
+    _sidebar_mode    = app_mode
     _is_disc_sidebar = "Discovery" in _sidebar_mode
 
     st.markdown("---")
@@ -794,51 +836,27 @@ with col_badge:
 
 st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
-# ── Top-level mode switcher ───────────────────────────────────────────────────
-st.markdown("""
-<style>
-div[data-testid="stRadio"] > div {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 0 !important;
-}
-div[data-testid="stRadio"] label {
-    font-family: 'IBM Plex Mono', monospace !important;
-    font-size: 0.72rem !important;
-    letter-spacing: 0.1em !important;
-    text-transform: uppercase !important;
-    padding: 0.5rem 1.5rem !important;
-    border: 1px solid #e0d9ce !important;
-    border-right: none !important;
-    cursor: pointer !important;
-    color: #8a8072 !important;
-    background: #ffffff !important;
-    transition: all 0.15s !important;
-    margin: 0 !important;
-}
-div[data-testid="stRadio"] label:first-of-type { border-radius: 3px 0 0 3px !important; }
-div[data-testid="stRadio"] label:last-of-type  { border-right: 1px solid #e0d9ce !important; border-radius: 0 3px 3px 0 !important; }
-div[data-testid="stRadio"] label[data-selected="true"],
-div[data-testid="stRadio"] label:has(input:checked) {
-    background: #2d6a4f !important;
-    color: #ffffff !important;
-    border-color: #2d6a4f !important;
-}
-div[data-testid="stRadio"] input { display: none !important; }
-div[data-testid="stRadio"] > label { display: none !important; }
-</style>
-""", unsafe_allow_html=True)
-
+# ── Mode badge + run button ───────────────────────────────────────────────────
 if "app_mode_radio" not in st.session_state:
-    st.session_state.app_mode_radio = "  ⬡  Portfolio Lab  "
+    st.session_state.app_mode_radio = "  ⬡  Lab  "
 
-_col_mode, _col_run = st.columns([6, 1])
-with _col_mode:
-    app_mode = st.radio("Mode", ["  ⬡  Portfolio Lab  ", "  🔍  Discovery Mode  "],
-                        horizontal=True, label_visibility="collapsed",
-                        key="app_mode_radio")
+app_mode = st.session_state.get("app_mode_radio", "  ⬡  Lab  ")
+st.session_state.app_mode  = app_mode
+st.session_state._app_mode = app_mode
+
+_is_discovery = "Discovery" in app_mode
+_mode_label   = "🔍  Discovery Mode" if _is_discovery else "⬡  Portfolio Lab"
+_mode_color   = "#4a7c9e" if _is_discovery else "#2d6a4f"
+
+_col_badge, _col_run = st.columns([6, 1])
+with _col_badge:
+    st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;font-weight:600;
+            color:{_mode_color};letter-spacing:0.12em;text-transform:uppercase;
+            padding:0.45rem 0;border-bottom:2px solid {_mode_color};display:inline-block;">
+  {_mode_label}
+</div>""", unsafe_allow_html=True)
 with _col_run:
-    _is_discovery = "Discovery" in st.session_state.get("app_mode_radio", "")
     if _is_discovery:
         if st.button("🔍  Run", key="btn_disc_top"):
             st.session_state.run_discovery = True
@@ -846,10 +864,7 @@ with _col_run:
         if st.button("▶  Run", key="btn_run_top"):
             st.session_state.run_optimization = True
 
-st.session_state.app_mode  = app_mode
-st.session_state._app_mode = app_mode
-
-st.markdown('<hr class="divider" style="margin-top:0.75rem;">', unsafe_allow_html=True)
+st.markdown('<hr class="divider" style="margin-top:0.5rem;">', unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DISCOVERY MODE
