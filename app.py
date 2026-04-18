@@ -574,23 +574,21 @@ with st.sidebar:
         st.markdown("---")
         st.markdown("## Weight Constraint")
 
-        if "optimize_weights" not in st.session_state:
-            st.session_state.optimize_weights = False
-
-        col_w1, col_w2 = st.columns([1, 1])
-        with col_w1:
-            if st.button("OPTIMIZE", key="btn_wt_opt"):
-                st.session_state.optimize_weights = True
-        with col_w2:
-            if st.button("MANUAL", key="btn_wt_manual"):
-                st.session_state.optimize_weights = False
-
+        _wt_qp = st.query_params.get("wt", "manual")
+        if _wt_qp not in ("optimize", "manual"):
+            _wt_qp = "manual"
+        st.session_state.optimize_weights = (_wt_qp == "optimize")
         wt_opt = st.session_state.optimize_weights
+
+        _P = "display:inline-block;width:100%;text-align:center;padding:0.45rem 0;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;text-decoration:none;cursor:pointer;background:#2d6a4f;color:#f7f5f0;border:1px solid #1a5c3a;box-shadow:inset 0 3px 6px rgba(0,0,0,0.5),inset 0 1px 2px rgba(0,0,0,0.3);transform:translateY(2px);"
+        _R = "display:inline-block;width:100%;text-align:center;padding:0.45rem 0;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;text-decoration:none;cursor:pointer;background:#ffffff;color:#8a8072;border:1px solid #c8bfb2;box-shadow:0 4px 0 #a8a098,0 1px 3px rgba(0,0,0,0.1);transform:translateY(0);"
+
         st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.4rem;margin-bottom:0.5rem;">
-  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if wt_opt else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if wt_opt else 'none'};transition:all 0.2s;"></div></div>
-  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'transparent' if wt_opt else '#2d6a4f'};box-shadow:{'none' if wt_opt else '0 0 6px #2d6a4f'};transition:all 0.2s;"></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
+  <a href="?mode={_cur_mode}&wt=optimize&n={st.query_params.get('n','manual')}" target="_self" style="{_P if wt_opt else _R}">OPTIMIZE</a>
+  <a href="?mode={_cur_mode}&wt=manual&n={st.query_params.get('n','manual')}" target="_self" style="{_P if not wt_opt else _R}">MANUAL</a>
 </div>""", unsafe_allow_html=True)
+
         st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-bottom:0.25rem;background:{'#f0ece4' if wt_opt else 'transparent'};border:1px solid {'#d6cfc4' if wt_opt else 'transparent'};color:{'#8a8072' if wt_opt else 'transparent'};">
   {'◆ Unconstrained — optimizer controls allocation' if wt_opt else '◆'}
@@ -612,19 +610,16 @@ with st.sidebar:
             st.session_state.suggested_n    = 8
             st.session_state.max_assets_val = 8
 
-        col_n1, col_n2 = st.columns([1, 1])
-        with col_n1:
-            if st.button("OPTIMIZE", key="btn_optimize_n"):
-                st.session_state.optimize_n = True
-        with col_n2:
-            if st.button("MANUAL", key="btn_manual_n"):
-                st.session_state.optimize_n = False
-
+        _n_qp = st.query_params.get("n", "manual")
+        if _n_qp not in ("optimize", "manual"):
+            _n_qp = "manual"
+        st.session_state.optimize_n = (_n_qp == "optimize")
         n_opt = st.session_state.optimize_n
+
         st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.4rem;margin-bottom:0.5rem;">
-  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if n_opt else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if n_opt else 'none'};transition:all 0.2s;"></div></div>
-  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'transparent' if n_opt else '#2d6a4f'};box-shadow:{'none' if n_opt else '0 0 6px #2d6a4f'};transition:all 0.2s;"></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
+  <a href="?mode={_cur_mode}&wt={st.query_params.get('wt','manual')}&n=optimize" target="_self" style="{_P if n_opt else _R}">OPTIMIZE</a>
+  <a href="?mode={_cur_mode}&wt={st.query_params.get('wt','manual')}&n=manual" target="_self" style="{_P if not n_opt else _R}">MANUAL</a>
 </div>""", unsafe_allow_html=True)
         st.markdown("""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;line-height:1.55;margin:0.4rem 0 0.6rem 0;padding:0.5rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;">
