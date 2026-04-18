@@ -901,7 +901,6 @@ st.markdown('<hr class="divider" style="margin-top:0.75rem;">', unsafe_allow_htm
 if "Discovery" in app_mode:
     st.session_state.run_optimization = False  # reset so switching back shows idle Portfolio Lab
 
-    # ── Discovery controls — defined first so variables exist for the idle card ──
     SECTORS = {
         "All S&P 500 (~490 tickers)": None,
         "Technology":      ["AAPL","MSFT","NVDA","AVGO","META","GOOGL","AMZN","AMD","QCOM","AMAT","MU","INTC","KLAC","LRCX","ADI","MCHP","SNPS","CDNS","ORCL","IBM","CRM","ADBE","NOW","INTU","PANW","CRWD","FTNT","ANET","HPE","TXN"],
@@ -923,7 +922,10 @@ if "Discovery" in app_mode:
         "Consumer Discret": "#c9a84c",
     }
 
-    # ── Discovery controls — in main window ──────────────────────────────────
+    # ── Placeholder sits at the top — filled with idle card or cleared on run ──
+    _disc_top = st.empty()
+
+    # ── Discovery controls — must render to produce variable values ───────────
     st.markdown('<div class="section-header">Discovery Settings</div>', unsafe_allow_html=True)
     col_d1, col_d2, col_d3, col_d4 = st.columns(4)
     with col_d1:
@@ -989,7 +991,7 @@ if "Discovery" in app_mode:
       </div>
       <div class="metric-card">
     <div class="metric-label">Search Space</div>
-    <div class="metric-value" style="font-size:1.2rem;color:#8a8072;">≈10¹²</div>
+    <div class="metric-value" style="font-size:1.2rem;color:#8a8072;">&#8776;10&#185;&#178;</div>
     <div class="metric-sub">combinatorially vast</div>
       </div>
     </div>
@@ -1007,88 +1009,59 @@ if "Discovery" in app_mode:
         for i, (sname, tlist) in enumerate([(k, v) for k, v in SECTORS.items() if v is not None]):
             with leg_cols[i % 2]:
                 scolor = SECTOR_COLORS.get(sname, "#8a8072")
-                st.markdown(f"""
-    <div style="background:#ffffff;border:1px solid #e0d9ce;border-left:3px solid {scolor};
-            border-radius:0 4px 4px 0;padding:0.75rem 1rem;margin-bottom:0.75rem;">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;font-weight:600;
-              color:{scolor};letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem;">
-    {sname} · {len(tlist)} tickers
-      </div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:#8a8072;
-              line-height:1.8;word-break:break-word;">
-    {"  ·  ".join(tlist)}
-      </div>
-    </div>""", unsafe_allow_html=True)
+                st.markdown(
+                    '<div style="background:#ffffff;border:1px solid #e0d9ce;border-left:3px solid ' + scolor + ';'
+                    'border-radius:0 4px 4px 0;padding:0.75rem 1rem;margin-bottom:0.75rem;">'
+                    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;font-weight:600;'
+                    'color:' + scolor + ';letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem;">'
+                    + sname + ' &middot; ' + str(len(tlist)) + ' tickers</div>'
+                    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:#8a8072;'
+                    'line-height:1.8;word-break:break-word;">'
+                    + '  &middot;  '.join(tlist) +
+                    '</div></div>',
+                    unsafe_allow_html=True)
 
+    # ── Now fill the top placeholder with idle card, or run ───────────────────
     if not run_discovery:
         import math as _math
         _univ_size = len(SECTORS[disc_sector]) if SECTORS[disc_sector] else 490
         try:
             _n_combos = _math.comb(_univ_size, disc_port_size)
-            if _n_combos > 1e12:   _combo_str = f"≈ {_n_combos:.1e}"
-            elif _n_combos > 1e9:  _combo_str = f"≈ {_n_combos/1e9:.1f}B"
-            elif _n_combos > 1e6:  _combo_str = f"≈ {_n_combos/1e6:.1f}M"
+            if _n_combos > 1e12:   _combo_str = "&#8776; " + f"{_n_combos:.1e}"
+            elif _n_combos > 1e9:  _combo_str = "&#8776; " + f"{_n_combos/1e9:.1f}B"
+            elif _n_combos > 1e6:  _combo_str = "&#8776; " + f"{_n_combos/1e6:.1f}M"
             else:                  _combo_str = f"{_n_combos:,}"
             _cov_pct = disc_iterations / _n_combos * 100
             _cov_str = f"{_cov_pct:.4f}%" if _cov_pct < 0.01 else f"{_cov_pct:.2f}%"
         except Exception:
-            _combo_str = "vast"; _cov_str = "<0.01%"
+            _combo_str = "vast"; _cov_str = "&lt;0.01%"
 
-        # ── Warning + idle card — always at top of content ────────────────────
-        st.markdown(
-            f"""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#8a3030;
-            background:#fdf0ef;border:1px solid #e8c4c0;border-radius:4px;
-            padding:0.65rem 1rem;margin-bottom:1rem;">
-  ⚠&nbsp;&nbsp;<b>Warning:</b> larger runs can take 30+ minutes.
-  Check estimated run time before executing.
-</div>
-
-<div style="max-width:640px;margin:0 auto 2rem auto;font-family:'IBM Plex Mono',monospace;
-            background:#ffffff;border:1px solid #e0d9ce;border-radius:6px;
-            padding:2rem 2.25rem;">
-
-  <div style="font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;
-              color:#8a8072;margin-bottom:0.3rem;">Ready to search</div>
-  <div style="font-size:1rem;font-weight:600;color:#1a1a18;margin-bottom:1.25rem;">
-    Stochastic Portfolio Search</div>
-
-  <div style="font-size:0.72rem;color:#4a4a45;line-height:1.9;margin-bottom:1.5rem;">
-    Each iteration samples <b style="color:#1a1a18;">{disc_port_size} tickers</b> at random
-    from <b style="color:#1a1a18;">{_univ_size}</b> in the {disc_sector} universe,
-    fetches returns from <b style="color:#1a1a18;">{disc_start}</b>,
-    and solves <b style="color:#2d6a4f;">max (wᵀμ − rƒ) / √(wᵀΣw)</b> via SLSQP.
-    The highest-Sharpe combination across all
-    <b style="color:#1a1a18;">{disc_iterations:,} iterations</b> is returned.
-    This is a best-effort heuristic — optimality over the full
-    <b style="color:#c0392b;">{_combo_str}</b> combinations is not guaranteed.
-  </div>
-
-  <div style="display:flex;gap:2rem;padding-top:1rem;border-top:1px solid #e0d9ce;">
-    <div>
-      <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                  color:#8a8072;margin-bottom:0.2rem;">Search space</div>
-      <div style="font-size:0.85rem;font-weight:600;color:#c0392b;">{_combo_str}</div>
-    </div>
-    <div>
-      <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                  color:#8a8072;margin-bottom:0.2rem;">Coverage</div>
-      <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_cov_str}</div>
-    </div>
-    <div>
-      <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                  color:#8a8072;margin-bottom:0.2rem;">Iterations</div>
-      <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{disc_iterations:,}</div>
-    </div>
-    <div>
-      <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                  color:#8a8072;margin-bottom:0.2rem;">Universe</div>
-      <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_univ_size} tickers</div>
-    </div>
-  </div>
-
-</div>
-""", unsafe_allow_html=True)
+        _disc_top.markdown(
+            '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:#8a3030;'
+            'background:#fdf0ef;border:1px solid #e8c4c0;border-radius:4px;'
+            'padding:0.65rem 1rem;margin-bottom:1rem;">'
+            '&#9888;&nbsp;&nbsp;<b>Warning:</b> larger runs can take 30+ minutes. '
+            'Check estimated run time before executing.'
+            '</div>'
+            '<div style="max-width:640px;margin:0 auto 1.5rem auto;font-family:\'IBM Plex Mono\',monospace;'
+            'background:#ffffff;border:1px solid #e0d9ce;border-radius:6px;padding:2rem 2.25rem;">'
+            '<div style="font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:#8a8072;margin-bottom:0.3rem;">Ready to search</div>'
+            '<div style="font-size:1rem;font-weight:600;color:#1a1a18;margin-bottom:1.25rem;">Stochastic Portfolio Search</div>'
+            '<div style="font-size:0.72rem;color:#4a4a45;line-height:1.9;margin-bottom:1.5rem;">'
+            f'Each iteration samples <b style="color:#1a1a18;">{disc_port_size} tickers</b> at random '
+            f'from <b style="color:#1a1a18;">{_univ_size}</b> in the {disc_sector} universe, '
+            f'fetches returns from <b style="color:#1a1a18;">{disc_start}</b>, '
+            'and solves <b style="color:#2d6a4f;">max (w&#7488;&#956; &#8722; r&#402;) / &#8730;(w&#7488;&#931;w)</b> via SLSQP. '
+            f'The highest-Sharpe combination across all <b style="color:#1a1a18;">{disc_iterations:,} iterations</b> is returned. '
+            f'This is a best-effort heuristic &#8212; optimality over the full <b style="color:#c0392b;">{_combo_str}</b> combinations is not guaranteed.'
+            '</div>'
+            '<div style="display:flex;gap:2rem;padding-top:1rem;border-top:1px solid #e0d9ce;">'
+            f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Search space</div><div style="font-size:0.85rem;font-weight:600;color:#c0392b;">{_combo_str}</div></div>'
+            f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Coverage</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_cov_str}</div></div>'
+            f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Iterations</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{disc_iterations:,}</div></div>'
+            f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Universe</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_univ_size} tickers</div></div>'
+            '</div></div>',
+            unsafe_allow_html=True)
     else:
         # ── Run discovery ──────────────────────────────────────────────────────
         import random as _random
@@ -1293,64 +1266,37 @@ if not run_btn:
     _wt_pct         = int(max_weight * 100)
     _rf_pct         = f"{rf*100:.2f}"
     _conf_pct       = int(confidence * 100)
-    _lam_display    = f"λ = {effective_lambda:.1f}" if effective_lambda is not None else ("Min Variance" if lambda_source == "minvar" else "Max Sharpe")
+    if effective_lambda is not None:
+        _lam_display = f"λ = {effective_lambda:.1f}"
+    elif lambda_source == "minvar":
+        _lam_display = "Min Variance"
+    else:
+        _lam_display = "Max Sharpe"
     _preset_display = active_preset[0].split("—")[0].strip()
     _preset_color   = active_preset[3]
 
-    st.markdown(
-        f"""
-<div style="max-width:640px;margin:1.5rem auto 2rem auto;font-family:'IBM Plex Mono',monospace;">
-
-  <div style="background:#ffffff;border:1px solid #e0d9ce;border-radius:6px;
-              padding:2rem 2.25rem;">
-
-    <div style="font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;
-                color:#8a8072;margin-bottom:0.3rem;">Ready to optimize</div>
-    <div style="font-size:1rem;font-weight:600;color:#1a1a18;margin-bottom:1.25rem;">
-      Mean-Variance Optimization</div>
-
-    <div style="font-size:0.72rem;color:#4a4a45;line-height:1.9;margin-bottom:1.5rem;">
-      SLSQP will maximize <b style="color:#2d6a4f;">( wᵀμ − rƒ ) / √(wᵀΣw)</b>
-      over your <b style="color:#1a1a18;">{_n_assets}-asset universe</b>,
-      subject to Σwᵢ = 1, wᵢ ≤ <b style="color:#1a1a18;">{_wt_pct}%</b>,
-      and at most <b style="color:#1a1a18;">N = {max_assets}</b> holdings.
-      Three portfolios are computed — Max Sharpe, Min Variance, Equal Weight —
-      with <b style="color:{_preset_color};">{_preset_display} ({_lam_display})</b>
-      as your primary selection across all tabs.
-    </div>
-
-    <div style="display:flex;gap:2rem;padding-top:1rem;border-top:1px solid #e0d9ce;">
-      <div>
-        <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                    color:#8a8072;margin-bottom:0.2rem;">Assets</div>
-        <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_n_assets}</div>
-      </div>
-      <div>
-        <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                    color:#8a8072;margin-bottom:0.2rem;">Max weight</div>
-        <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_wt_pct}%</div>
-      </div>
-      <div>
-        <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                    color:#8a8072;margin-bottom:0.2rem;">Max holdings</div>
-        <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{max_assets}</div>
-      </div>
-      <div>
-        <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                    color:#8a8072;margin-bottom:0.2rem;">Risk-free rate</div>
-        <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_rf_pct}%</div>
-      </div>
-      <div>
-        <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;
-                    color:#8a8072;margin-bottom:0.2rem;">VaR conf.</div>
-        <div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_conf_pct}%</div>
-      </div>
-    </div>
-
-  </div>
-
-</div>
-""", unsafe_allow_html=True)
+    _html = (
+        '<div style="max-width:640px;margin:1.5rem auto 2rem auto;font-family:\'IBM Plex Mono\',monospace;">'
+        '<div style="background:#ffffff;border:1px solid #e0d9ce;border-radius:6px;padding:2rem 2.25rem;">'
+        '<div style="font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:#8a8072;margin-bottom:0.3rem;">Ready to optimize</div>'
+        '<div style="font-size:1rem;font-weight:600;color:#1a1a18;margin-bottom:1.25rem;">Mean-Variance Optimization</div>'
+        '<div style="font-size:0.72rem;color:#4a4a45;line-height:1.9;margin-bottom:1.5rem;">'
+        'SLSQP will maximize <b style="color:#2d6a4f;">( w&#7488;&#956; &#8722; r&#402; ) / &#8730;(w&#7488;&#931;w)</b> '
+        f'over your <b style="color:#1a1a18;">{_n_assets}-asset universe</b>, '
+        f'subject to &#8721;w&#7522; = 1, w&#7522; &#8804; <b style="color:#1a1a18;">{_wt_pct}%</b>, '
+        f'and at most <b style="color:#1a1a18;">N = {max_assets}</b> holdings. '
+        'Three portfolios are computed — Max Sharpe, Min Variance, Equal Weight — '
+        f'with <b style="color:{_preset_color};">{_preset_display} ({_lam_display})</b> as your primary selection across all tabs.'
+        '</div>'
+        '<div style="display:flex;gap:2rem;padding-top:1rem;border-top:1px solid #e0d9ce;">'
+        f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Assets</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_n_assets}</div></div>'
+        f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Max weight</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_wt_pct}%</div></div>'
+        f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Max holdings</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{max_assets}</div></div>'
+        f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Risk-free rate</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_rf_pct}%</div></div>'
+        f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">VaR conf.</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_conf_pct}%</div></div>'
+        '</div></div></div>'
+    )
+    st.markdown(_html, unsafe_allow_html=True)
     st.stop()
 
 # ── Data Fetch ────────────────────────────────────────────────────────────────
