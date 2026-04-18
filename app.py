@@ -487,55 +487,42 @@ with st.sidebar:
     if "app_mode" not in st.session_state:
         st.session_state.app_mode = "Portfolio Lab"
 
-    if "app_mode_radio" not in st.session_state:
-        st.session_state.app_mode_radio = "analyze"
+    # ── Mode switcher via query params — full visual pressed/raised ───────────
+    _qp = st.query_params.get("mode", "analyze")
+    if _qp not in ("analyze", "discover"):
+        _qp = "analyze"
+    st.session_state.app_mode_radio = _qp
+    _cur_mode = _qp
 
-    # ── Mode switcher ─────────────────────────────────────────────────────────
-    if "app_mode_radio" not in st.session_state:
-        st.session_state.app_mode_radio = "analyze"
+    _a = _cur_mode == "analyze"
+    _d = _cur_mode == "discover"
 
-    _cur_mode = st.session_state.app_mode_radio
-
-    _a_pressed = _cur_mode == "analyze"
-    _d_pressed = _cur_mode == "discover"
+    _pressed_style = (
+        "display:inline-block;width:100%;text-align:center;padding:0.5rem 0;"
+        "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;"
+        "letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;"
+        "text-decoration:none;cursor:pointer;"
+        "background:#2d6a4f;color:#f7f5f0;"
+        "border:1px solid #1a5c3a;"
+        "box-shadow:inset 0 3px 6px rgba(0,0,0,0.5),inset 0 1px 2px rgba(0,0,0,0.3);"
+        "transform:translateY(2px);"
+    )
+    _raised_style = (
+        "display:inline-block;width:100%;text-align:center;padding:0.5rem 0;"
+        "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;"
+        "letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;"
+        "text-decoration:none;cursor:pointer;"
+        "background:#ffffff;color:#8a8072;"
+        "border:1px solid #c8bfb2;"
+        "box-shadow:0 4px 0 #a8a098,0 1px 3px rgba(0,0,0,0.1);"
+        "transform:translateY(0);"
+    )
 
     st.markdown(f"""
-<style>
-[data-testid="stSidebar"] button[key="btn_mode_analyze"] {{
-    background: {'#2d6a4f' if _a_pressed else '#ffffff'} !important;
-    color: {'#ffffff' if _a_pressed else '#8a8072'} !important;
-    border: 1px solid {'#1e5a3f' if _a_pressed else '#c8bfb2'} !important;
-    box-shadow: {'inset 0 4px 8px rgba(0,0,0,0.45), inset 0 1px 3px rgba(0,0,0,0.3)' if _a_pressed else '0 4px 0 #9a9088, 0 1px 3px rgba(0,0,0,0.08)'} !important;
-    transform: {'translateY(2px)' if _a_pressed else 'translateY(0)'} !important;
-    font-family: 'IBM Plex Mono', monospace !important;
-    font-size: 0.68rem !important; font-weight: 600 !important;
-    letter-spacing: 0.1em !important; text-transform: uppercase !important;
-    width: 100% !important; border-radius: 3px !important;
-}}
-[data-testid="stSidebar"] button[key="btn_mode_discover"] {{
-    background: {'#2d6a4f' if _d_pressed else '#ffffff'} !important;
-    color: {'#ffffff' if _d_pressed else '#8a8072'} !important;
-    border: 1px solid {'#1e5a3f' if _d_pressed else '#c8bfb2'} !important;
-    box-shadow: {'inset 0 4px 8px rgba(0,0,0,0.45), inset 0 1px 3px rgba(0,0,0,0.3)' if _d_pressed else '0 4px 0 #9a9088, 0 1px 3px rgba(0,0,0,0.08)'} !important;
-    transform: {'translateY(2px)' if _d_pressed else 'translateY(0)'} !important;
-    font-family: 'IBM Plex Mono', monospace !important;
-    font-size: 0.68rem !important; font-weight: 600 !important;
-    letter-spacing: 0.1em !important; text-transform: uppercase !important;
-    width: 100% !important; border-radius: 3px !important;
-}}
-</style>""", unsafe_allow_html=True)
-
-    col_m1, col_m2 = st.columns([1, 1])
-    with col_m1:
-        if st.button("ANALYZE", key="btn_mode_analyze"):
-            st.session_state.app_mode_radio = "analyze"
-            st.rerun()
-    with col_m2:
-        if st.button("DISCOVER", key="btn_mode_discover"):
-            st.session_state.app_mode_radio = "discover"
-            st.rerun()
-
-    _cur_mode = st.session_state.app_mode_radio
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
+  <a href="?mode=analyze" target="_self" style="{''+_pressed_style if _a else ''+_raised_style}">ANALYZE</a>
+  <a href="?mode=discover" target="_self" style="{''+_pressed_style if _d else ''+_raised_style}">DISCOVER</a>
+</div>""", unsafe_allow_html=True)
 
     app_mode = "  🔍  Discovery  " if _cur_mode == "discover" else "  ⬡  Lab  "
     st.session_state.app_mode  = app_mode
@@ -852,7 +839,11 @@ st.markdown('<hr class="divider">', unsafe_allow_html=True)
 if "app_mode_radio" not in st.session_state:
     st.session_state.app_mode_radio = "analyze"
 
-_cur_mode     = st.session_state.get("app_mode_radio", "analyze")
+_cur_mode = st.query_params.get("mode", st.session_state.get("app_mode_radio", "analyze"))
+if _cur_mode not in ("analyze", "discover"):
+    _cur_mode = "analyze"
+st.session_state.app_mode_radio = _cur_mode
+
 app_mode      = "  🔍  Discovery  " if _cur_mode == "discover" else "  ⬡  Lab  "
 st.session_state.app_mode  = app_mode
 st.session_state._app_mode = app_mode
