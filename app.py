@@ -486,43 +486,58 @@ with st.sidebar:
 
     if "app_mode" not in st.session_state:
         st.session_state.app_mode = "Portfolio Lab"
+    if "app_mode_radio" not in st.session_state:
+        st.session_state.app_mode_radio = "analyze"
+    if "optimize_weights" not in st.session_state:
+        st.session_state.optimize_weights = False
+    if "optimize_n" not in st.session_state:
+        st.session_state.optimize_n     = False
+        st.session_state.suggested_n    = 8
+        st.session_state.max_assets_val = 8
 
-    # ── Mode switcher via query params — full visual pressed/raised ───────────
-    _qp = st.query_params.get("mode", "analyze")
-    if _qp not in ("analyze", "discover"):
-        _qp = "analyze"
-    st.session_state.app_mode_radio = _qp
-    _cur_mode = _qp
+    # Shared styles for pressed/raised toggle
+    _P = ("display:block;width:100%;text-align:center;padding:0.45rem 0;"
+          "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;"
+          "letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;"
+          "background:#2d6a4f;color:#f7f5f0;border:1px solid #1a5c3a;"
+          "box-shadow:inset 0 3px 6px rgba(0,0,0,0.5),inset 0 1px 2px rgba(0,0,0,0.3);"
+          "transform:translateY(2px);pointer-events:none;")
+    _R = ("display:block;width:100%;text-align:center;padding:0.45rem 0;"
+          "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;"
+          "letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;"
+          "background:#ffffff;color:#8a8072;border:1px solid #c8bfb2;"
+          "box-shadow:0 4px 0 #a8a098,0 1px 3px rgba(0,0,0,0.1);"
+          "transform:translateY(0);pointer-events:none;")
 
-    _a = _cur_mode == "analyze"
-    _d = _cur_mode == "discover"
+    # Hide all sidebar st.button native rendering, show only our HTML overlay
+    st.markdown("""
+<style>
+[data-testid="stSidebar"] .stButton > button {
+    opacity: 0 !important;
+    position: absolute !important;
+    top: 0; left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    cursor: pointer !important;
+    z-index: 10;
+}
+[data-testid="stSidebar"] .stButton {
+    position: relative !important;
+}
+</style>""", unsafe_allow_html=True)
 
-    _pressed_style = (
-        "display:inline-block;width:100%;text-align:center;padding:0.5rem 0;"
-        "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;"
-        "letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;"
-        "text-decoration:none;cursor:pointer;"
-        "background:#2d6a4f;color:#f7f5f0;"
-        "border:1px solid #1a5c3a;"
-        "box-shadow:inset 0 3px 6px rgba(0,0,0,0.5),inset 0 1px 2px rgba(0,0,0,0.3);"
-        "transform:translateY(2px);"
-    )
-    _raised_style = (
-        "display:inline-block;width:100%;text-align:center;padding:0.5rem 0;"
-        "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;"
-        "letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;"
-        "text-decoration:none;cursor:pointer;"
-        "background:#ffffff;color:#8a8072;"
-        "border:1px solid #c8bfb2;"
-        "box-shadow:0 4px 0 #a8a098,0 1px 3px rgba(0,0,0,0.1);"
-        "transform:translateY(0);"
-    )
-
-    st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
-  <a href="?mode=analyze" target="_self" style="{''+_pressed_style if _a else ''+_raised_style}">ANALYZE</a>
-  <a href="?mode=discover" target="_self" style="{''+_pressed_style if _d else ''+_raised_style}">DISCOVER</a>
-</div>""", unsafe_allow_html=True)
+    # ── Mode switcher ─────────────────────────────────────────────────────────
+    _cur_mode = st.session_state.app_mode_radio
+    col_m1, col_m2 = st.columns([1, 1])
+    with col_m1:
+        st.markdown(f'<div style="{_P if _cur_mode == "analyze" else _R}">ANALYZE</div>', unsafe_allow_html=True)
+        if st.button("ANALYZE", key="btn_mode_analyze"):
+            st.session_state.app_mode_radio = "analyze"
+    with col_m2:
+        st.markdown(f'<div style="{_P if _cur_mode == "discover" else _R}">DISCOVER</div>', unsafe_allow_html=True)
+        if st.button("DISCOVER", key="btn_mode_discover"):
+            st.session_state.app_mode_radio = "discover"
+    _cur_mode = st.session_state.app_mode_radio
 
     app_mode = "  🔍  Discovery  " if _cur_mode == "discover" else "  ⬡  Lab  "
     st.session_state.app_mode  = app_mode
@@ -574,20 +589,17 @@ with st.sidebar:
         st.markdown("---")
         st.markdown("## Weight Constraint")
 
-        _wt_qp = st.query_params.get("wt", "manual")
-        if _wt_qp not in ("optimize", "manual"):
-            _wt_qp = "manual"
-        st.session_state.optimize_weights = (_wt_qp == "optimize")
         wt_opt = st.session_state.optimize_weights
-
-        _P = "display:inline-block;width:100%;text-align:center;padding:0.45rem 0;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;text-decoration:none;cursor:pointer;background:#2d6a4f;color:#f7f5f0;border:1px solid #1a5c3a;box-shadow:inset 0 3px 6px rgba(0,0,0,0.5),inset 0 1px 2px rgba(0,0,0,0.3);transform:translateY(2px);"
-        _R = "display:inline-block;width:100%;text-align:center;padding:0.45rem 0;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;text-decoration:none;cursor:pointer;background:#ffffff;color:#8a8072;border:1px solid #c8bfb2;box-shadow:0 4px 0 #a8a098,0 1px 3px rgba(0,0,0,0.1);transform:translateY(0);"
-
-        st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
-  <a href="?mode={_cur_mode}&wt=optimize&n={st.query_params.get('n','manual')}" target="_self" style="{_P if wt_opt else _R}">OPTIMIZE</a>
-  <a href="?mode={_cur_mode}&wt=manual&n={st.query_params.get('n','manual')}" target="_self" style="{_P if not wt_opt else _R}">MANUAL</a>
-</div>""", unsafe_allow_html=True)
+        col_w1, col_w2 = st.columns([1, 1])
+        with col_w1:
+            st.markdown(f'<div style="{_P if wt_opt else _R}">OPTIMIZE</div>', unsafe_allow_html=True)
+            if st.button("OPTIMIZE", key="btn_wt_opt"):
+                st.session_state.optimize_weights = True
+        with col_w2:
+            st.markdown(f'<div style="{_P if not wt_opt else _R}">MANUAL</div>', unsafe_allow_html=True)
+            if st.button("MANUAL", key="btn_wt_manual"):
+                st.session_state.optimize_weights = False
+        wt_opt = st.session_state.optimize_weights
 
         st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-bottom:0.25rem;background:{'#f0ece4' if wt_opt else 'transparent'};border:1px solid {'#d6cfc4' if wt_opt else 'transparent'};color:{'#8a8072' if wt_opt else 'transparent'};">
@@ -605,22 +617,17 @@ with st.sidebar:
         st.markdown("## Diversification")
         st.caption("Max assets with nonzero weight in optimal portfolio")
 
-        if "optimize_n" not in st.session_state:
-            st.session_state.optimize_n     = False
-            st.session_state.suggested_n    = 8
-            st.session_state.max_assets_val = 8
-
-        _n_qp = st.query_params.get("n", "manual")
-        if _n_qp not in ("optimize", "manual"):
-            _n_qp = "manual"
-        st.session_state.optimize_n = (_n_qp == "optimize")
         n_opt = st.session_state.optimize_n
-
-        st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
-  <a href="?mode={_cur_mode}&wt={st.query_params.get('wt','manual')}&n=optimize" target="_self" style="{_P if n_opt else _R}">OPTIMIZE</a>
-  <a href="?mode={_cur_mode}&wt={st.query_params.get('wt','manual')}&n=manual" target="_self" style="{_P if not n_opt else _R}">MANUAL</a>
-</div>""", unsafe_allow_html=True)
+        col_n1, col_n2 = st.columns([1, 1])
+        with col_n1:
+            st.markdown(f'<div style="{_P if n_opt else _R}">OPTIMIZE</div>', unsafe_allow_html=True)
+            if st.button("OPTIMIZE", key="btn_optimize_n"):
+                st.session_state.optimize_n = True
+        with col_n2:
+            st.markdown(f'<div style="{_P if not n_opt else _R}">MANUAL</div>', unsafe_allow_html=True)
+            if st.button("MANUAL", key="btn_manual_n"):
+                st.session_state.optimize_n = False
+        n_opt = st.session_state.optimize_n
         st.markdown("""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;line-height:1.55;margin:0.4rem 0 0.6rem 0;padding:0.5rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;">
   <b style="color:#1a1a18;">OPTIMIZE N</b> sets holdings to the portfolio's
@@ -834,11 +841,7 @@ st.markdown('<hr class="divider">', unsafe_allow_html=True)
 if "app_mode_radio" not in st.session_state:
     st.session_state.app_mode_radio = "analyze"
 
-_cur_mode = st.query_params.get("mode", st.session_state.get("app_mode_radio", "analyze"))
-if _cur_mode not in ("analyze", "discover"):
-    _cur_mode = "analyze"
-st.session_state.app_mode_radio = _cur_mode
-
+_cur_mode = st.session_state.get("app_mode_radio", "analyze")
 app_mode      = "  🔍  Discovery  " if _cur_mode == "discover" else "  ⬡  Lab  "
 st.session_state.app_mode  = app_mode
 st.session_state._app_mode = app_mode
