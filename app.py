@@ -434,6 +434,13 @@ def compute_max_drawdown(cum_ret: pd.Series):
 def compute_calmar(ann_ret: float, max_dd: float):
     return ann_ret / abs(max_dd) if max_dd != 0 else np.nan
 
+def utility_obj(w, mu, cov, lam):
+    """Arrow-Pratt utility: U = mu_p - (lambda/2) * sigma_p^2  (daily, annualized internally)"""
+    w = w / w.sum()
+    mu_p    = float(w @ mu) * 252
+    sigma2_p = float(w @ cov @ w) * 252
+    return -(mu_p - (lam / 2) * sigma2_p)  # negate for minimization
+
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## ⬡ QuantFrame")
@@ -461,14 +468,100 @@ with st.sidebar:
     period = period_map[period_label]
 
     confidence = st.slider("VaR / CVaR Confidence", 0.90, 0.99, 0.95, 0.01, format="%.2f")
-    max_weight = st.slider("Max Single Asset Weight", 0.10, 1.0, 0.40, 0.05, format="%.2f")
     rf_input   = st.number_input("Risk-Free Rate (%)", 0.0, 10.0, RF_RATE * 100, 0.25, format="%.2f")
     rf = rf_input / 100
 
+    # ── Max Weight with OPTIMIZE toggle ──────────────────────────────────────
+    st.markdown("---")
+    st.markdown("## Weight Constraint")
+    optimize_weights = st.toggle("OPTIMIZE (unconstrained)", value=False,
+        help="Let the optimizer freely allocate. Disables the max weight slider.")
+    if optimize_weights:
+        max_weight = 1.0
+        st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
+            color:#6b6b8a;padding:0.4rem 0.6rem;
+            background:#0d0d14;border:1px solid #1e1e2e;border-radius:3px;
+            margin-top:0.25rem;">
+  ◆ Slider disabled — optimizer controls allocation
+</div>""", unsafe_allow_html=True)
+        st.slider("Max Single Asset Weight", 0.10, 1.0, 1.0, 0.05,
+                  format="%.2f", disabled=True, label_visibility="collapsed")
+    else:
+        max_weight = st.slider("Max Single Asset Weight", 0.10, 1.0, 0.40, 0.05, format="%.2f")
+
+    # ── Diversification ───────────────────────────────────────────────────────
     st.markdown("---")
     st.markdown("## Diversification")
     st.caption("Max assets with nonzero weight in optimal portfolio")
     max_assets = st.slider("Max Holdings (N)", min_value=2, max_value=20, value=8, step=1)
+
+    # ── Risk Tolerance ────────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("## Risk Tolerance")
+    st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;
+            line-height:1.6;margin-bottom:0.75rem;">
+Selects a portfolio on the efficient frontier via a <b style="color:#e2e2f0;">utility function</b>:<br>
+<span style="color:#00d4aa;">max U = μ − (λ/2)σ²</span><br>
+where λ is your risk aversion coefficient.<br>
+Higher λ → closer to Min Variance.<br>
+Lower λ → closer to Max Sharpe (Optimal Risky).
+</div>
+""", unsafe_allow_html=True)
+
+    # 5 preset buttons in order of ascending risk
+    RISK_PRESETS = [
+        ("NO GUTS",       "Min Variance",         "minvar",   None,  "#7c6af7"),
+        ("STEADY",        "Low Risk  λ=10",        "steady",   10.0,  "#5b8af0"),
+        ("AVERAGE",       "Moderate  λ=4",         "average",  4.0,   "#00d4aa"),
+        ("HIGH ROLLER",   "Aggressive  λ=1.5",     "roller",   1.5,   "#f0c27f"),
+        ("OPTIMAL RISKY", "Tangency / Max Sharpe", "optimal",  None,  "#ff6b6b"),
+    ]
+
+    if "risk_preset" not in st.session_state:
+        st.session_state.risk_preset = "average"
+
+    cols_risk = st.columns(5)
+    for col, (label, sublabel, key, lam, color) in zip(cols_risk, RISK_PRESETS):
+        active = st.session_state.risk_preset == key
+        with col:
+            if st.button(
+                label,
+                key=f"risk_btn_{key}",
+                help=sublabel,
+                type="primary" if active else "secondary",
+            ):
+                st.session_state.risk_preset = key
+
+    # Show active preset description
+    active_preset = next(p for p in RISK_PRESETS if p[2] == st.session_state.risk_preset)
+    risk_lambda   = active_preset[3]
+    risk_color    = active_preset[4]
+    st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
+            padding:0.5rem 0.75rem;margin-top:0.5rem;
+            background:#0d0d14;border-left:2px solid {risk_color};border-radius:0 3px 3px 0;">
+  <span style="color:{risk_color};font-weight:600;">{active_preset[0]}</span>
+  <span style="color:#6b6b8a;"> · {active_preset[1]}</span>
+</div>""", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    # Custom lambda slider — activates when user moves it (overrides button)
+    custom_lambda = st.slider("Custom λ (risk aversion)", 0.5, 15.0, float(risk_lambda) if risk_lambda else 3.0,
+                               0.5, format="%.1f",
+                               help="Overrides preset buttons. λ=0.5 = max risk, λ=15 = near min variance.")
+
+    # Determine effective lambda: if user moved the slider away from preset default, use slider
+    if risk_lambda is not None and abs(custom_lambda - risk_lambda) > 0.01:
+        effective_lambda = custom_lambda
+        lambda_source    = "custom"
+    elif risk_lambda is None:
+        effective_lambda = None
+        lambda_source    = active_preset[2]
+    else:
+        effective_lambda = risk_lambda
+        lambda_source    = active_preset[2]
 
     st.markdown("---")
     run_btn = st.button("▶  Run Optimization")
@@ -479,17 +572,17 @@ with st.sidebar:
 **Mean-Variance Optimization**  
 Markowitz (1952): maximize Sharpe ratio on the efficient frontier.
 
+**Utility-Based Selection**  
+Arrow-Pratt: U = μ − (λ/2)σ². Selects where on the frontier you sit.
+
 **VaR / CVaR**  
 Historical simulation. CVaR = expected loss beyond VaR threshold.
 
 **Rolling Beta**  
-60-day OLS beta vs SPY benchmark.
+60-day rolling OLS vs SPY.
 
-**Sortino Ratio**  
-Penalizes only downside deviation.
-
-**Calmar Ratio**  
-Ann. return / Max drawdown.
+**Sortino / Calmar**  
+Downside-adjusted return ratios.
         """)
 
 # ── Header ─────────────────────────────────────────────────────────────────
@@ -536,33 +629,43 @@ with st.spinner("Running optimization…"):
     bounds      = tuple((0.0, max_weight) for _ in range(n))
     constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1}]
     w0          = np.ones(n) / n
+    n_keep      = min(max_assets, n)
 
-    # Max Sharpe
-    res_sharpe = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
-                          method="SLSQP", bounds=bounds, constraints=constraints)
-    w_sharpe_full = res_sharpe.x / res_sharpe.x.sum()
+    def _apply_cardinality(w_full, k):
+        top = np.argsort(w_full)[-k:]
+        w   = np.zeros(len(w_full))
+        w[top] = w_full[top]
+        return w / w.sum()
 
-    # Apply cardinality constraint: keep top-N by weight, re-normalize
-    n_keep = min(max_assets, n)
-    top_idx = np.argsort(w_sharpe_full)[-n_keep:]
-    w_sharpe = np.zeros(n)
-    w_sharpe[top_idx] = w_sharpe_full[top_idx]
-    w_sharpe = w_sharpe / w_sharpe.sum()
+    # ── Max Sharpe (Optimal Risky / Tangency) ─────────────────────────────────
+    res_sharpe    = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
+                             method="SLSQP", bounds=bounds, constraints=constraints)
+    w_sharpe      = _apply_cardinality(res_sharpe.x / res_sharpe.x.sum(), n_keep)
 
-    # Min Volatility
-    res_minvol = minimize(min_vol_obj, w0, args=(mu, cov / 252),
-                          method="SLSQP", bounds=bounds, constraints=constraints)
-    w_minvol_full = res_minvol.x / res_minvol.x.sum()
-    w_minvol = np.zeros(n)
-    top_idx_mv = np.argsort(w_minvol_full)[-n_keep:]
-    w_minvol[top_idx_mv] = w_minvol_full[top_idx_mv]
-    w_minvol = w_minvol / w_minvol.sum()
+    # ── Min Volatility (No Guts / Min Variance) ───────────────────────────────
+    res_minvol    = minimize(min_vol_obj, w0, args=(mu, cov / 252),
+                             method="SLSQP", bounds=bounds, constraints=constraints)
+    w_minvol      = _apply_cardinality(res_minvol.x / res_minvol.x.sum(), n_keep)
 
-    # Equal Weight baseline
+    # ── Utility-based portfolio (risk tolerance selection) ────────────────────
+    if lambda_source == "minvar" or lambda_source == "optimal":
+        # Preset maps directly to an already-computed portfolio
+        w_utility = w_minvol.copy() if lambda_source == "minvar" else w_sharpe.copy()
+    else:
+        lam_eff = effective_lambda if effective_lambda is not None else 4.0
+        res_util = minimize(utility_obj, w0, args=(mu, cov / 252, lam_eff),
+                            method="SLSQP", bounds=bounds, constraints=constraints)
+        w_utility = _apply_cardinality(res_util.x / res_util.x.sum(), n_keep)
+
+    # ── Equal Weight baseline ─────────────────────────────────────────────────
     w_eq = np.ones(n) / n
 
-    # Frontier
+    # ── Efficient Frontier ────────────────────────────────────────────────────
     frontier_vols, frontier_rets, _ = compute_efficient_frontier(mu / 252, cov / 252)
+
+    # ── Primary display portfolio = utility selection ─────────────────────────
+    # (used in risk analytics, rolling metrics, report tabs)
+    w_primary = w_utility
 
 # ── Data Source Panel ─────────────────────────────────────────────────────────
 import datetime as _dt
@@ -570,12 +673,15 @@ _now        = _dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 _date_start = prices.index[0].strftime("%Y-%m-%d")
 _date_end   = prices.index[-1].strftime("%Y-%m-%d")
 _n_obs      = len(returns)
-_active     = [t for t in valid_tickers if w_sharpe[valid_tickers.index(t)] > 0.001]
+_active     = [t for t in valid_tickers if w_primary[valid_tickers.index(t)] > 0.001]
+_preset_lbl = active_preset[0]
+_preset_sub = active_preset[1]
+_preset_col = active_preset[4]
 
 st.markdown(f"""
 <div style="background:#0d0d14;border:1px solid #1e1e2e;border-radius:4px;
             padding:1rem 1.5rem;margin-bottom:1.5rem;
-            display:grid;grid-template-columns:repeat(6,1fr);gap:1rem;">
+            display:grid;grid-template-columns:repeat(7,1fr);gap:1rem;">
   <div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
                 letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
@@ -621,6 +727,14 @@ st.markdown(f"""
   <div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
                 letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+      Risk Profile</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;font-weight:600;
+                color:{_preset_col};">{_preset_lbl}</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">{_preset_sub}</div>
+  </div>
+  <div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
       Last Fetched</div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#e2e2f0;font-weight:500;">
       {_now}</div>
@@ -635,11 +749,6 @@ def port_series(weights, ret_df):
 
 rf_daily = rf / 252
 bench_ret = bench.pct_change().dropna()
-
-for label, weights in [("Optimal (Max Sharpe)", w_sharpe),
-                        ("Min Volatility", w_minvol),
-                        ("Equal Weight", w_eq)]:
-    pass  # computed below per tab
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -660,14 +769,13 @@ with tab1:
     asset_ann_vol = np.sqrt(np.diag(cov))
 
     # Portfolio points
-    r_sh, v_sh, s_sh = portfolio_stats(w_sharpe, mu, cov / 252, rf)
-    r_mv, v_mv, s_mv = portfolio_stats(w_minvol, mu, cov / 252, rf)
-    r_eq, v_eq, s_eq = portfolio_stats(w_eq, mu, cov / 252, rf)
+    r_sh, v_sh, s_sh   = portfolio_stats(w_sharpe,  mu, cov / 252, rf)
+    r_mv, v_mv, s_mv   = portfolio_stats(w_minvol,  mu, cov / 252, rf)
+    r_eq, v_eq, s_eq   = portfolio_stats(w_eq,       mu, cov / 252, rf)
+    r_ut, v_ut, s_ut   = portfolio_stats(w_primary,  mu, cov / 252, rf)
 
-    # Sharpe frontier color
-    sharpes_frontier = []
-    for r_, v_ in zip(frontier_rets, frontier_vols):
-        sharpes_frontier.append((r_ - rf) / v_ if v_ > 0 else 0)
+    sharpes_frontier = [(r_ - rf) / v_ if v_ > 0 else 0
+                        for r_, v_ in zip(frontier_rets, frontier_vols)]
 
     fig = go.Figure()
 
@@ -692,7 +800,7 @@ with tab1:
         hovertemplate="Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
     ))
 
-    # Capital Market Line
+    # Capital Market Line (always anchored to true tangency = w_sharpe)
     if v_sh > 0:
         cml_x = np.linspace(0, max(asset_ann_vol) * 1.3, 100)
         cml_y = rf + (r_sh - rf) / v_sh * cml_x
@@ -703,11 +811,11 @@ with tab1:
             name="Capital Market Line",
         ))
 
-    # Portfolio markers
+    # Portfolio markers — always show Min Var + Optimal Risky, then highlight user's selection
     port_points = [
-        (v_sh, r_sh, "Max Sharpe", "#00d4aa", "star", 18),
-        (v_mv, r_mv, "Min Volatility", "#7c6af7", "diamond", 16),
-        (v_eq, r_eq, "Equal Weight", "#f0c27f", "circle", 14),
+        (v_sh, r_sh, "Optimal Risky (Max Sharpe)", "#00d4aa", "star",    18),
+        (v_mv, r_mv, "Min Variance Portfolio",      "#7c6af7", "diamond", 16),
+        (v_eq, r_eq, "Equal Weight",                "#f0c27f", "circle",  12),
     ]
     for v_, r_, name_, color_, sym_, sz_ in port_points:
         fig.add_trace(go.Scatter(
@@ -715,11 +823,26 @@ with tab1:
             mode="markers+text",
             text=[name_],
             textposition="top right",
-            textfont=dict(size=10, color=color_, family="IBM Plex Mono"),
+            textfont=dict(size=9, color=color_, family="IBM Plex Mono"),
             marker=dict(size=sz_, color=color_, symbol=sym_,
                         line=dict(color="white", width=1)),
             name=name_,
             hovertemplate=f"<b>{name_}</b><br>Vol: {v_*100:.2f}%<br>Return: {r_*100:.2f}%<br>Sharpe: {(r_-rf)/v_:.3f}<extra></extra>",
+        ))
+
+    # User's selected portfolio (if different from the above)
+    is_custom = lambda_source not in ("minvar", "optimal")
+    if is_custom:
+        fig.add_trace(go.Scatter(
+            x=[v_ut * 100], y=[r_ut * 100],
+            mode="markers+text",
+            text=[f"YOUR PORTFOLIO ({_preset_lbl})"],
+            textposition="bottom right",
+            textfont=dict(size=9, color=_preset_col, family="IBM Plex Mono"),
+            marker=dict(size=16, color=_preset_col, symbol="pentagon",
+                        line=dict(color="white", width=1.5)),
+            name=f"Selected: {_preset_lbl}",
+            hovertemplate=f"<b>Your Portfolio</b><br>λ={effective_lambda}<br>Vol: {v_ut*100:.2f}%<br>Return: {r_ut*100:.2f}%<br>Sharpe: {s_ut:.3f}<extra></extra>",
         ))
 
     layout = dict(**PLOT_LAYOUT)
@@ -727,7 +850,7 @@ with tab1:
         title=dict(text="Efficient Frontier & Portfolio Compositions", font=dict(size=13, color="#e2e2f0")),
         xaxis_title="Annualized Volatility (%)",
         yaxis_title="Annualized Return (%)",
-        height=500,
+        height=520,
     ))
     fig.update_layout(**layout)
     st.plotly_chart(fig, use_container_width=True)
@@ -735,18 +858,25 @@ with tab1:
     # ── Portfolio comparison metrics
     st.markdown('<div class="section-header">Portfolio Comparison</div>', unsafe_allow_html=True)
 
-    cols = st.columns(3)
-    for col, (label, weights, ret, vol, sharpe, color) in zip(cols, [
-        ("Max Sharpe",    w_sharpe, r_sh, v_sh, s_sh, "#00d4aa"),
-        ("Min Volatility",w_minvol, r_mv, v_mv, s_mv, "#7c6af7"),
-        ("Equal Weight",  w_eq,     r_eq, v_eq, s_eq, "#f0c27f"),
-    ]):
+    # Build card list — insert user portfolio if it's not one of the named ones
+    card_list = [
+        ("Min Variance",        w_minvol,  r_mv, v_mv, s_mv, "#7c6af7"),
+        ("Equal Weight",        w_eq,      r_eq, v_eq, s_eq, "#f0c27f"),
+        ("Optimal Risky",       w_sharpe,  r_sh, v_sh, s_sh, "#00d4aa"),
+    ]
+    if is_custom:
+        card_list.insert(2, (f"Your Portfolio\n({_preset_lbl})", w_primary, r_ut, v_ut, s_ut, _preset_col))
+
+    cols = st.columns(len(card_list))
+    for col, (label, weights, ret, vol, sharpe, color) in zip(cols, card_list):
+        is_selected = np.allclose(weights, w_primary, atol=1e-4)
+        border_style = f"box-shadow:0 0 0 1px {color}; " if is_selected else ""
         with col:
             st.markdown(f"""
-<div class="metric-card" style="--accent:{color};">
+<div class="metric-card" style="--accent:{color};{border_style}">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
-  <div class="metric-label">{label}</div>
-  <span class="badge" style="background:rgba(0,0,0,0.3);color:{color};border-color:{color}30;">Portfolio</span>
+  <div class="metric-label" style="white-space:pre;">{label}</div>
+  {'<span class="badge" style="background:rgba(0,0,0,0.3);color:' + color + ';border-color:' + color + '60;">ACTIVE</span>' if is_selected else ''}
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
   <div>
@@ -754,15 +884,15 @@ with tab1:
     <div class="metric-value" style="font-size:1.1rem;color:{color};">{ret*100:.2f}%</div>
   </div>
   <div>
-    <div class="metric-label">Ann. Volatility</div>
+    <div class="metric-label">Ann. Vol</div>
     <div class="metric-value" style="font-size:1.1rem;">{vol*100:.2f}%</div>
   </div>
   <div>
-    <div class="metric-label">Sharpe Ratio</div>
+    <div class="metric-label">Sharpe</div>
     <div class="metric-value" style="font-size:1.1rem;color:{color};">{sharpe:.3f}</div>
   </div>
   <div>
-    <div class="metric-label">Max Weight</div>
+    <div class="metric-label">Max Wt</div>
     <div class="metric-value" style="font-size:1.1rem;">{weights.max()*100:.1f}%</div>
   </div>
 </div>
@@ -770,23 +900,29 @@ with tab1:
 """, unsafe_allow_html=True)
 
     # ── Weights chart
-    st.markdown('<div class="section-header">Optimal Weights · Max Sharpe Portfolio</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-header">Portfolio Weights · Your Selection: {_preset_lbl}</div>', unsafe_allow_html=True)
     df_w = pd.DataFrame({
-        "Ticker": valid_tickers,
-        "Max Sharpe": w_sharpe * 100,
-        "Min Vol":    w_minvol * 100,
-        "Equal Wt":   w_eq * 100,
-    }).sort_values("Max Sharpe", ascending=False)
+        "Ticker":        valid_tickers,
+        "Your Portfolio": w_primary * 100,
+        "Optimal Risky": w_sharpe  * 100,
+        "Min Variance":  w_minvol  * 100,
+        "Equal Wt":      w_eq      * 100,
+    }).sort_values("Your Portfolio", ascending=False)
 
     fig2 = go.Figure()
-    for name, color in [("Max Sharpe","#00d4aa"),("Min Vol","#7c6af7"),("Equal Wt","#f0c27f")]:
+    for name, color in [
+        ("Your Portfolio", _preset_col),
+        ("Optimal Risky",  "#00d4aa"),
+        ("Min Variance",   "#7c6af7"),
+        ("Equal Wt",       "#f0c27f"),
+    ]:
         fig2.add_trace(go.Bar(
             name=name, x=df_w["Ticker"], y=df_w[name],
             marker_color=color, marker_line_width=0,
             opacity=0.85,
         ))
     fig2.update_layout(**{**PLOT_LAYOUT,
-        "barmode":"group","height":320,
+        "barmode":"group","height":340,
         "yaxis_title":"Weight (%)",
         "title":dict(text="Portfolio Weight Comparison", font=dict(size=12,color="#e2e2f0")),
     })
@@ -797,9 +933,9 @@ with tab1:
 # TAB 2 — RISK ANALYTICS
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab2:
-    st.markdown('<div class="section-header">Risk Decomposition · VaR · CVaR · Drawdown</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-header">Risk Decomposition · {_preset_lbl} Portfolio · VaR · CVaR · Drawdown</div>', unsafe_allow_html=True)
 
-    port_ret_series = port_series(w_sharpe, returns)
+    port_ret_series = port_series(w_primary, returns)
     port_ret_arr    = port_ret_series.values
 
     # VaR / CVaR
@@ -807,7 +943,7 @@ with tab2:
     sortino = compute_sortino(port_ret_arr, rf_daily)
     cum_ret = (1 + port_ret_series).cumprod()
     max_dd  = compute_max_drawdown(cum_ret)
-    calmar  = compute_calmar(r_sh, max_dd)
+    calmar  = compute_calmar(r_ut, max_dd)
 
     # Top metrics row
     m1, m2, m3, m4, m5 = st.columns(5)
@@ -903,13 +1039,13 @@ with tab2:
 
     # Asset-level risk table
     st.markdown('<div class="section-header">Asset Risk Decomposition</div>', unsafe_allow_html=True)
-    marginal_contrib = (cov / 252 @ w_sharpe) / np.sqrt(w_sharpe @ (cov / 252) @ w_sharpe)
-    risk_contrib     = w_sharpe * marginal_contrib
+    marginal_contrib = (cov / 252 @ w_primary) / np.sqrt(w_primary @ (cov / 252) @ w_primary)
+    risk_contrib     = w_primary * marginal_contrib
     risk_contrib_pct = risk_contrib / risk_contrib.sum() * 100
 
     df_risk = pd.DataFrame({
         "Asset":           valid_tickers,
-        "Weight (%)":      (w_sharpe * 100).round(2),
+        "Weight (%)":      (w_primary * 100).round(2),
         "Ann. Return (%)": (asset_ann_ret * 100).round(2),
         "Ann. Vol (%)":    (asset_ann_vol * 100).round(2),
         "Sharpe":          ((asset_ann_ret - rf) / asset_ann_vol).round(3),
@@ -954,9 +1090,9 @@ with tab2:
 # TAB 3 — ROLLING METRICS
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab3:
-    st.markdown('<div class="section-header">Rolling Risk & Factor Exposure · 60-Day Window</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-header">Rolling Risk & Factor Exposure · {_preset_lbl} Portfolio · 60-Day Window</div>', unsafe_allow_html=True)
 
-    port_ret_full = port_series(w_sharpe, returns)
+    port_ret_full = port_series(w_primary, returns)
     bench_ret_aligned = bench_ret.reindex(port_ret_full.index).dropna()
     port_aligned = port_ret_full.reindex(bench_ret_aligned.index).dropna()
 
@@ -1020,14 +1156,14 @@ with tab3:
 # TAB 4 — PORTFOLIO REPORT
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab4:
-    st.markdown('<div class="section-header">Portfolio Report · Max Sharpe Portfolio</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-header">Portfolio Report · {_preset_lbl} · {_preset_sub}</div>', unsafe_allow_html=True)
 
-    port_ret_series = port_series(w_sharpe, returns)
+    port_ret_series = port_series(w_primary, returns)
     cum_port_full   = (1 + port_ret_series).cumprod()
     max_dd_val      = compute_max_drawdown(cum_port_full)
     var_val, cvar_val = compute_var_cvar(port_ret_series.values, confidence)
     sort_val        = compute_sortino(port_ret_series.values, rf_daily)
-    calmar_val      = compute_calmar(r_sh, max_dd_val)
+    calmar_val      = compute_calmar(r_ut, max_dd_val)
 
     # Omega ratio
     threshold = rf_daily
@@ -1041,26 +1177,32 @@ with tab4:
     kurt_val = kurtosis(port_ret_series.values)
 
     st.markdown(f"""
-<div class="metric-card" style="margin-bottom:1.5rem;">
-  <div class="metric-label" style="font-size:0.7rem;margin-bottom:0.75rem;">
-    QUANTFRAME PORTFOLIO ANALYTICS REPORT &nbsp;·&nbsp; 
-    Universe: {', '.join(valid_tickers)} &nbsp;·&nbsp;
-    Period: {period_label} &nbsp;·&nbsp;
-    RF: {rf*100:.2f}% &nbsp;·&nbsp;
-    Confidence: {confidence:.0%}
+<div class="metric-card" style="margin-bottom:1.5rem;border-left:3px solid {_preset_col};">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+    <div class="metric-label" style="font-size:0.7rem;">
+      QUANTFRAME ANALYTICS REPORT &nbsp;·&nbsp;
+      Universe: {', '.join(valid_tickers)} &nbsp;·&nbsp;
+      Period: {period_label} &nbsp;·&nbsp;
+      RF: {rf*100:.2f}% &nbsp;·&nbsp;
+      Confidence: {confidence:.0%}
+    </div>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;font-weight:600;
+                 color:{_preset_col};white-space:nowrap;padding-left:1rem;">
+      {_preset_lbl} · {_preset_sub}
+    </span>
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
     <div>
       <div class="metric-label">Annualized Return</div>
-      <div class="metric-value positive">{r_sh*100:.2f}%</div>
+      <div class="metric-value {'positive' if r_ut>0 else 'negative'}">{r_ut*100:.2f}%</div>
     </div>
     <div>
       <div class="metric-label">Annualized Volatility</div>
-      <div class="metric-value">{v_sh*100:.2f}%</div>
+      <div class="metric-value">{v_ut*100:.2f}%</div>
     </div>
     <div>
       <div class="metric-label">Sharpe Ratio</div>
-      <div class="metric-value positive">{s_sh:.4f}</div>
+      <div class="metric-value {'positive' if s_ut>0 else 'negative'}">{s_ut:.4f}</div>
     </div>
     <div>
       <div class="metric-label">Sortino Ratio</div>
@@ -1105,11 +1247,12 @@ with tab4:
     # All three portfolios weights table
     st.markdown('<div class="section-header">Allocation Breakdown</div>', unsafe_allow_html=True)
     df_alloc = pd.DataFrame({
-        "Ticker":           valid_tickers,
-        "Max Sharpe (%)":   (w_sharpe * 100).round(2),
-        "Min Vol (%)":      (w_minvol * 100).round(2),
-        "Equal Weight (%)": (w_eq * 100).round(2),
-    }).sort_values("Max Sharpe (%)", ascending=False)
+        "Ticker":              valid_tickers,
+        f"{_preset_lbl} (%)": (w_primary * 100).round(2),
+        "Optimal Risky (%)":  (w_sharpe  * 100).round(2),
+        "Min Variance (%)":   (w_minvol  * 100).round(2),
+        "Equal Weight (%)":   (w_eq      * 100).round(2),
+    }).sort_values(f"{_preset_lbl} (%)", ascending=False)
 
     # Color active holdings
     def _wt_color(v):
@@ -1118,19 +1261,29 @@ with tab4:
             return f"rgba(0,{int(180*t+40)},{int(120*t+50)},0.25)"
         return "#0d0d14"
 
+    user_col = f"{_preset_lbl} (%)"
     alloc_colors = [
         ["#111118"] * len(df_alloc),
-        [_wt_color(v) for v in df_alloc["Max Sharpe (%)"]],
-        [_wt_color(v) for v in df_alloc["Min Vol (%)"]],
+        [_wt_color(v) for v in df_alloc[user_col]],
+        [_wt_color(v) for v in df_alloc["Optimal Risky (%)"]],
+        [_wt_color(v) for v in df_alloc["Min Variance (%)"]],
         ["#111118"] * len(df_alloc),
     ]
     fig_alloc = go.Figure(go.Table(
-        columnwidth=[60, 100, 80, 110],
+        columnwidth=[60, 100, 100, 90, 100],
         header=dict(
-            values=["<b>Ticker</b>","<b>Max Sharpe %</b>","<b>Min Vol %</b>","<b>Equal Weight %</b>"],
+            values=[
+                "<b>Ticker</b>",
+                f"<b>{_preset_lbl}</b>",
+                "<b>Optimal Risky</b>",
+                "<b>Min Variance</b>",
+                "<b>Equal Weight</b>",
+            ],
             fill_color="#0d0d14",
             line_color="#2a2a3e",
-            font=dict(family="IBM Plex Mono", size=11, color="#00d4aa"),
+            font=dict(family="IBM Plex Mono", size=11, color=[
+                "#6b6b8a", _preset_col, "#00d4aa", "#7c6af7", "#f0c27f"
+            ]),
             align="center", height=32,
         ),
         cells=dict(
