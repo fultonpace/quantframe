@@ -1030,13 +1030,121 @@ if "Discovery" in app_mode:
     </div>""", unsafe_allow_html=True)
 
     if not run_discovery:
-        st.markdown("""
-    <div style="text-align:center;padding:4rem 2rem;font-family:'IBM Plex Mono',monospace;">
-      <div style="font-size:2rem;color:#e0d9ce;margin-bottom:1rem;">🔍</div>
-      <div style="font-size:0.85rem;color:#8a8072;letter-spacing:0.1em;text-transform:uppercase;">
-    Configure settings in the sidebar and press <span style="color:#2d6a4f;">▶ Run Discovery</span>
+        _univ_size   = len(SECTORS[disc_sector]) if SECTORS[disc_sector] else 490
+        _combo_approx = f"C({_univ_size},{disc_port_size})"
+        import math as _math
+        try:
+            _n_combos = _math.comb(_univ_size, disc_port_size)
+            if _n_combos > 1e15:
+                _combo_str = f"≈ {_n_combos:.2e}"
+            elif _n_combos > 1e9:
+                _combo_str = f"≈ {_n_combos/1e9:.1f}B"
+            elif _n_combos > 1e6:
+                _combo_str = f"≈ {_n_combos/1e6:.1f}M"
+            else:
+                _combo_str = f"{_n_combos:,}"
+        except Exception:
+            _combo_str = "vast"
+        _coverage_pct = min(disc_iterations / max(1, _math.comb(_univ_size, disc_port_size)) * 100, 100)
+        _coverage_str = f"{_coverage_pct:.6f}%" if _coverage_pct < 0.01 else f"{_coverage_pct:.3f}%"
+
+        st.markdown(f"""
+<div style="max-width:860px;margin:2rem auto 0 auto;font-family:'IBM Plex Mono',monospace;">
+
+  <!-- Title row -->
+  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.35rem;">
+    <div style="font-size:1.5rem;color:#e0d9ce;line-height:1;">🔍</div>
+    <div>
+      <div style="font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:#8a8072;">
+        Ready to search
       </div>
-    </div>""", unsafe_allow_html=True)
+      <div style="font-size:1.05rem;font-weight:600;color:#1a1a18;letter-spacing:-0.01em;">
+        Stochastic Portfolio Search · Pre-flight Summary
+      </div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid #e0d9ce;margin:0.9rem 0 1.25rem 0;"></div>
+
+  <!-- What the search will do -->
+  <div style="font-size:0.78rem;color:#4a4a45;line-height:1.85;margin-bottom:1.5rem;">
+    Discovery Mode performs a <span style="color:#2d6a4f;font-weight:600;">random combinatorial search</span>
+    over the <span style="color:#1a1a18;font-weight:600;">{disc_sector}</span> universe
+    (<span style="color:#1a1a18;font-weight:600;">{_univ_size} tickers</span>).
+    Each iteration draws a random <span style="color:#b5873a;font-weight:600;">{disc_port_size}-stock subset</span>,
+    fetches daily price data from <span style="color:#b5873a;font-weight:600;">{disc_start}</span>,
+    and runs SLSQP to find the Max Sharpe weights for that combination.
+    After <span style="color:#2d6a4f;font-weight:600;">{disc_iterations:,} iterations</span>,
+    the combination with the highest Sharpe ratio is returned as the best discovered portfolio.
+    This is a <span style="color:#c0392b;font-weight:600;">heuristic search</span> —
+    optimality is not guaranteed over the full combinatorial space.
+  </div>
+
+  <!-- Stats cards -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem;">
+
+    <div style="background:#ffffff;border:1px solid #e0d9ce;border-top:2px solid #2d6a4f;
+                border-radius:4px;padding:1rem 1.25rem;">
+      <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;
+                  color:#2d6a4f;margin-bottom:0.5rem;font-weight:600;">Search Problem</div>
+      <div style="font-size:0.68rem;color:#4a4a45;line-height:2.1;">
+        Universe: <span style="color:#1a1a18;font-weight:600;">{_univ_size} tickers</span><br>
+        Portfolio size: <span style="color:#1a1a18;font-weight:600;">{disc_port_size} stocks</span><br>
+        Total combinations: <span style="color:#c0392b;font-weight:600;">{_combo_str}</span><br>
+        Space: <span style="color:#1a1a18;font-weight:600;">{_combo_approx}</span>
+      </div>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e0d9ce;border-top:2px solid #b5873a;
+                border-radius:4px;padding:1rem 1.25rem;">
+      <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;
+                  color:#b5873a;margin-bottom:0.5rem;font-weight:600;">Per-Iteration Procedure</div>
+      <div style="font-size:0.68rem;color:#4a4a45;line-height:2.1;">
+        1. Sample {disc_port_size} tickers uniformly at random<br>
+        2. Fetch log-returns from {disc_start}<br>
+        3. Solve: <span style="color:#2d6a4f;font-weight:600;">max (wᵀμ − r<sub>f</sub>) / √(wᵀΣw)</span><br>
+        4. Record Sharpe · update best if improved
+      </div>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e0d9ce;border-top:2px solid #c0392b;
+                border-radius:4px;padding:1rem 1.25rem;">
+      <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;
+                  color:#c0392b;margin-bottom:0.5rem;font-weight:600;">Search Coverage</div>
+      <div style="font-size:0.68rem;color:#4a4a45;line-height:2.1;">
+        Iterations planned: <span style="color:#1a1a18;font-weight:600;">{disc_iterations:,}</span><br>
+        Est. space coverage: <span style="color:#c0392b;font-weight:600;">{_coverage_str}</span><br>
+        Method: <span style="color:#1a1a18;font-weight:600;">Monte Carlo sampling</span><br>
+        Guarantee: <span style="color:#c0392b;font-weight:600;">none · best-effort only</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Honest caveats -->
+  <div style="background:#fdf6ee;border:1px solid #e8d9bb;border-left:3px solid #b5873a;
+              border-radius:0 4px 4px 0;padding:0.85rem 1.1rem;margin-bottom:1.25rem;">
+    <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;
+                color:#b5873a;margin-bottom:0.5rem;font-weight:600;">Statistical Honesty</div>
+    <div style="font-size:0.68rem;color:#6a5a3a;line-height:1.85;">
+      The best Sharpe found improves monotonically with iterations but converges slowly — the search space is
+      combinatorially vast and random sampling has no memory. Results are
+      <span style="font-weight:600;">not reproducible across runs</span> (no fixed seed).
+      A high Sharpe in-sample does not imply out-of-sample performance.
+      All metrics are backward-looking from <span style="font-weight:600;">{disc_start}</span>.
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align:center;padding:0.75rem 0 0.5rem 0;">
+    <div style="font-size:0.62rem;color:#8a8072;letter-spacing:0.12em;text-transform:uppercase;">
+      Configure settings above and press
+      <span style="color:#2d6a4f;font-weight:600;">🔍 Run Discovery</span> to begin
+    </div>
+  </div>
+
+</div>
+""", unsafe_allow_html=True)
     else:
         # ── Run discovery ──────────────────────────────────────────────────────
         import random as _random
@@ -1237,12 +1345,105 @@ if "Discovery" in app_mode:
 # ── PORTFOLIO LAB (existing app) ──────────────────────────────────────────────
 # ── Main Logic ───────────────────────────────────────────────────────────────
 if not run_btn:
-    st.markdown("""
-<div style="text-align:center; padding: 5rem 2rem; font-family: 'IBM Plex Mono', monospace;">
-    <div style="font-size:3rem; margin-bottom:1rem; color:#e0d9ce;">⬡</div>
-    <div style="font-size:0.9rem; color:#8a8072; letter-spacing:0.15em; text-transform:uppercase;">
-        Configure your universe in the sidebar<br>and press <span style="color:#2d6a4f;">▶ Run Optimization</span>
+    _n_assets    = len(tickers)
+    _wt_pct      = int(max_weight * 100)
+    _rf_pct      = f"{rf*100:.2f}"
+    _conf_pct    = int(confidence * 100)
+    _lam_display = f"λ = {effective_lambda:.1f}" if effective_lambda is not None else ("Min Variance" if lambda_source == "minvar" else "Max Sharpe")
+    _preset_display = active_preset[0].split("—")[0].strip()
+    _preset_color   = active_preset[3]
+
+    st.markdown(f"""
+<div style="max-width:860px;margin:2.5rem auto 0 auto;font-family:'IBM Plex Mono',monospace;">
+
+  <!-- Title row -->
+  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.35rem;">
+    <div style="font-size:1.5rem;color:#e0d9ce;line-height:1;">⬡</div>
+    <div>
+      <div style="font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:#8a8072;">
+        Ready to optimize
+      </div>
+      <div style="font-size:1.05rem;font-weight:600;color:#1a1a18;letter-spacing:-0.01em;">
+        Mean-Variance Optimization · Pre-flight Summary
+      </div>
     </div>
+  </div>
+
+  <div style="border-top:1px solid #e0d9ce;margin:0.9rem 0 1.25rem 0;"></div>
+
+  <!-- What the solver will do -->
+  <div style="font-size:0.78rem;color:#4a4a45;line-height:1.85;margin-bottom:1.5rem;">
+    The SLSQP solver will find the weight vector <span style="color:#2d6a4f;font-weight:600;">w ∈ ℝ<sup>{_n_assets}</sup></span>
+    that maximizes the <span style="color:#2d6a4f;font-weight:600;">Sharpe ratio</span> of a portfolio drawn from your
+    <span style="color:#1a1a18;font-weight:600;">{_n_assets}-asset universe</span>, subject to a
+    full-investment constraint (Σwᵢ = 1), non-negativity (wᵢ ≥ 0), a
+    <span style="color:#b5873a;font-weight:600;">{_wt_pct}% per-asset cap</span>, and a cardinality limit of
+    <span style="color:#b5873a;font-weight:600;">N = {max_assets} holdings</span>.
+    Three portfolios are computed and compared: the <span style="color:#6b3fa0;font-weight:600;">tangency portfolio</span>
+    (Max Sharpe), the <span style="color:#4a7c9e;font-weight:600;">global minimum variance</span> portfolio,
+    and an <span style="color:#c9a84c;font-weight:600;">equal-weight baseline</span>.
+    Your selected risk profile — <span style="color:{_preset_color};font-weight:600;">{_preset_display} ({_lam_display})</span> —
+    will be highlighted as the primary portfolio across all tabs.
+  </div>
+
+  <!-- Formula + constraint cards -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+
+    <div style="background:#ffffff;border:1px solid #e0d9ce;border-top:2px solid #2d6a4f;
+                border-radius:4px;padding:1rem 1.25rem;">
+      <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;
+                  color:#2d6a4f;margin-bottom:0.6rem;font-weight:600;">Objective</div>
+      <div style="font-size:0.9rem;color:#1a1a18;margin-bottom:0.4rem;">
+        max <span style="color:#2d6a4f;">( wᵀμ − r<sub>f</sub> ) / √(wᵀΣw)</span>
+      </div>
+      <div style="font-size:0.65rem;color:#8a8072;line-height:1.7;">
+        μ = sample mean returns (annualized × 252)<br>
+        Σ = sample covariance matrix (annualized)<br>
+        r<sub>f</sub> = <span style="color:#b5873a;">{_rf_pct}%</span> risk-free rate
+      </div>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e0d9ce;border-top:2px solid #b5873a;
+                border-radius:4px;padding:1rem 1.25rem;">
+      <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;
+                  color:#b5873a;margin-bottom:0.6rem;font-weight:600;">Constraints Active</div>
+      <div style="font-size:0.68rem;color:#4a4a45;line-height:2;">
+        <span style="color:#1a1a18;font-weight:600;">∑ wᵢ = 1</span> &nbsp;·&nbsp; full investment<br>
+        <span style="color:#1a1a18;font-weight:600;">0 ≤ wᵢ ≤ {_wt_pct}%</span> &nbsp;·&nbsp; box constraint<br>
+        <span style="color:#1a1a18;font-weight:600;">‖w‖₀ ≤ {max_assets}</span> &nbsp;·&nbsp; cardinality (heuristic)<br>
+        <span style="color:#1a1a18;font-weight:600;">r<sub>f</sub> = {_rf_pct}%</span> &nbsp;·&nbsp; in all ratio calculations
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Risk metrics preview -->
+  <div style="background:#ffffff;border:1px solid #e0d9ce;border-top:2px solid #4a7c9e;
+              border-radius:4px;padding:1rem 1.25rem;margin-bottom:1.25rem;">
+    <div style="font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;
+                color:#4a7c9e;margin-bottom:0.75rem;font-weight:600;">Risk Metrics That Will Be Computed</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
+      {"".join([f'''
+      <div style="border-left:2px solid {c};padding:0.4rem 0.65rem;">
+        <div style="font-size:0.6rem;font-weight:600;color:{c};letter-spacing:0.06em;">{name}</div>
+        <div style="font-size:0.62rem;color:#8a8072;margin-top:0.15rem;line-height:1.5;">{desc}</div>
+      </div>''' for name, desc, c in [
+        ("VaR / CVaR", f"Historical sim · {_conf_pct}% confidence · no dist. assumption", "#c0392b"),
+        ("Sortino", "Return / downside σ · penalises only negative deviation", "#6b3fa0"),
+        ("Calmar", "Ann. return / |Max Drawdown| · regime-sensitive", "#b5873a"),
+        ("Rolling β", "60-day OLS vs SPY · captures time-varying mkt exposure", "#4a7c9e"),
+      ]])}
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align:center;padding:1rem 0 0.5rem 0;">
+    <div style="font-size:0.62rem;color:#8a8072;letter-spacing:0.12em;text-transform:uppercase;">
+      Configure your universe in the sidebar and press
+      <span style="color:#2d6a4f;font-weight:600;">▶ Run Optimization</span> to begin
+    </div>
+  </div>
+
 </div>
 """, unsafe_allow_html=True)
     st.stop()
