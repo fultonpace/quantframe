@@ -873,74 +873,17 @@ st.session_state._app_mode = app_mode
 
 st.markdown('<hr class="divider" style="margin-top:0.75rem;">', unsafe_allow_html=True)
 
-with st.expander("ℹ  About QuantFrame", expanded=False):
-    _col_a, _col_b = st.columns(2)
-    with _col_a:
-        st.markdown("""
-<div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.95rem;font-weight:600;
-            color:#1a1a18;margin-bottom:0.6rem;">What is QuantFrame?</div>
-<div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;color:#4a4a45;line-height:1.8;margin-bottom:1rem;">
-  You give it a list of stocks and how much risk you're willing to take.
-  It finds the <span style="color:#2d6a4f;font-weight:600;">exact allocation</span>
-  that maximizes return for that risk level — then breaks down every metric you'd want to know.
-</div>""", unsafe_allow_html=True)
-        for _color, _title, _body, _formula in [
-            ("#2d6a4f","Mean-Variance Optimization","Finds exact weights that maximize Sharpe ratio via SLSQP. Nobel Prize math (Markowitz, 1952).","max (Rₚ − Rᶠ) / σₚ"),
-            ("#2d6a4f","Efficient Frontier","The curve of every optimal portfolio. Anything below it is suboptimal.",""),
-            ("#b5873a","Utility Function (λ)","Expresses risk tolerance mathematically. Higher λ = more conservative.","max U = μ − (λ/2)σ²"),
-            ("#b5873a","VaR & CVaR","Worst loss on bad 5% of days (VaR) and average loss when those days hit (CVaR). From real data.","CVaR = E[loss | loss > VaR]"),
-            ("#4a7c9e","Rolling Beta","How much your portfolio moves vs S&P 500, recalculated every 60 days.","β = Cov(Rₚ, Rₘ) / Var(Rₘ)"),
-            ("#4a7c9e","Effective N","True diversification count. Equal-weight 8-stock portfolio has N_eff = 8.","N_eff = 1 / Σwᵢ²"),
-        ]:
-            st.markdown(f"""
-<div style="background:#f7f5f0;border-left:3px solid {_color};border-radius:0 3px 3px 0;
-            padding:0.65rem 1rem;margin-bottom:0.5rem;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.67rem;font-weight:600;
-              color:{_color};margin-bottom:0.15rem;">{_title}</div>
-  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.79rem;color:#4a4a45;line-height:1.6;">{_body}</div>
-  {f'<div style="font-family:IBM Plex Mono,monospace;font-size:0.7rem;color:#b5873a;margin-top:0.2rem;">{_formula}</div>' if _formula else ''}
-</div>""", unsafe_allow_html=True)
-
-    with _col_b:
-        for _label, _val in [
-            ("Source","Yahoo Finance via yfinance — fetched live on every run"),
-            ("Type","Adjusted Close prices — corrected for splits & dividends"),
-            ("Frequency","Daily · 252 trading days per year"),
-            ("Lookback","1 year up to full ticker history"),
-            ("Benchmark","SPY for Beta calculations"),
-            ("Discovery","~490 S&amp;P 500 tickers from a public GitHub dataset"),
-        ]:
-            st.markdown(f"""
-<div style="display:flex;gap:0.6rem;padding:0.4rem 0;border-bottom:1px solid #f0ece4;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.08em;
-              text-transform:uppercase;color:#8a8072;min-width:80px;padding-top:0.15rem;">{_label}</div>
-  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:#1a1a18;line-height:1.6;">{_val}</div>
-</div>""", unsafe_allow_html=True)
-
-        st.markdown("<div style='margin-top:0.9rem;'></div>", unsafe_allow_html=True)
-        for _color, _title, _body in [
-            ("#c0392b","Past ≠ Future","Historical returns drive everything. The future may differ."),
-            ("#c0392b","Estimation error","Returns & covariances are noisy, especially with short windows."),
-            ("#c0392b","No trading costs","Fees, spreads, taxes, and market impact are ignored."),
-            ("#c0392b","N constraint is heuristic","True cardinality MVO is NP-hard. We threshold and renormalize."),
-            ("#c0392b","Discovery is sampling","5,000 iterations covers a tiny slice of ~10¹² combinations."),
-        ]:
-            st.markdown(f"""
-<div style="padding:0.4rem 0;border-bottom:1px solid #f0ece4;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.63rem;font-weight:600;
-              color:{_color};margin-bottom:0.1rem;">⚠ {_title}</div>
-  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.79rem;color:#4a4a45;line-height:1.55;">{_body}</div>
-</div>""", unsafe_allow_html=True)
-
-
-
+# ══════════════════════════════════════════════════════════════════════════════
+# DISCOVERY MODE
+# ══════════════════════════════════════════════════════════════════════════════
+if "Discovery" in app_mode:
     # ── Red warning banner ────────────────────────────────────────────────────
     st.markdown("""
-<div style="background:#fdf0ef;border:1.5px solid #c0392b;border-radius:4px;
+    <div style="background:#fdf0ef;border:1.5px solid #c0392b;border-radius:4px;
             padding:0.9rem 1.25rem;margin-bottom:1.5rem;
             display:flex;align-items:flex-start;gap:0.75rem;">
-  <span style="font-size:1.2rem;line-height:1;">⚠</span>
-  <div>
+      <span style="font-size:1.2rem;line-height:1;">⚠</span>
+      <div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;font-weight:600;
                 color:#c0392b;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.3rem;">
       Long Runtime Warning
@@ -951,9 +894,9 @@ with st.expander("ℹ  About QuantFrame", expanded=False):
       Large sample sizes can take <b>10–30+ minutes</b> to complete.
       Estimated runtime is shown below and updates as you adjust settings.
     </div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── Discovery controls ────────────────────────────────────────────────────
     SECTORS = {
@@ -1015,61 +958,61 @@ with st.expander("ℹ  About QuantFrame", expanded=False):
 
     # ── Metric cards ─────────────────────────────────────────────────────────
     st.markdown(f"""
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1rem 0;">
-  <div class="metric-card">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1rem 0;">
+      <div class="metric-card">
     <div class="metric-label">Estimated Runtime</div>
     <div class="metric-value" style="font-size:1.1rem;color:{est_col};">{est_str}</div>
     <div class="metric-sub" style="color:{est_col};margin-top:0.3rem;">{est_msg}</div>
-  </div>
-  <div class="metric-card">
+      </div>
+      <div class="metric-card">
     <div class="metric-label">Universe Size</div>
     <div class="metric-value" style="font-size:1.2rem;">{universe_size} tickers</div>
-  </div>
-  <div class="metric-card">
+      </div>
+      <div class="metric-card">
     <div class="metric-label">Combinations Tested</div>
     <div class="metric-value" style="font-size:1.2rem;">{disc_iterations:,}</div>
-  </div>
-  <div class="metric-card">
+      </div>
+      <div class="metric-card">
     <div class="metric-label">Search Space</div>
     <div class="metric-value" style="font-size:1.2rem;color:#8a8072;">≈10¹²</div>
     <div class="metric-sub">combinatorially vast</div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── Sector Legend ─────────────────────────────────────────────────────────
     with st.expander("📋  Sector Universe Reference", expanded=False):
         st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;
             margin-bottom:1rem;">
-  Tickers in each sector filter. Selecting a sector dramatically reduces runtime
-  by narrowing the search universe from ~490 to ~20–30 stocks.
-</div>""", unsafe_allow_html=True)
+      Tickers in each sector filter. Selecting a sector dramatically reduces runtime
+      by narrowing the search universe from ~490 to ~20–30 stocks.
+    </div>""", unsafe_allow_html=True)
         leg_cols = st.columns(2)
         for i, (sname, tlist) in enumerate([(k, v) for k, v in SECTORS.items() if v is not None]):
             with leg_cols[i % 2]:
                 scolor = SECTOR_COLORS.get(sname, "#8a8072")
                 st.markdown(f"""
-<div style="background:#ffffff;border:1px solid #e0d9ce;border-left:3px solid {scolor};
+    <div style="background:#ffffff;border:1px solid #e0d9ce;border-left:3px solid {scolor};
             border-radius:0 4px 4px 0;padding:0.75rem 1rem;margin-bottom:0.75rem;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;font-weight:600;
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;font-weight:600;
               color:{scolor};letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem;">
     {sname} · {len(tlist)} tickers
-  </div>
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:#8a8072;
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:#8a8072;
               line-height:1.8;word-break:break-word;">
     {"  ·  ".join(tlist)}
-  </div>
-</div>""", unsafe_allow_html=True)
+      </div>
+    </div>""", unsafe_allow_html=True)
 
     if not run_discovery:
         st.markdown("""
-<div style="text-align:center;padding:4rem 2rem;font-family:'IBM Plex Mono',monospace;">
-  <div style="font-size:2rem;color:#e0d9ce;margin-bottom:1rem;">🔍</div>
-  <div style="font-size:0.85rem;color:#8a8072;letter-spacing:0.1em;text-transform:uppercase;">
+    <div style="text-align:center;padding:4rem 2rem;font-family:'IBM Plex Mono',monospace;">
+      <div style="font-size:2rem;color:#e0d9ce;margin-bottom:1rem;">🔍</div>
+      <div style="font-size:0.85rem;color:#8a8072;letter-spacing:0.1em;text-transform:uppercase;">
     Configure settings in the sidebar and press <span style="color:#2d6a4f;">▶ Run Discovery</span>
-  </div>
-</div>""", unsafe_allow_html=True)
+      </div>
+    </div>""", unsafe_allow_html=True)
     else:
         # ── Run discovery ──────────────────────────────────────────────────────
         import random as _random
@@ -1176,10 +1119,10 @@ with st.expander("ℹ  About QuantFrame", expanded=False):
         ]):
             with col:
                 st.markdown(f"""
-<div class="metric-card">
-  <div class="metric-label">{label}</div>
-  <div class="metric-value" style="color:{color};">{val}</div>
-</div>""", unsafe_allow_html=True)
+    <div class="metric-card">
+      <div class="metric-label">{label}</div>
+      <div class="metric-value" style="color:{color};">{val}</div>
+    </div>""", unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -1255,16 +1198,17 @@ with st.expander("ℹ  About QuantFrame", expanded=False):
         st.plotly_chart(fig_disc_tbl, use_container_width=True)
 
         st.markdown(f"""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#8a8072;
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#8a8072;
             padding:0.75rem 1rem;background:#f7f5f0;border:1px solid #e0d9ce;border-radius:4px;margin-top:1rem;">
-  <b style="color:#1a1a18;">Best stocks found:</b> {', '.join(best['stocks'])} &nbsp;·&nbsp;
-  <b style="color:#1a1a18;">Sharpe:</b> {best['sharpe']:.4f} &nbsp;·&nbsp;
-  <b style="color:#1a1a18;">Return:</b> {best['ret']*100:.2f}% &nbsp;·&nbsp;
-  <b style="color:#1a1a18;">Vol:</b> {best['vol']*100:.2f}% &nbsp;·&nbsp;
-  {disc_iterations} iterations over {disc_sector}
-</div>""", unsafe_allow_html=True)
+      <b style="color:#1a1a18;">Best stocks found:</b> {', '.join(best['stocks'])} &nbsp;·&nbsp;
+      <b style="color:#1a1a18;">Sharpe:</b> {best['sharpe']:.4f} &nbsp;·&nbsp;
+      <b style="color:#1a1a18;">Return:</b> {best['ret']*100:.2f}% &nbsp;·&nbsp;
+      <b style="color:#1a1a18;">Vol:</b> {best['vol']*100:.2f}% &nbsp;·&nbsp;
+      {disc_iterations} iterations over {disc_sector}
+    </div>""", unsafe_allow_html=True)
 
     st.stop()
+
 
 # ── PORTFOLIO LAB (existing app) ──────────────────────────────────────────────
 # ── Main Logic ───────────────────────────────────────────────────────────────
@@ -2022,4 +1966,65 @@ Historical returns are not indicative of future performance. Transaction costs a
 """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.caption("QuantFrame · Built with Streamlit + yfinance + SciPy · For educational and research purposes only. Not financial advice.")
+    st.caption("QuantFrame · Built with Streamlit + yfinance + SciPy · Created by Fulton Pace")
+
+    # ── About QuantFrame — collapsed by default, lives at the bottom ──────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    with st.expander("ℹ  About QuantFrame", expanded=False):
+        _col_a, _col_b = st.columns(2)
+        with _col_a:
+            st.markdown("""
+<div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.95rem;font-weight:600;
+            color:#1a1a18;margin-bottom:0.6rem;">What is QuantFrame?</div>
+<div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;color:#4a4a45;line-height:1.8;margin-bottom:1rem;">
+  You give it a list of stocks and how much risk you're willing to take.
+  It finds the <span style="color:#2d6a4f;font-weight:600;">exact allocation</span>
+  that maximizes return for that risk level — then breaks down every metric you'd want to know.
+</div>""", unsafe_allow_html=True)
+            for _color, _title, _body, _formula in [
+                ("#2d6a4f","Mean-Variance Optimization","Finds exact weights that maximize Sharpe ratio via SLSQP. Nobel Prize math (Markowitz, 1952).","max (Rₚ − Rᶠ) / σₚ"),
+                ("#2d6a4f","Efficient Frontier","The curve of every optimal portfolio. Anything below it is suboptimal.",""),
+                ("#b5873a","Utility Function (λ)","Expresses risk tolerance mathematically. Higher λ = more conservative.","max U = μ − (λ/2)σ²"),
+                ("#b5873a","VaR & CVaR","Worst loss on bad 5% of days (VaR) and average loss when those days hit (CVaR). From real data.","CVaR = E[loss | loss > VaR]"),
+                ("#4a7c9e","Rolling Beta","How much your portfolio moves vs S&P 500, recalculated every 60 days.","β = Cov(Rₚ, Rₘ) / Var(Rₘ)"),
+                ("#4a7c9e","Effective N","True diversification count. Equal-weight 8-stock portfolio has N_eff = 8.","N_eff = 1 / Σwᵢ²"),
+            ]:
+                st.markdown(f"""
+<div style="background:#f7f5f0;border-left:3px solid {_color};border-radius:0 3px 3px 0;
+            padding:0.65rem 1rem;margin-bottom:0.5rem;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.67rem;font-weight:600;
+              color:{_color};margin-bottom:0.15rem;">{_title}</div>
+  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.79rem;color:#4a4a45;line-height:1.6;">{_body}</div>
+  {f'<div style="font-family:IBM Plex Mono,monospace;font-size:0.7rem;color:#b5873a;margin-top:0.2rem;">{_formula}</div>' if _formula else ''}
+</div>""", unsafe_allow_html=True)
+
+        with _col_b:
+            for _label, _val in [
+                ("Source","Yahoo Finance via yfinance — fetched live on every run"),
+                ("Type","Adjusted Close prices — corrected for splits & dividends"),
+                ("Frequency","Daily · 252 trading days per year"),
+                ("Lookback","1 year up to full ticker history"),
+                ("Benchmark","SPY for Beta calculations"),
+                ("Discovery","~490 S&P 500 tickers from a public GitHub dataset"),
+            ]:
+                st.markdown(f"""
+<div style="display:flex;gap:0.6rem;padding:0.4rem 0;border-bottom:1px solid #f0ece4;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.08em;
+              text-transform:uppercase;color:#8a8072;min-width:80px;padding-top:0.15rem;">{_label}</div>
+  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:#1a1a18;line-height:1.6;">{_val}</div>
+</div>""", unsafe_allow_html=True)
+
+            st.markdown("<div style='margin-top:0.9rem;'></div>", unsafe_allow_html=True)
+            for _color, _title, _body in [
+                ("#c0392b","Past ≠ Future","Historical returns drive everything. The future may differ."),
+                ("#c0392b","Estimation error","Returns & covariances are noisy, especially with short windows."),
+                ("#c0392b","No trading costs","Fees, spreads, taxes, and market impact are ignored."),
+                ("#c0392b","N constraint is heuristic","True cardinality MVO is NP-hard. We threshold and renormalize."),
+                ("#c0392b","Discovery is sampling","5,000 iterations covers a tiny slice of ~10¹² combinations."),
+            ]:
+                st.markdown(f"""
+<div style="padding:0.4rem 0;border-bottom:1px solid #f0ece4;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.63rem;font-weight:600;
+              color:{_color};margin-bottom:0.1rem;">⚠ {_title}</div>
+  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.79rem;color:#4a4a45;line-height:1.55;">{_body}</div>
+</div>""", unsafe_allow_html=True)
