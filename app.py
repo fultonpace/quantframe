@@ -771,6 +771,44 @@ Historical simulation. CVaR = expected loss beyond VaR threshold.
 Downside-adjusted return ratios.
         """)
 
+    # ── Discovery Mode sidebar (only shown when Discovery tab is active) ──────
+    _disc_mode = st.session_state.get("_app_mode", "Portfolio Lab")
+    if "Discovery" in _disc_mode:
+        st.markdown("---")
+        st.markdown("## Discovery Mode")
+
+        _DISC_SECTORS = [
+            "All S&P 500 (~490 tickers)",
+            "Technology", "Healthcare", "Financials", "Energy",
+            "Consumer Staples", "Industrials", "Consumer Discret",
+        ]
+        _disc_sector = st.selectbox("Sector Filter", _DISC_SECTORS,
+                                    index=_DISC_SECTORS.index(
+                                        st.session_state.get("disc_sector", "All S&P 500 (~490 tickers)")),
+                                    label_visibility="collapsed")
+        st.session_state.disc_sector = _disc_sector
+
+        _disc_port_size = st.slider("Portfolio Size (N stocks)", 5, 20,
+                                    st.session_state.get("disc_port_size", 10), 1)
+        st.session_state.disc_port_size = _disc_port_size
+
+        _disc_iterations = st.slider("Iterations", 10, 5000,
+                                     st.session_state.get("disc_iterations", 50), 10)
+        st.session_state.disc_iterations = _disc_iterations
+
+        _disc_start = st.selectbox("Lookback Start",
+                                   ["2018-01-01","2019-01-01","2020-01-01","2021-01-01"],
+                                   index=["2018-01-01","2019-01-01","2020-01-01","2021-01-01"].index(
+                                       st.session_state.get("disc_start", "2018-01-01")))
+        st.session_state.disc_start = _disc_start
+
+        st.markdown("---")
+        if st.button("🔍  Run Discovery", key="btn_discovery"):
+            st.session_state.run_discovery = True
+        else:
+            if "run_discovery" not in st.session_state:
+                st.session_state.run_discovery = False
+
 # ── Header ─────────────────────────────────────────────────────────────────
 col_title, col_badge = st.columns([5, 1])
 with col_title:
@@ -831,13 +869,298 @@ div[data-testid="stRadio"] > label { display: none !important; }
 
 app_mode = st.radio("Mode", ["  ⬡  Portfolio Lab  ", "  🔍  Discovery Mode  "],
                     horizontal=True, label_visibility="collapsed")
+st.session_state._app_mode = app_mode
+
+app_mode = st.radio("Mode", ["  ⬡  Portfolio Lab  ", "  🔍  Discovery Mode  ", "  ℹ  About  "],
+                    horizontal=True, label_visibility="collapsed")
+st.session_state._app_mode = app_mode
 
 st.markdown('<hr class="divider" style="margin-top:0.75rem;">', unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# DISCOVERY MODE
+# ABOUT PAGE
 # ══════════════════════════════════════════════════════════════════════════════
-if "Discovery" in app_mode:
+if "About" in app_mode:
+    st.markdown("""
+<style>
+.about-section {
+    background: #ffffff;
+    border: 1px solid #e0d9ce;
+    border-radius: 6px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.25rem;
+}
+.about-section-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #8a8072;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e0d9ce;
+}
+.about-lead {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 1.05rem;
+    color: #1a1a18;
+    line-height: 1.75;
+    margin-bottom: 0.75rem;
+}
+.about-body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.88rem;
+    color: #4a4a45;
+    line-height: 1.85;
+}
+.about-highlight {
+    color: #2d6a4f;
+    font-weight: 600;
+}
+.about-gold {
+    color: #b5873a;
+    font-weight: 600;
+}
+.concept-card {
+    background: #f7f5f0;
+    border-left: 3px solid #2d6a4f;
+    border-radius: 0 4px 4px 0;
+    padding: 0.9rem 1.25rem;
+    margin-bottom: 0.75rem;
+}
+.concept-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #2d6a4f;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.3rem;
+}
+.concept-body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.84rem;
+    color: #4a4a45;
+    line-height: 1.7;
+}
+.concept-formula {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: #b5873a;
+    margin-top: 0.3rem;
+}
+.data-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    align-items: flex-start;
+}
+.data-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8a8072;
+    min-width: 110px;
+    padding-top: 0.1rem;
+}
+.data-value {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.84rem;
+    color: #1a1a18;
+    line-height: 1.6;
+}
+.limit-item {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.84rem;
+    color: #4a4a45;
+    line-height: 1.7;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0ece4;
+}
+.limit-item:last-child { border-bottom: none; }
+</style>
+""", unsafe_allow_html=True)
+
+    # ── Hero ──────────────────────────────────────────────────────────────────
+    st.markdown("""
+<div style="padding:2rem 0 1.5rem 0;">
+  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:1.5rem;font-weight:600;
+              color:#1a1a18;margin-bottom:0.5rem;">
+    What is <span style="color:#2d6a4f;">QuantFrame</span>?
+  </div>
+  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:1rem;color:#4a4a45;
+              line-height:1.8;max-width:800px;">
+    QuantFrame is a portfolio intelligence tool. You give it a list of stocks,
+    tell it how much risk you're willing to take, and it tells you exactly
+    <span style="color:#2d6a4f;font-weight:600;">how much of each stock to own</span>
+    to get the best possible return for that level of risk.
+    It also tells you how bad things could get, how correlated your stocks are,
+    and how your portfolio has behaved over time relative to the market.
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    col_a, col_b = st.columns(2)
+
+    with col_a:
+        # ── The Core Idea ──────────────────────────────────────────────────────
+        st.markdown('<div class="about-section">', unsafe_allow_html=True)
+        st.markdown('<div class="about-section-title">The Core Idea</div>', unsafe_allow_html=True)
+        st.markdown("""
+<div class="about-body">
+  Imagine you have $100 to invest across 8 stocks. There are infinite ways to split it —
+  <span class="about-highlight">$12.50 each? $50 in one and spread the rest?</span>
+  Most splits are suboptimal. QuantFrame solves for the <em>exact</em> split that
+  maximizes your reward per unit of risk — a number called the
+  <span class="about-highlight">Sharpe Ratio</span>.
+  <br><br>
+  This idea was invented by Harry Markowitz in 1952 and earned him the Nobel Prize in Economics.
+  The math behind it is called <span class="about-gold">Modern Portfolio Theory (MPT)</span>.
+</div>
+""", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── Models Used ───────────────────────────────────────────────────────
+        st.markdown('<div class="about-section">', unsafe_allow_html=True)
+        st.markdown('<div class="about-section-title">Models & Math</div>', unsafe_allow_html=True)
+
+        concepts = [
+            ("Mean-Variance Optimization",
+             "Finds the portfolio weights that maximize return for a given level of risk. Uses an algorithm called SLSQP — it's like calculus optimization but for many variables at once. Finds the exact mathematical answer, not an approximation.",
+             "max Sharpe = (Rₚ − Rᶠ) / σₚ"),
+            ("Efficient Frontier",
+             "The curve of all 'best possible' portfolios. Any portfolio on this curve is optimal — you can't do better without taking more risk. Portfolios below the curve are leaving money on the table.",
+             ""),
+            ("Arrow-Pratt Utility Function",
+             "A way to mathematically express how much risk you're willing to tolerate. Higher λ means more risk-averse — the optimizer steers you toward safer portfolios.",
+             "max U = μ − (λ/2)σ²"),
+            ("Value at Risk (VaR) & CVaR",
+             "VaR answers: 'On my worst 5% of days, how much do I lose?' CVaR (Expected Shortfall) goes further: 'When those bad days happen, how bad are they on average?' Both computed directly from historical data — no assumptions about the shape of returns.",
+             "CVaR = E[loss | loss > VaR]"),
+            ("Rolling Beta",
+             "Measures how much your portfolio moves relative to the S&P 500. Beta = 1 means you move with the market. Beta = 0.5 means you move half as much. Computed over 60-day rolling windows so you can see how it changes over time.",
+             "β = Cov(Rₚ, Rₘ) / Var(Rₘ)"),
+            ("Effective N",
+             "Measures how many stocks your portfolio is really spread across, accounting for weight concentration. A portfolio with weights [50%, 50%] has Effective N = 2. One with [99%, 1%] has Effective N ≈ 1.",
+             "N_eff = 1 / Σwᵢ²"),
+        ]
+        for title, body, formula in concepts:
+            border_color = "#2d6a4f" if formula else "#b5873a"
+            st.markdown(f"""
+<div style="background:#f7f5f0;border-left:3px solid {border_color};
+            border-radius:0 4px 4px 0;padding:0.9rem 1.25rem;margin-bottom:0.75rem;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;font-weight:600;
+              color:{border_color};letter-spacing:0.06em;margin-bottom:0.3rem;">{title}</div>
+  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;
+              color:#4a4a45;line-height:1.7;">{body}</div>
+  {f'<div style="font-family:IBM Plex Mono,monospace;font-size:0.75rem;color:#b5873a;margin-top:0.35rem;">{formula}</div>' if formula else ''}
+</div>""", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_b:
+        # ── Data ──────────────────────────────────────────────────────────────
+        st.markdown('<div class="about-section">', unsafe_allow_html=True)
+        st.markdown('<div class="about-section-title">Data</div>', unsafe_allow_html=True)
+        st.markdown("""
+<div class="about-body" style="margin-bottom:1rem;">
+  All market data is pulled live from <span class="about-gold">Yahoo Finance</span>
+  via the <code style="background:#f0ece4;padding:0.1rem 0.3rem;border-radius:2px;
+  font-size:0.8rem;">yfinance</code> Python library every time you run the app.
+</div>
+""", unsafe_allow_html=True)
+
+        data_rows = [
+            ("What",       "Daily stock prices for any ticker listed on major US exchanges"),
+            ("Type",       "Adjusted Close prices — corrected for stock splits and dividends so returns are apples-to-apples"),
+            ("Frequency",  "Daily (252 trading days per year)"),
+            ("Lookback",   "You choose: 1 year up to the full history of the stock"),
+            ("Benchmark",  "SPY (SPDR S&P 500 ETF) — used to compute your portfolio's Beta"),
+            ("Caching",    "Data is cached for 1 hour per session to avoid redundant API calls"),
+            ("Discovery",  "S&P 500 constituents list pulled from a public GitHub dataset (~490 tickers after filtering)"),
+            ("Coverage",   "Any ticker Yahoo Finance supports — US stocks, ETFs, and some international listings"),
+        ]
+        for label, value in data_rows:
+            st.markdown(f"""
+<div style="display:flex;gap:1rem;margin-bottom:0.5rem;align-items:flex-start;
+            padding-bottom:0.5rem;border-bottom:1px solid #f0ece4;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;
+              letter-spacing:0.1em;text-transform:uppercase;color:#8a8072;
+              min-width:90px;padding-top:0.1rem;">{label}</div>
+  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;
+              color:#1a1a18;line-height:1.6;">{value}</div>
+</div>""", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── How to Use It ─────────────────────────────────────────────────────
+        st.markdown('<div class="about-section">', unsafe_allow_html=True)
+        st.markdown('<div class="about-section-title">How to Use It</div>', unsafe_allow_html=True)
+
+        steps = [
+            ("1", "#2d6a4f", "Pick your stocks",
+             "Choose a preset universe (Mega-Cap Tech, Diversified Blue-Chip) or type in any tickers you want in the Custom field."),
+            ("2", "#b5873a", "Set your parameters",
+             "Choose how far back to look (lookback period), how concentrated you want the portfolio (max weight), and how many stocks to hold (max holdings N)."),
+            ("3", "#4a7c9e", "Set your risk tolerance",
+             "Choose from NO GUTS → OPTIMAL RISKY using the dropdown. This tells the optimizer where on the efficient frontier to place you."),
+            ("4", "#6b3fa0", "Run Optimization",
+             "Hit the button. The app fetches live data, builds the covariance matrix, and solves for your optimal weights in seconds."),
+            ("5", "#c0392b", "Read the results",
+             "The Efficient Frontier tab shows your portfolio vs alternatives. Risk Analytics shows VaR, drawdowns, and correlations. Rolling Metrics shows how things changed over time."),
+        ]
+        for num, color, title, body in steps:
+            st.markdown(f"""
+<div style="display:flex;gap:0.9rem;margin-bottom:0.85rem;align-items:flex-start;">
+  <div style="width:24px;height:24px;border-radius:50%;background:{color};
+              display:flex;align-items:center;justify-content:center;
+              font-family:'IBM Plex Mono',monospace;font-size:0.7rem;
+              font-weight:700;color:white;flex-shrink:0;margin-top:0.1rem;">{num}</div>
+  <div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;
+                font-weight:600;color:{color};margin-bottom:0.2rem;">{title}</div>
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;
+                color:#4a4a45;line-height:1.65;">{body}</div>
+  </div>
+</div>""", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── Limitations ───────────────────────────────────────────────────────
+        st.markdown('<div class="about-section">', unsafe_allow_html=True)
+        st.markdown('<div class="about-section-title">Honest Limitations</div>', unsafe_allow_html=True)
+
+        limits = [
+            ("Past ≠ Future",
+             "The optimizer uses historical returns and correlations. The future may look different. Results are not a guarantee."),
+            ("Estimation error",
+             "The expected return and covariance estimates are noisy, especially with short lookback windows. More data = better estimates, but older data may be less relevant."),
+            ("No transaction costs",
+             "The model ignores trading fees, bid-ask spreads, taxes, and the market impact of actually executing trades."),
+            ("Cardinality constraint is a heuristic",
+             "The 'Max Holdings N' feature works by solving the full optimization, then keeping only the top-N weights. True N-stock constrained optimization is mathematically intractable (NP-hard) for large universes."),
+            ("Discovery Mode is sampling, not exhaustive",
+             "The S&P 500 has ~10¹² possible 10-stock combinations. Even 5,000 iterations covers a tiny fraction. You're finding a good portfolio, not the globally optimal one."),
+        ]
+        for title, body in limits:
+            st.markdown(f"""
+<div style="padding:0.55rem 0;border-bottom:1px solid #f0ece4;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;
+              color:#c0392b;margin-bottom:0.2rem;">⚠ {title}</div>
+  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;
+              color:#4a4a45;line-height:1.65;">{body}</div>
+</div>""", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── Footer ────────────────────────────────────────────────────────────────
+    st.markdown("""
+<div style="text-align:center;padding:2rem 0;font-family:'IBM Plex Mono',monospace;
+            font-size:0.65rem;color:#b0a898;letter-spacing:0.08em;">
+  QUANTFRAME · CREATED BY <span style="color:#2d6a4f;">FULTON PACE</span> ·
+  <a href="https://github.com/fultonpace/quantframe" target="_blank"
+     style="color:#4a7c9e;text-decoration:none;">OPEN SOURCE ↗</a> ·
+  DATA VIA <span style="color:#b5873a;">YAHOO FINANCE</span>
+</div>
+""", unsafe_allow_html=True)
+
+    st.stop()
 
     # ── Red warning banner ────────────────────────────────────────────────────
     st.markdown("""
@@ -861,8 +1184,6 @@ if "Discovery" in app_mode:
 """, unsafe_allow_html=True)
 
     # ── Discovery controls ────────────────────────────────────────────────────
-    st.markdown('<div class="section-header">Discovery Settings</div>', unsafe_allow_html=True)
-
     SECTORS = {
         "All S&P 500 (~490 tickers)": None,
         "Technology":      ["AAPL","MSFT","NVDA","AVGO","META","GOOGL","AMZN","AMD","QCOM","AMAT","MU","INTC","KLAC","LRCX","ADI","MCHP","SNPS","CDNS","ORCL","IBM","CRM","ADBE","NOW","INTU","PANW","CRWD","FTNT","ANET","HPE","TXN"],
@@ -874,15 +1195,22 @@ if "Discovery" in app_mode:
         "Consumer Discret":["AMZN","TSLA","HD","MCD","NKE","SBUX","TJX","LOW","BKNG","CMG","YUM","DPZ","RCL","CCL","MAR","HLT","EXPE","LVS","MGM","WYNN"],
     }
 
-    col_d1, col_d2, col_d3, col_d4 = st.columns(4)
-    with col_d1:
-        disc_sector = st.selectbox("Sector Filter", list(SECTORS.keys()), index=0)
-    with col_d2:
-        disc_port_size = st.slider("Portfolio Size (N stocks)", 5, 20, 10, 1)
-    with col_d3:
-        disc_iterations = st.slider("Iterations", 10, 5000, 50, 10)
-    with col_d4:
-        disc_start = st.selectbox("Lookback Start", ["2018-01-01","2019-01-01","2020-01-01","2021-01-01"], index=0)
+    SECTOR_COLORS = {
+        "Technology":       "#4a7c9e",
+        "Healthcare":       "#2d6a4f",
+        "Financials":       "#6b3fa0",
+        "Energy":           "#c0392b",
+        "Consumer Staples": "#b5873a",
+        "Industrials":      "#5a7a6a",
+        "Consumer Discret": "#c9a84c",
+    }
+
+    # Read controls from session state (set by sidebar)
+    disc_sector     = st.session_state.get("disc_sector",     "All S&P 500 (~490 tickers)")
+    disc_port_size  = st.session_state.get("disc_port_size",  10)
+    disc_iterations = st.session_state.get("disc_iterations", 50)
+    disc_start      = st.session_state.get("disc_start",      "2018-01-01")
+    run_discovery   = st.session_state.get("run_discovery",   False)
 
     # ── Live time estimate ────────────────────────────────────────────────────
     SECS_PER_ITER = 2.5
@@ -891,47 +1219,29 @@ if "Discovery" in app_mode:
     est_hrs   = est_mins / 60
 
     if est_secs < 60:
-        est_str = f"~{int(est_secs)} seconds"
-        est_col = "#2d6a4f"
-        est_msg = "Quick run ☑"
+        est_str = f"~{int(est_secs)} seconds";  est_col = "#2d6a4f"; est_msg = "Quick run ☑"
     elif est_mins < 3:
-        est_str = f"~{est_mins:.1f} minutes"
-        est_col = "#2d6a4f"
-        est_msg = "Grab a sip of water 💧"
+        est_str = f"~{est_mins:.1f} minutes";   est_col = "#2d6a4f"; est_msg = "Grab a sip of water 💧"
     elif est_mins < 7:
-        est_str = f"~{est_mins:.0f} minutes"
-        est_col = "#b5873a"
-        est_msg = "Go get a coffee ☕"
+        est_str = f"~{est_mins:.0f} minutes";   est_col = "#b5873a"; est_msg = "Go get a coffee ☕"
     elif est_mins < 12:
-        est_str = f"~{est_mins:.0f} minutes"
-        est_col = "#b5873a"
-        est_msg = "Take a walk outside 🚶"
+        est_str = f"~{est_mins:.0f} minutes";   est_col = "#b5873a"; est_msg = "Take a walk outside 🚶"
     elif est_mins < 20:
-        est_str = f"~{est_mins:.0f} minutes"
-        est_col = "#c0392b"
-        est_msg = "Call your mom 📞"
+        est_str = f"~{est_mins:.0f} minutes";   est_col = "#c0392b"; est_msg = "Call your mom 📞"
     elif est_mins < 35:
-        est_str = f"~{est_mins:.0f} minutes"
-        est_col = "#c0392b"
-        est_msg = "Watch an episode of something 📺"
+        est_str = f"~{est_mins:.0f} minutes";   est_col = "#c0392b"; est_msg = "Watch an episode of something 📺"
     elif est_mins < 60:
-        est_str = f"~{est_mins:.0f} minutes"
-        est_col = "#c0392b"
-        est_msg = "Hit the gym 🏋️ — seriously"
+        est_str = f"~{est_mins:.0f} minutes";   est_col = "#c0392b"; est_msg = "Hit the gym 🏋️ — seriously"
     elif est_hrs < 2:
-        est_str = f"~{est_hrs:.1f} hours"
-        est_col = "#c0392b"
-        est_msg = "Take a nap. A real one. 😴"
+        est_str = f"~{est_hrs:.1f} hours";      est_col = "#c0392b"; est_msg = "Take a nap. A real one. 😴"
     elif est_hrs < 3:
-        est_str = f"~{est_hrs:.1f} hours"
-        est_col = "#c0392b"
-        est_msg = "Watch a full movie 🎬"
+        est_str = f"~{est_hrs:.1f} hours";      est_col = "#c0392b"; est_msg = "Watch a full movie 🎬"
     else:
-        est_str = f"~{est_hrs:.1f} hours"
-        est_col = "#c0392b"
-        est_msg = "Read War and Peace 📖"
+        est_str = f"~{est_hrs:.1f} hours";      est_col = "#c0392b"; est_msg = "Read War and Peace 📖"
 
     universe_size = len(SECTORS[disc_sector]) if SECTORS[disc_sector] else 490
+
+    # ── Metric cards ─────────────────────────────────────────────────────────
     st.markdown(f"""
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1rem 0;">
   <div class="metric-card">
@@ -955,9 +1265,7 @@ if "Discovery" in app_mode:
 </div>
 """, unsafe_allow_html=True)
 
-    run_discovery = st.button("🔍  Run Discovery", key="btn_discovery")
-
-    # ── Sector Legend — always visible ────────────────────────────────────────
+    # ── Sector Legend ─────────────────────────────────────────────────────────
     with st.expander("📋  Sector Universe Reference", expanded=False):
         st.markdown("""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;
@@ -965,21 +1273,10 @@ if "Discovery" in app_mode:
   Tickers in each sector filter. Selecting a sector dramatically reduces runtime
   by narrowing the search universe from ~490 to ~20–30 stocks.
 </div>""", unsafe_allow_html=True)
-        SECTOR_COLORS = {
-            "Technology":       "#4a7c9e",
-            "Healthcare":       "#2d6a4f",
-            "Financials":       "#6b3fa0",
-            "Energy":           "#c0392b",
-            "Consumer Staples": "#b5873a",
-            "Industrials":      "#5a7a6a",
-            "Consumer Discret": "#c9a84c",
-        }
         leg_cols = st.columns(2)
-        sector_items_top = [(k, v) for k, v in SECTORS.items() if v is not None]
-        for i, (sname, tlist) in enumerate(sector_items_top):
-            col = leg_cols[i % 2]
-            scolor = SECTOR_COLORS.get(sname, "#8a8072")
-            with col:
+        for i, (sname, tlist) in enumerate([(k, v) for k, v in SECTORS.items() if v is not None]):
+            with leg_cols[i % 2]:
+                scolor = SECTOR_COLORS.get(sname, "#8a8072")
                 st.markdown(f"""
 <div style="background:#ffffff;border:1px solid #e0d9ce;border-left:3px solid {scolor};
             border-radius:0 4px 4px 0;padding:0.75rem 1rem;margin-bottom:0.75rem;">
@@ -998,7 +1295,7 @@ if "Discovery" in app_mode:
 <div style="text-align:center;padding:4rem 2rem;font-family:'IBM Plex Mono',monospace;">
   <div style="font-size:2rem;color:#e0d9ce;margin-bottom:1rem;">🔍</div>
   <div style="font-size:0.85rem;color:#8a8072;letter-spacing:0.1em;text-transform:uppercase;">
-    Configure settings above and press <span style="color:#2d6a4f;">Run Discovery</span>
+    Configure settings in the sidebar and press <span style="color:#2d6a4f;">▶ Run Discovery</span>
   </div>
 </div>""", unsafe_allow_html=True)
     else:
@@ -1088,6 +1385,7 @@ if "Discovery" in app_mode:
             iter_display.metric("Iterations", f"{i+1} / {disc_iterations}")
 
         progress_bar.progress(1.0, text="Discovery complete!")
+        st.session_state.run_discovery = False  # reset so it doesn't re-run on next interaction
 
         if best["stocks"] is None:
             st.error("No valid portfolios found. Try increasing iterations or changing the sector.")
