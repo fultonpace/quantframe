@@ -526,34 +526,38 @@ with st.sidebar:
 
     wt_opt = st.session_state.optimize_weights
     st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.35rem;">
-  <div style="height:2px;border-radius:1px;
-              background:{'#00d4aa' if wt_opt else '#1e1e2e'};
-              transition:background 0.2s;"></div>
-  <div style="height:2px;border-radius:1px;
-              background:{'#1e1e2e' if wt_opt else '#00d4aa'};
-              transition:background 0.2s;"></div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.2rem;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
-              text-align:center;color:{'#00d4aa' if wt_opt else '#3a3a5a'};">
-    {'● ACTIVE' if wt_opt else '○'}</div>
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
-              text-align:center;color:{'#3a3a5a' if wt_opt else '#00d4aa'};">
-    {'○' if wt_opt else '● ACTIVE'}</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.4rem;margin-bottom:0.5rem;">
+  <div style="text-align:center;">
+    <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
+                background:{'#00d4aa' if wt_opt else 'transparent'};
+                box-shadow:{'0 0 6px #00d4aa' if wt_opt else 'none'};
+                transition:all 0.2s;"></div>
+  </div>
+  <div style="text-align:center;">
+    <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
+                background:{'transparent' if wt_opt else '#00d4aa'};
+                box-shadow:{'none' if wt_opt else '0 0 6px #00d4aa'};
+                transition:all 0.2s;"></div>
+  </div>
 </div>""", unsafe_allow_html=True)
 
     if st.session_state.optimize_weights:
         max_weight = 1.0
         st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#3a3a5a;
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#3a3a5a;
             padding:0.3rem 0.6rem;background:#0a0a0f;border:1px solid #1a1a28;
-            border-radius:3px;margin-top:0.25rem;">
+            border-radius:3px;margin-bottom:0.25rem;">
   ◆ Unconstrained — optimizer controls allocation
 </div>""", unsafe_allow_html=True)
         st.slider("Max Single Asset Weight", 0.10, 1.0, 1.0, 0.05,
                   format="%.2f", disabled=True, label_visibility="collapsed")
     else:
+        st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#3a3a5a;
+            padding:0.3rem 0.6rem;background:#0a0a0f;border:1px solid transparent;
+            border-radius:3px;margin-bottom:0.25rem;">
+  &nbsp;
+</div>""", unsafe_allow_html=True)
         max_weight = st.slider("Max Single Asset Weight", 0.10, 1.0, 0.40, 0.05, format="%.2f")
 
     # ── Diversification ───────────────────────────────────────────────────────
@@ -576,19 +580,19 @@ with st.sidebar:
 
     n_opt = st.session_state.optimize_n
     st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.35rem;">
-  <div style="height:2px;border-radius:1px;
-              background:{'#00d4aa' if n_opt else '#1e1e2e'};"></div>
-  <div style="height:2px;border-radius:1px;
-              background:{'#1e1e2e' if n_opt else '#00d4aa'};"></div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.2rem;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
-              text-align:center;color:{'#00d4aa' if n_opt else '#3a3a5a'};">
-    {'● ACTIVE' if n_opt else '○'}</div>
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
-              text-align:center;color:{'#3a3a5a' if n_opt else '#00d4aa'};">
-    {'○' if n_opt else '● ACTIVE'}</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.4rem;margin-bottom:0.5rem;">
+  <div style="text-align:center;">
+    <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
+                background:{'#00d4aa' if n_opt else 'transparent'};
+                box-shadow:{'0 0 6px #00d4aa' if n_opt else 'none'};
+                transition:all 0.2s;"></div>
+  </div>
+  <div style="text-align:center;">
+    <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
+                background:{'transparent' if n_opt else '#00d4aa'};
+                box-shadow:{'none' if n_opt else '0 0 6px #00d4aa'};
+                transition:all 0.2s;"></div>
+  </div>
 </div>""", unsafe_allow_html=True)
 
     st.markdown("""
@@ -601,12 +605,11 @@ with st.sidebar:
 </div>""", unsafe_allow_html=True)
 
     if st.session_state.optimize_n:
-        # Will be resolved after optimization runs — use stored suggestion for now
         sn = st.session_state.suggested_n
         st.markdown(f"""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
-            padding:0.4rem 0.65rem;background:#0d0d14;
-            border-left:2px solid #00d4aa;border-radius:0 3px 3px 0;">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
+            padding:0.3rem 0.65rem;background:#0a0a0f;
+            border:1px solid #1a1a28;border-radius:3px;margin-bottom:0.25rem;">
   <span style="color:#6b6b8a;">Effective N = </span>
   <span style="color:#00d4aa;font-weight:600;">{sn}</span>
   <span style="color:#6b6b8a;"> (auto)</span>
@@ -615,6 +618,12 @@ with st.sidebar:
         st.slider("Max Holdings (N)", min_value=2, max_value=20, value=sn,
                   step=1, disabled=True, label_visibility="collapsed")
     else:
+        st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
+            padding:0.3rem 0.65rem;background:#0a0a0f;
+            border:1px solid transparent;border-radius:3px;margin-bottom:0.25rem;">
+  &nbsp;
+</div>""", unsafe_allow_html=True)
         max_assets = st.slider("Max Holdings (N)", min_value=2, max_value=20,
                                value=st.session_state.max_assets_val, step=1)
         st.session_state.max_assets_val = max_assets
@@ -705,10 +714,17 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
 
     if slider_disabled:
         st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#3a3a5a;
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#3a3a5a;
             padding:0.3rem 0.6rem;background:#0a0a0f;border:1px solid #1a1a28;
             border-radius:3px;margin-top:0.25rem;">
   ◆ λ not applicable for this portfolio
+</div>""", unsafe_allow_html=True)
+    else:
+        st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
+            padding:0.3rem 0.6rem;background:#0a0a0f;border:1px solid transparent;
+            border-radius:3px;margin-top:0.25rem;">
+  &nbsp;
 </div>""", unsafe_allow_html=True)
 
     # Store slider value
