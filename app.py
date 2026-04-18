@@ -495,47 +495,30 @@ with st.sidebar:
         st.session_state.suggested_n    = 8
         st.session_state.max_assets_val = 8
 
-    # Shared styles for pressed/raised toggle
+    # Shared styles for pressed/raised toggle — used for ANALYZE/DISCOVER only
     _P = ("display:block;width:100%;text-align:center;padding:0.45rem 0;"
           "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;"
           "letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;"
           "background:#2d6a4f;color:#f7f5f0;border:1px solid #1a5c3a;"
           "box-shadow:inset 0 3px 6px rgba(0,0,0,0.5),inset 0 1px 2px rgba(0,0,0,0.3);"
-          "transform:translateY(2px);pointer-events:none;")
+          "transform:translateY(2px);margin-bottom:0.25rem;")
     _R = ("display:block;width:100%;text-align:center;padding:0.45rem 0;"
           "font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;"
           "letter-spacing:0.1em;text-transform:uppercase;border-radius:3px;"
           "background:#ffffff;color:#8a8072;border:1px solid #c8bfb2;"
           "box-shadow:0 4px 0 #a8a098,0 1px 3px rgba(0,0,0,0.1);"
-          "transform:translateY(0);pointer-events:none;")
+          "transform:translateY(0);margin-bottom:0.25rem;")
 
-    # Hide all sidebar st.button native rendering, show only our HTML overlay
-    st.markdown("""
-<style>
-[data-testid="stSidebar"] .stButton > button {
-    opacity: 0 !important;
-    position: absolute !important;
-    top: 0; left: 0;
-    width: 100% !important;
-    height: 100% !important;
-    cursor: pointer !important;
-    z-index: 10;
-}
-[data-testid="stSidebar"] .stButton {
-    position: relative !important;
-}
-</style>""", unsafe_allow_html=True)
-
-    # ── Mode switcher ─────────────────────────────────────────────────────────
+    # ── Mode switcher — HTML visual only, st.button hidden below for click ────
     _cur_mode = st.session_state.app_mode_radio
     col_m1, col_m2 = st.columns([1, 1])
     with col_m1:
         st.markdown(f'<div style="{_P if _cur_mode == "analyze" else _R}">ANALYZE</div>', unsafe_allow_html=True)
-        if st.button("ANALYZE", key="btn_mode_analyze"):
+        if st.button("ANALYZE", key="btn_mode_analyze", use_container_width=True):
             st.session_state.app_mode_radio = "analyze"
     with col_m2:
         st.markdown(f'<div style="{_P if _cur_mode == "discover" else _R}">DISCOVER</div>', unsafe_allow_html=True)
-        if st.button("DISCOVER", key="btn_mode_discover"):
+        if st.button("DISCOVER", key="btn_mode_discover", use_container_width=True):
             st.session_state.app_mode_radio = "discover"
     _cur_mode = st.session_state.app_mode_radio
 
@@ -592,14 +575,17 @@ with st.sidebar:
         wt_opt = st.session_state.optimize_weights
         col_w1, col_w2 = st.columns([1, 1])
         with col_w1:
-            st.markdown(f'<div style="{_P if wt_opt else _R}">OPTIMIZE</div>', unsafe_allow_html=True)
-            if st.button("OPTIMIZE", key="btn_wt_opt"):
+            if st.button("OPTIMIZE", key="btn_wt_opt", use_container_width=True):
                 st.session_state.optimize_weights = True
         with col_w2:
-            st.markdown(f'<div style="{_P if not wt_opt else _R}">MANUAL</div>', unsafe_allow_html=True)
-            if st.button("MANUAL", key="btn_wt_manual"):
+            if st.button("MANUAL", key="btn_wt_manual", use_container_width=True):
                 st.session_state.optimize_weights = False
         wt_opt = st.session_state.optimize_weights
+        st.markdown(f"""
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.1rem;margin-bottom:0.4rem;">
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if wt_opt else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if wt_opt else 'none'};"></div></div>
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'transparent' if wt_opt else '#2d6a4f'};box-shadow:{'none' if wt_opt else '0 0 6px #2d6a4f'};"></div></div>
+</div>""", unsafe_allow_html=True)
 
         st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-bottom:0.25rem;background:{'#f0ece4' if wt_opt else 'transparent'};border:1px solid {'#d6cfc4' if wt_opt else 'transparent'};color:{'#8a8072' if wt_opt else 'transparent'};">
@@ -620,14 +606,17 @@ with st.sidebar:
         n_opt = st.session_state.optimize_n
         col_n1, col_n2 = st.columns([1, 1])
         with col_n1:
-            st.markdown(f'<div style="{_P if n_opt else _R}">OPTIMIZE</div>', unsafe_allow_html=True)
-            if st.button("OPTIMIZE", key="btn_optimize_n"):
+            if st.button("OPTIMIZE", key="btn_optimize_n", use_container_width=True):
                 st.session_state.optimize_n = True
         with col_n2:
-            st.markdown(f'<div style="{_P if not n_opt else _R}">MANUAL</div>', unsafe_allow_html=True)
-            if st.button("MANUAL", key="btn_manual_n"):
+            if st.button("MANUAL", key="btn_manual_n", use_container_width=True):
                 st.session_state.optimize_n = False
         n_opt = st.session_state.optimize_n
+        st.markdown(f"""
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.1rem;margin-bottom:0.4rem;">
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if n_opt else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if n_opt else 'none'};"></div></div>
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'transparent' if n_opt else '#2d6a4f'};box-shadow:{'none' if n_opt else '0 0 6px #2d6a4f'};"></div></div>
+</div>""", unsafe_allow_html=True)
         st.markdown("""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;line-height:1.55;margin:0.4rem 0 0.6rem 0;padding:0.5rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;">
   <b style="color:#1a1a18;">OPTIMIZE N</b> sets holdings to the portfolio's
