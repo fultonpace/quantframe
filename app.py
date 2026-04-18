@@ -652,12 +652,12 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
 
     # 5 presets in ascending risk order + Variable option
     RISK_PRESETS = [
-        ("NO GUTS — Min Variance Portfolio",      "minvar",   None,  "#b5873a"),
-        ("STEADY — Low Risk  (λ=10)",             "steady",   10.0,  "#c9a84c"),
-        ("AVERAGE — Moderate  (λ=4)",             "average",  4.0,   "#2d6a4f"),
-        ("HIGH ROLLER — Aggressive  (λ=1.5)",     "roller",   1.5,   "#c9a84c"),
-        ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal",  None,  "#c0392b"),
-        ("VARIABLE — Custom λ",                   "custom",   4.0,   "#1a1a18"),
+        ("NO GUTS — Min Variance Portfolio",      "minvar",   None,  "#4a7c9e"),
+        ("STEADY — Low Risk  (λ=10)",             "steady",   10.0,  "#2d6a4f"),
+        ("AVERAGE — Moderate  (λ=4)",             "average",  4.0,   "#b5873a"),
+        ("HIGH ROLLER — Aggressive  (λ=1.5)",     "roller",   1.5,   "#c0392b"),
+        ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal",  None,  "#6b3fa0"),
+        ("VARIABLE — Custom λ",                   "custom",   4.0,   "#5a7a6a"),
     ]
     PRESET_LABELS = [p[0] for p in RISK_PRESETS]
     key_to_idx    = {p[1]: i for i, p in enumerate(RISK_PRESETS)}
@@ -776,6 +776,16 @@ col_title, col_badge = st.columns([5, 1])
 with col_title:
     st.markdown('<div class="app-title">Quant<span>Frame</span></div>', unsafe_allow_html=True)
     st.markdown('<div class="app-subtitle">Modern Portfolio Theory · Factor Risk · Decision Analytics</div>', unsafe_allow_html=True)
+    st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;
+            color:#b0a898;margin-top:0.35rem;letter-spacing:0.04em;">
+  Created by <span style="color:#2d6a4f;font-weight:500;">Fulton Pace</span>
+  <span style="color:#d6cfc4;margin:0 0.5rem;">·</span>
+  Market data via <span style="color:#b5873a;font-weight:500;">Yahoo Finance</span>
+  <span style="color:#d6cfc4;margin:0 0.5rem;">·</span>
+  <span style="color:#b0a898;">For educational purposes only. Not financial advice.</span>
+</div>
+""", unsafe_allow_html=True)
 with col_badge:
     st.markdown('<br><span class="badge">v1.0</span>', unsafe_allow_html=True)
 
@@ -1014,8 +1024,8 @@ with tab1:
 
     # Portfolio markers — always show Min Var + Optimal Risky, then highlight user's selection
     port_points = [
-        (v_sh, r_sh, "Optimal Risky (Max Sharpe)", "#2d6a4f", "star",    18),
-        (v_mv, r_mv, "Min Variance Portfolio",      "#b5873a", "diamond", 16),
+        (v_sh, r_sh, "Optimal Risky (Max Sharpe)", "#6b3fa0", "star",    18),
+        (v_mv, r_mv, "Min Variance Portfolio",      "#4a7c9e", "diamond", 16),
         (v_eq, r_eq, "Equal Weight",                "#c9a84c", "circle",  12),
     ]
     for v_, r_, name_, color_, sym_, sz_ in port_points:
@@ -1061,9 +1071,9 @@ with tab1:
 
     # Build card list — insert user portfolio if it's not one of the named ones
     card_list = [
-        ("Min Variance",        w_minvol,  r_mv, v_mv, s_mv, "#b5873a"),
+        ("Min Variance",        w_minvol,  r_mv, v_mv, s_mv, "#4a7c9e"),
         ("Equal Weight",        w_eq,      r_eq, v_eq, s_eq, "#c9a84c"),
-        ("Optimal Risky",       w_sharpe,  r_sh, v_sh, s_sh, "#2d6a4f"),
+        ("Optimal Risky",       w_sharpe,  r_sh, v_sh, s_sh, "#6b3fa0"),
     ]
     if is_custom:
         card_list.insert(2, (f"Your Portfolio\n({_preset_lbl})", w_primary, r_ut, v_ut, s_ut, _preset_col))
@@ -1113,8 +1123,8 @@ with tab1:
     fig2 = go.Figure()
     for name, color in [
         ("Your Portfolio", _preset_col),
-        ("Optimal Risky",  "#2d6a4f"),
-        ("Min Variance",   "#b5873a"),
+        ("Optimal Risky",  "#6b3fa0"),
+        ("Min Variance",   "#4a7c9e"),
         ("Equal Wt",       "#c9a84c"),
     ]:
         fig2.add_trace(go.Bar(
@@ -1322,28 +1332,28 @@ with tab3:
                          vertical_spacing=0.06)
 
     fig6.add_trace(go.Scatter(x=cum_port.index,  y=cum_port.values,
-        name="Max Sharpe Portfolio", line=dict(color="#2d6a4f", width=2)), row=1, col=1)
+        name=f"{_preset_lbl} Portfolio", line=dict(color=_preset_col, width=2)), row=1, col=1)
     fig6.add_trace(go.Scatter(x=cum_bench.index, y=cum_bench.values,
         name="SPY", line=dict(color="#8a8072", width=1.5, dash="dash")), row=1, col=1)
 
     fig6.add_trace(go.Scatter(x=roll_beta.index, y=roll_beta["beta"],
-        name="Beta", line=dict(color="#b5873a", width=1.8),
-        fill="tozeroy", fillcolor="rgba(181,135,58,0.1)"), row=2, col=1)
+        name="Beta", line=dict(color="#4a7c9e", width=1.8),
+        fill="tozeroy", fillcolor="rgba(74,124,158,0.1)"), row=2, col=1)
     fig6.add_hline(y=1.0, line_color="#8a8072", line_dash="dot", line_width=1, row=2, col=1)
 
     fig6.add_trace(go.Scatter(x=roll_sharpe.index, y=roll_sharpe.values,
-        name="Sharpe", line=dict(color="#c9a84c", width=1.8),
-        fill="tozeroy", fillcolor="rgba(201,168,76,0.1)"), row=3, col=1)
+        name="Sharpe", line=dict(color="#6b3fa0", width=1.8),
+        fill="tozeroy", fillcolor="rgba(107,63,160,0.08)"), row=3, col=1)
     fig6.add_hline(y=0, line_color="#8a8072", line_dash="dot", line_width=1, row=3, col=1)
 
     fig6.add_trace(go.Scatter(x=roll_vol.index, y=roll_vol.values,
         name="Volatility (%)", line=dict(color="#c0392b", width=1.8),
-        fill="tozeroy", fillcolor="rgba(192,57,43,0.1)"), row=4, col=1)
+        fill="tozeroy", fillcolor="rgba(192,57,43,0.08)"), row=4, col=1)
 
     fig6.update_layout(**{**PLOT_LAYOUT,
         "height": 900,
         "showlegend": True,
-        "title": dict(text="Rolling Factor Analytics · Max Sharpe Portfolio vs SPY",
+        "title": dict(text=f"Rolling Factor Analytics · {_preset_lbl} Portfolio vs SPY",
                       font=dict(size=13, color="#1a1a18")),
     })
     for i in range(1, 5):
@@ -1483,7 +1493,7 @@ with tab4:
             fill_color="#f0ece4",
             line_color="#c8bfb2",
             font=dict(family="IBM Plex Mono", size=11, color=[
-                "#8a8072", _preset_col, "#2d6a4f", "#b5873a", "#c9a84c"
+                "#8a8072", _preset_col, "#6b3fa0", "#4a7c9e", "#c9a84c"
             ]),
             align="center", height=32,
         ),
