@@ -755,7 +755,9 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
         lambda_source    = active_preset[1]
 
     st.markdown("---")
-    run_btn = st.button("▶  Run Optimization")
+    if st.button("▶  Run Optimization"):
+        st.session_state.run_optimization = True
+    run_btn = st.session_state.get("run_optimization", False)
 
     st.markdown("---")
     with st.expander("ℹ Model Reference"):
@@ -871,11 +873,14 @@ div[data-testid="stRadio"] > label { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
+if "app_mode_radio" not in st.session_state:
+    st.session_state.app_mode_radio = "  ⬡  Portfolio Lab  "
+
 app_mode = st.radio("Mode", ["  ⬡  Portfolio Lab  ", "  🔍  Discovery Mode  "],
                     horizontal=True, label_visibility="collapsed",
-                    index=0 if "Discovery" not in st.session_state.get("app_mode","") else 1)
-st.session_state.app_mode    = app_mode
-st.session_state._app_mode   = app_mode
+                    key="app_mode_radio")
+st.session_state.app_mode  = app_mode
+st.session_state._app_mode = app_mode
 
 st.markdown('<hr class="divider" style="margin-top:0.75rem;">', unsafe_allow_html=True)
 
@@ -883,6 +888,7 @@ st.markdown('<hr class="divider" style="margin-top:0.75rem;">', unsafe_allow_htm
 # DISCOVERY MODE
 # ══════════════════════════════════════════════════════════════════════════════
 if "Discovery" in app_mode:
+    st.session_state.run_optimization = False  # reset so switching back shows idle Portfolio Lab
     # ── Red warning banner ────────────────────────────────────────────────────
     st.markdown("""
     <div style="background:#fdf0ef;border:1.5px solid #c0392b;border-radius:4px;
