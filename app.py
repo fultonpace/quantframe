@@ -789,6 +789,342 @@ with col_badge:
 
 st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
+# ── Top-level mode switcher ───────────────────────────────────────────────────
+st.markdown("""
+<style>
+div[data-testid="stRadio"] > div {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0 !important;
+}
+div[data-testid="stRadio"] label {
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    padding: 0.5rem 1.5rem !important;
+    border: 1px solid #e0d9ce !important;
+    border-right: none !important;
+    cursor: pointer !important;
+    color: #8a8072 !important;
+    background: #ffffff !important;
+    transition: all 0.15s !important;
+    margin: 0 !important;
+}
+div[data-testid="stRadio"] label:first-of-type { border-radius: 3px 0 0 3px !important; }
+div[data-testid="stRadio"] label:last-of-type  { border-right: 1px solid #e0d9ce !important; border-radius: 0 3px 3px 0 !important; }
+div[data-testid="stRadio"] label[data-selected="true"],
+div[data-testid="stRadio"] label:has(input:checked) {
+    background: #2d6a4f !important;
+    color: #ffffff !important;
+    border-color: #2d6a4f !important;
+}
+div[data-testid="stRadio"] input { display: none !important; }
+div[data-testid="stRadio"] > label { display: none !important; }
+</style>
+""", unsafe_allow_html=True)
+
+app_mode = st.radio("Mode", ["  ⬡  Portfolio Lab  ", "  🔍  Discovery Mode  "],
+                    horizontal=True, label_visibility="collapsed")
+
+st.markdown('<hr class="divider" style="margin-top:0.75rem;">', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# DISCOVERY MODE
+# ══════════════════════════════════════════════════════════════════════════════
+if "Discovery" in app_mode:
+
+    # ── Red warning banner ────────────────────────────────────────────────────
+    st.markdown("""
+<div style="background:#fdf0ef;border:1.5px solid #c0392b;border-radius:4px;
+            padding:0.9rem 1.25rem;margin-bottom:1.5rem;
+            display:flex;align-items:flex-start;gap:0.75rem;">
+  <span style="font-size:1.2rem;line-height:1;">⚠</span>
+  <div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;font-weight:600;
+                color:#c0392b;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.3rem;">
+      Long Runtime Warning
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#8a3030;line-height:1.6;">
+      Discovery Mode randomly samples stock combinations from the full S&P 500 universe (~490 tickers)
+      and optimizes each one. Each iteration requires a live data fetch + optimization.
+      Large sample sizes can take <b>10–30+ minutes</b> to complete.
+      Estimated runtime is shown below and updates as you adjust settings.
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    # ── Discovery controls ────────────────────────────────────────────────────
+    st.markdown('<div class="section-header">Discovery Settings</div>', unsafe_allow_html=True)
+
+    SECTORS = {
+        "All S&P 500 (~490 tickers)": None,
+        "Technology":      ["AAPL","MSFT","NVDA","AVGO","META","GOOGL","AMZN","AMD","QCOM","AMAT","MU","INTC","KLAC","LRCX","ADI","MCHP","SNPS","CDNS","ORCL","IBM","CRM","ADBE","NOW","INTU","PANW","CRWD","FTNT","ANET","HPE","TXN"],
+        "Healthcare":      ["JNJ","UNH","LLY","ABT","MRK","TMO","DHR","ABBV","BMY","AMGN","GILD","MDT","ISRG","SYK","BSX","ZBH","BDX","EW","REGN","VRTX","BIIB","IQV","A","IDXX","RMD"],
+        "Financials":      ["JPM","BAC","WFC","GS","MS","C","BLK","SCHW","AXP","V","MA","USB","PNC","TFC","COF","MTB","FITB","RF","CFG","HBAN","KEY","WBS","FNB","ZION"],
+        "Energy":          ["XOM","CVX","COP","EOG","SLB","PXD","MPC","PSX","VLO","OXY","KMI","WMB","EQT","DVN","FANG","HAL","BKR","APA","MRO","HES"],
+        "Consumer Staples":["PG","KO","PEP","WMT","COST","MDLZ","CL","KMB","GIS","HSY","MKC","SJM","HRL","CPB","K","CAG","CLX","CHD","SPB","COTY"],
+        "Industrials":     ["HON","GE","MMM","CAT","DE","RTX","LMT","BA","GD","NOC","EMR","ITW","ETN","PH","ROK","CMI","IR","XYL","GNRC","JCI"],
+        "Consumer Discret":["AMZN","TSLA","HD","MCD","NKE","SBUX","TJX","LOW","BKNG","CMG","YUM","DPZ","RCL","CCL","MAR","HLT","EXPE","LVS","MGM","WYNN"],
+    }
+
+    col_d1, col_d2, col_d3, col_d4 = st.columns(4)
+    with col_d1:
+        disc_sector = st.selectbox("Sector Filter", list(SECTORS.keys()), index=0)
+    with col_d2:
+        disc_port_size = st.slider("Portfolio Size (N stocks)", 5, 20, 10, 1)
+    with col_d3:
+        disc_iterations = st.slider("Iterations", 10, 500, 50, 10)
+    with col_d4:
+        disc_start = st.selectbox("Lookback Start", ["2018-01-01","2019-01-01","2020-01-01","2021-01-01"], index=0)
+
+    # ── Live time estimate ────────────────────────────────────────────────────
+    SECS_PER_ITER = 2.5
+    est_secs  = disc_iterations * SECS_PER_ITER
+    est_mins  = est_secs / 60
+    if est_secs < 60:
+        est_str = f"~{int(est_secs)} seconds"
+        est_col = "#2d6a4f"
+    elif est_mins < 5:
+        est_str = f"~{est_mins:.1f} minutes"
+        est_col = "#b5873a"
+    elif est_mins < 15:
+        est_str = f"~{est_mins:.0f} minutes"
+        est_col = "#c0392b"
+    else:
+        est_str = f"~{est_mins:.0f} minutes — go get coffee ☕"
+        est_col = "#c0392b"
+
+    universe_size = len(SECTORS[disc_sector]) if SECTORS[disc_sector] else 490
+    st.markdown(f"""
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1rem 0;">
+  <div class="metric-card">
+    <div class="metric-label">Estimated Runtime</div>
+    <div class="metric-value" style="font-size:1.2rem;color:{est_col};">{est_str}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Universe Size</div>
+    <div class="metric-value" style="font-size:1.2rem;">{universe_size} tickers</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Combinations Tested</div>
+    <div class="metric-value" style="font-size:1.2rem;">{disc_iterations:,}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Search Space</div>
+    <div class="metric-value" style="font-size:1.2rem;color:#8a8072;">≈10¹²</div>
+    <div class="metric-sub">combinatorially vast</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    run_discovery = st.button("🔍  Run Discovery", key="btn_discovery")
+
+    if not run_discovery:
+        st.markdown("""
+<div style="text-align:center;padding:4rem 2rem;font-family:'IBM Plex Mono',monospace;">
+  <div style="font-size:2rem;color:#e0d9ce;margin-bottom:1rem;">🔍</div>
+  <div style="font-size:0.85rem;color:#8a8072;letter-spacing:0.1em;text-transform:uppercase;">
+    Configure settings above and press <span style="color:#2d6a4f;">Run Discovery</span>
+  </div>
+</div>""", unsafe_allow_html=True)
+    else:
+        # ── Run discovery ──────────────────────────────────────────────────────
+        import random as _random
+
+        # Load universe
+        with st.spinner("Loading S&P 500 universe…"):
+            if SECTORS[disc_sector]:
+                universe = SECTORS[disc_sector]
+            else:
+                try:
+                    sp_url = 'https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv'
+                    sp500  = pd.read_csv(sp_url)
+                    universe = [t for t in sp500['Symbol'].tolist() if "." not in t]
+                except:
+                    st.error("Could not load S&P 500 universe. Try a sector filter instead.")
+                    st.stop()
+
+        if len(universe) < disc_port_size:
+            st.error(f"Universe too small ({len(universe)} tickers) for portfolio size {disc_port_size}.")
+            st.stop()
+
+        best = {"sharpe": -np.inf, "stocks": None, "weights": None, "ret": None, "vol": None}
+        history = []
+
+        progress_bar = st.progress(0, text="Starting discovery…")
+        status_col1, status_col2, status_col3 = st.columns(3)
+        best_sharpe_display  = status_col1.empty()
+        best_stocks_display  = status_col2.empty()
+        iter_display         = status_col3.empty()
+
+        rf_disc = 0.0525
+
+        for i in range(disc_iterations):
+            stocks = _random.sample(universe, disc_port_size)
+            try:
+                raw = yf.download(stocks, start=disc_start, end="2024-12-31",
+                                  auto_adjust=True, progress=False)
+                if isinstance(raw.columns, pd.MultiIndex):
+                    data = raw["Close"]
+                else:
+                    data = raw
+                data = data.dropna()
+                if data.shape[0] < 60 or data.shape[1] < 2:
+                    continue
+
+                rets = np.log(data / data.shift(1)).dropna()
+                noa  = rets.shape[1]
+                actual_stocks = list(rets.columns)
+
+                mu_d   = rets.mean().values
+                cov_d  = rets.cov().values
+
+                def _neg_sharpe_d(w):
+                    r = float(w @ mu_d) * 252
+                    v = float(np.sqrt(w @ cov_d @ w)) * np.sqrt(252)
+                    return -(r - rf_disc) / v if v > 0 else 1e6
+
+                w0_d   = np.ones(noa) / noa
+                bounds_d = tuple((0, 1) for _ in range(noa))
+                cons_d   = ({"type": "eq", "fun": lambda x: np.sum(x) - 1},)
+                res_d    = minimize(_neg_sharpe_d, w0_d, method="SLSQP",
+                                    bounds=bounds_d, constraints=cons_d)
+
+                if not res_d.success:
+                    continue
+
+                w_d    = res_d.x / res_d.x.sum()
+                p_ret  = float(w_d @ mu_d) * 252
+                p_vol  = float(np.sqrt(w_d @ cov_d @ w_d)) * np.sqrt(252)
+                sr     = (p_ret - rf_disc) / p_vol if p_vol > 0 else -np.inf
+
+                history.append({"iter": i + 1, "sharpe": sr})
+
+                if sr > best["sharpe"]:
+                    best = {"sharpe": sr, "stocks": actual_stocks,
+                            "weights": w_d, "ret": p_ret, "vol": p_vol}
+
+            except Exception:
+                continue
+
+            pct = (i + 1) / disc_iterations
+            progress_bar.progress(pct, text=f"Iteration {i+1} / {disc_iterations}  ·  Best Sharpe so far: {best['sharpe']:.3f}")
+            best_sharpe_display.metric("Best Sharpe", f"{best['sharpe']:.4f}" if best['sharpe'] > -np.inf else "—")
+            best_stocks_display.metric("Best Combo", ", ".join(best['stocks'][:3]) + "…" if best['stocks'] else "—")
+            iter_display.metric("Iterations", f"{i+1} / {disc_iterations}")
+
+        progress_bar.progress(1.0, text="Discovery complete!")
+
+        if best["stocks"] is None:
+            st.error("No valid portfolios found. Try increasing iterations or changing the sector.")
+            st.stop()
+
+        # ── Results ────────────────────────────────────────────────────────────
+        st.markdown('<div class="section-header">Discovery Results · Best Portfolio Found</div>', unsafe_allow_html=True)
+
+        res_cols = st.columns(5)
+        for col, (label, val, color) in zip(res_cols, [
+            ("Sharpe Ratio",        f"{best['sharpe']:.4f}",          "#2d6a4f"),
+            ("Ann. Return",         f"{best['ret']*100:.2f}%",         "#2d6a4f"),
+            ("Ann. Volatility",     f"{best['vol']*100:.2f}%",         "#1a1a18"),
+            ("Portfolio Size",      f"{len(best['stocks'])} stocks",   "#b5873a"),
+            ("Iterations Run",      f"{disc_iterations}",              "#8a8072"),
+        ]):
+            with col:
+                st.markdown(f"""
+<div class="metric-card">
+  <div class="metric-label">{label}</div>
+  <div class="metric-value" style="color:{color};">{val}</div>
+</div>""", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Weights bar chart
+        df_disc = pd.DataFrame({
+            "Ticker": best["stocks"],
+            "Weight (%)": (best["weights"] * 100).round(2)
+        }).sort_values("Weight (%)", ascending=False)
+
+        fig_disc = go.Figure(go.Bar(
+            x=df_disc["Ticker"], y=df_disc["Weight (%)"],
+            marker_color="#2d6a4f", marker_line_width=0, opacity=0.85,
+        ))
+        fig_disc.update_layout(**{**PLOT_LAYOUT,
+            "height": 320,
+            "yaxis_title": "Weight (%)",
+            "title": dict(text="Optimal Weights · Best Discovered Portfolio",
+                          font=dict(size=12, color="#1a1a18")),
+        })
+        st.plotly_chart(fig_disc, use_container_width=True)
+
+        # Sharpe history line
+        if history:
+            df_hist = pd.DataFrame(history)
+            df_hist["best_so_far"] = df_hist["sharpe"].cummax()
+            fig_hist = go.Figure()
+            fig_hist.add_trace(go.Scatter(
+                x=df_hist["iter"], y=df_hist["sharpe"],
+                mode="markers", marker=dict(size=4, color="#c9a84c", opacity=0.5),
+                name="Each Iteration",
+            ))
+            fig_hist.add_trace(go.Scatter(
+                x=df_hist["iter"], y=df_hist["best_so_far"],
+                mode="lines", line=dict(color="#2d6a4f", width=2),
+                name="Best So Far",
+            ))
+            fig_hist.update_layout(**{**PLOT_LAYOUT,
+                "height": 300,
+                "xaxis_title": "Iteration",
+                "yaxis_title": "Sharpe Ratio",
+                "title": dict(text="Sharpe Ratio Across Iterations",
+                              font=dict(size=12, color="#1a1a18")),
+            })
+            st.plotly_chart(fig_hist, use_container_width=True)
+
+        # Full allocation table
+        st.markdown('<div class="section-header">Optimal Allocation</div>', unsafe_allow_html=True)
+        fig_disc_tbl = go.Figure(go.Table(
+            columnwidth=[80, 100, 100, 100],
+            header=dict(
+                values=["<b>Ticker</b>", "<b>Weight (%)</b>", "<b>Sector Filter</b>", "<b>Start Date</b>"],
+                fill_color="#f0ece4", line_color="#c8bfb2",
+                font=dict(family="IBM Plex Mono", size=11, color="#2d6a4f"),
+                align="center", height=32,
+            ),
+            cells=dict(
+                values=[
+                    df_disc["Ticker"].tolist(),
+                    df_disc["Weight (%)"].tolist(),
+                    [disc_sector] * len(df_disc),
+                    [disc_start] * len(df_disc),
+                ],
+                fill_color="#ffffff",
+                line_color="#e0d9ce",
+                font=dict(family="IBM Plex Mono", size=11, color="#1a1a18"),
+                align="center", height=28,
+            )
+        ))
+        fig_disc_tbl.update_layout(**{**PLOT_LAYOUT,
+            "height": 60 + 28 * len(df_disc) + 32,
+            "margin": dict(l=0, r=0, t=0, b=0)
+        })
+        st.plotly_chart(fig_disc_tbl, use_container_width=True)
+
+        st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#8a8072;
+            padding:0.75rem 1rem;background:#f7f5f0;border:1px solid #e0d9ce;border-radius:4px;margin-top:1rem;">
+  <b style="color:#1a1a18;">Best stocks found:</b> {', '.join(best['stocks'])} &nbsp;·&nbsp;
+  <b style="color:#1a1a18;">Sharpe:</b> {best['sharpe']:.4f} &nbsp;·&nbsp;
+  <b style="color:#1a1a18;">Return:</b> {best['ret']*100:.2f}% &nbsp;·&nbsp;
+  <b style="color:#1a1a18;">Vol:</b> {best['vol']*100:.2f}% &nbsp;·&nbsp;
+  {disc_iterations} iterations over {disc_sector}
+</div>""", unsafe_allow_html=True)
+
+    st.stop()
+
+# ── PORTFOLIO LAB (existing app) ──────────────────────────────────────────────
 # ── Main Logic ───────────────────────────────────────────────────────────────
 if not run_btn:
     st.markdown("""
