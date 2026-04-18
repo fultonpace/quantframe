@@ -510,58 +510,74 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
 </div>
 """, unsafe_allow_html=True)
 
-    # 5 preset buttons in order of ascending risk
+    # 5 presets in ascending risk order
     RISK_PRESETS = [
-        ("NO GUTS",       "Min Variance",         "minvar",   None,  "#7c6af7"),
-        ("STEADY",        "Low Risk  λ=10",        "steady",   10.0,  "#5b8af0"),
-        ("AVERAGE",       "Moderate  λ=4",         "average",  4.0,   "#00d4aa"),
-        ("HIGH ROLLER",   "Aggressive  λ=1.5",     "roller",   1.5,   "#f0c27f"),
-        ("OPTIMAL RISKY", "Tangency / Max Sharpe", "optimal",  None,  "#ff6b6b"),
+        ("NO GUTS — Min Variance Portfolio",      "minvar",   None,  "#7c6af7"),
+        ("STEADY — Low Risk  (λ=10)",             "steady",   10.0,  "#5b8af0"),
+        ("AVERAGE — Moderate  (λ=4)",             "average",  4.0,   "#00d4aa"),
+        ("HIGH ROLLER — Aggressive  (λ=1.5)",     "roller",   1.5,   "#f0c27f"),
+        ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal",  None,  "#ff6b6b"),
     ]
+    PRESET_LABELS = [p[0] for p in RISK_PRESETS]
 
     if "risk_preset" not in st.session_state:
         st.session_state.risk_preset = "average"
 
-    cols_risk = st.columns(5)
-    for col, (label, sublabel, key, lam, color) in zip(cols_risk, RISK_PRESETS):
-        active = st.session_state.risk_preset == key
-        with col:
-            if st.button(
-                label,
-                key=f"risk_btn_{key}",
-                help=sublabel,
-                type="primary" if active else "secondary",
-            ):
-                st.session_state.risk_preset = key
+    # Map key → index for selectbox default
+    key_to_idx = {p[1]: i for i, p in enumerate(RISK_PRESETS)}
+    default_idx = key_to_idx.get(st.session_state.risk_preset, 2)
 
-    # Show active preset description
-    active_preset = next(p for p in RISK_PRESETS if p[2] == st.session_state.risk_preset)
-    risk_lambda   = active_preset[3]
-    risk_color    = active_preset[4]
+    selected_label = st.selectbox(
+        "Risk Profile",
+        PRESET_LABELS,
+        index=default_idx,
+        label_visibility="collapsed",
+    )
+    active_preset = RISK_PRESETS[PRESET_LABELS.index(selected_label)]
+    st.session_state.risk_preset = active_preset[1]
+    risk_lambda = active_preset[2]
+    risk_color  = active_preset[3]
+
+    # Active preset pill
     st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
-            padding:0.5rem 0.75rem;margin-top:0.5rem;
+            padding:0.45rem 0.75rem;margin-top:0.25rem;margin-bottom:0.5rem;
             background:#0d0d14;border-left:2px solid {risk_color};border-radius:0 3px 3px 0;">
-  <span style="color:{risk_color};font-weight:600;">{active_preset[0]}</span>
-  <span style="color:#6b6b8a;"> · {active_preset[1]}</span>
+  <span style="color:{risk_color};font-weight:600;">{active_preset[0].split('—')[0].strip()}</span>
+  <span style="color:#6b6b8a;"> · {active_preset[0].split('—')[1].strip() if '—' in active_preset[0] else ''}</span>
 </div>""", unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    # Custom lambda slider — activates when user moves it (overrides button)
-    custom_lambda = st.slider("Custom λ (risk aversion)", 0.5, 15.0, float(risk_lambda) if risk_lambda else 3.0,
-                               0.5, format="%.1f",
-                               help="Overrides preset buttons. λ=0.5 = max risk, λ=15 = near min variance.")
+    # Custom λ slider — disabled when dropdown preset is used
+    use_custom_lambda = st.toggle("Use custom λ instead", value=False,
+        help="Override the preset with a manual risk aversion value.")
 
-    # Determine effective lambda: if user moved the slider away from preset default, use slider
-    if risk_lambda is not None and abs(custom_lambda - risk_lambda) > 0.01:
+    if use_custom_lambda:
+        custom_lambda = st.slider(
+            "Custom λ (risk aversion)", 0.5, 15.0,
+            float(risk_lambda) if risk_lambda else 4.0,
+            0.5, format="%.1f",
+            help="λ=0.5 = maximum risk, λ=15 = near min variance.",
+        )
         effective_lambda = custom_lambda
         lambda_source    = "custom"
-    elif risk_lambda is None:
-        effective_lambda = None
-        lambda_source    = active_preset[2]
     else:
-        effective_lambda = risk_lambda
-        lambda_source    = active_preset[2]
+        st.slider(
+            "Custom λ (risk aversion)", 0.5, 15.0,
+            float(risk_lambda) if risk_lambda else 4.0,
+            0.5, format="%.1f", disabled=True,
+        )
+        st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#3a3a5a;
+            padding:0.3rem 0.6rem;background:#0a0a0f;border:1px solid #1a1a28;
+            border-radius:3px;margin-top:0.25rem;">
+  ◆ Slider disabled — using preset profile
+</div>""", unsafe_allow_html=True)
+        if risk_lambda is None:
+            effective_lambda = None
+            lambda_source    = active_preset[1]
+        else:
+            effective_lambda = risk_lambda
+            lambda_source    = active_preset[1]
 
     st.markdown("---")
     run_btn = st.button("▶  Run Optimization")
@@ -674,9 +690,9 @@ _date_start = prices.index[0].strftime("%Y-%m-%d")
 _date_end   = prices.index[-1].strftime("%Y-%m-%d")
 _n_obs      = len(returns)
 _active     = [t for t in valid_tickers if w_primary[valid_tickers.index(t)] > 0.001]
-_preset_lbl = active_preset[0]
-_preset_sub = active_preset[1]
-_preset_col = active_preset[4]
+_preset_lbl = active_preset[0].split("—")[0].strip()
+_preset_sub = active_preset[0].split("—")[1].strip() if "—" in active_preset[0] else active_preset[0]
+_preset_col = active_preset[3]
 
 st.markdown(f"""
 <div style="background:#0d0d14;border:1px solid #1e1e2e;border-radius:4px;
