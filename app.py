@@ -304,25 +304,24 @@ html, body, [class*="css"] {
     transform: translateY(2px);
     box-shadow: 0 0px 0 rgba(0,212,170,0.2), 0 1px 4px rgba(0,0,0,0.3);
 }
-/* Primary (Run Optimization) — filled variant */
-.stButton > button[kind="primary"],
-[data-testid="stSidebar"] .stButton > button {
+/* Run Optimization — filled primary */
+[data-testid="stSidebar"] .stButton:last-of-type > button {
     background: var(--accent);
     color: var(--bg);
     border-color: var(--accent);
     box-shadow: 0 4px 0 rgba(0,150,110,0.6), 0 2px 8px rgba(0,212,170,0.2);
 }
-[data-testid="stSidebar"] .stButton > button:hover {
+[data-testid="stSidebar"] .stButton:last-of-type > button:hover {
     background: #00f0c0;
     border-color: #00f0c0;
     color: var(--bg);
     box-shadow: 0 4px 0 rgba(0,170,130,0.6), 0 4px 16px rgba(0,212,170,0.25);
     transform: translateY(-1px);
 }
-[data-testid="stSidebar"] .stButton > button:active {
+[data-testid="stSidebar"] .stButton:last-of-type > button:active {
     background: #00b894;
     transform: translateY(3px);
-    box-shadow: 0 1px 0 rgba(0,100,80,0.5), 0 1px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 0 rgba(0,100,80,0.5);
 }
 /* Toggle */
 [data-testid="stToggle"] { accent-color: var(--accent) !important; }
@@ -510,19 +509,47 @@ with st.sidebar:
     rf_input   = st.number_input("Risk-Free Rate (%)", 0.0, 10.0, RF_RATE * 100, 0.25, format="%.2f")
     rf = rf_input / 100
 
-    # ── Max Weight with OPTIMIZE toggle ──────────────────────────────────────
+    # ── Max Weight Constraint ─────────────────────────────────────────────────
     st.markdown("---")
     st.markdown("## Weight Constraint")
-    optimize_weights = st.toggle("OPTIMIZE (unconstrained)", value=False,
-        help="Let the optimizer freely allocate. Disables the max weight slider.")
-    if optimize_weights:
+
+    if "optimize_weights" not in st.session_state:
+        st.session_state.optimize_weights = False
+
+    col_w1, col_w2 = st.columns([1, 1])
+    with col_w1:
+        if st.button("OPTIMIZE", key="btn_wt_opt"):
+            st.session_state.optimize_weights = True
+    with col_w2:
+        if st.button("MANUAL", key="btn_wt_manual"):
+            st.session_state.optimize_weights = False
+
+    wt_opt = st.session_state.optimize_weights
+    st.markdown(f"""
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.35rem;">
+  <div style="height:2px;border-radius:1px;
+              background:{'#00d4aa' if wt_opt else '#1e1e2e'};
+              transition:background 0.2s;"></div>
+  <div style="height:2px;border-radius:1px;
+              background:{'#1e1e2e' if wt_opt else '#00d4aa'};
+              transition:background 0.2s;"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.2rem;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+              text-align:center;color:{'#00d4aa' if wt_opt else '#3a3a5a'};">
+    {'● ACTIVE' if wt_opt else '○'}</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+              text-align:center;color:{'#3a3a5a' if wt_opt else '#00d4aa'};">
+    {'○' if wt_opt else '● ACTIVE'}</div>
+</div>""", unsafe_allow_html=True)
+
+    if st.session_state.optimize_weights:
         max_weight = 1.0
         st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
-            color:#6b6b8a;padding:0.4rem 0.6rem;
-            background:#0d0d14;border:1px solid #1e1e2e;border-radius:3px;
-            margin-top:0.25rem;">
-  ◆ Slider disabled — optimizer controls allocation
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#3a3a5a;
+            padding:0.3rem 0.6rem;background:#0a0a0f;border:1px solid #1a1a28;
+            border-radius:3px;margin-top:0.25rem;">
+  ◆ Unconstrained — optimizer controls allocation
 </div>""", unsafe_allow_html=True)
         st.slider("Max Single Asset Weight", 0.10, 1.0, 1.0, 0.05,
                   format="%.2f", disabled=True, label_visibility="collapsed")
@@ -541,11 +568,28 @@ with st.sidebar:
 
     col_n1, col_n2 = st.columns([1, 1])
     with col_n1:
-        if st.button("⬡ OPTIMIZE N", key="btn_optimize_n"):
+        if st.button("OPTIMIZE", key="btn_optimize_n"):
             st.session_state.optimize_n = True
     with col_n2:
         if st.button("MANUAL", key="btn_manual_n"):
             st.session_state.optimize_n = False
+
+    n_opt = st.session_state.optimize_n
+    st.markdown(f"""
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.35rem;">
+  <div style="height:2px;border-radius:1px;
+              background:{'#00d4aa' if n_opt else '#1e1e2e'};"></div>
+  <div style="height:2px;border-radius:1px;
+              background:{'#1e1e2e' if n_opt else '#00d4aa'};"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.2rem;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+              text-align:center;color:{'#00d4aa' if n_opt else '#3a3a5a'};">
+    {'● ACTIVE' if n_opt else '○'}</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+              text-align:center;color:{'#3a3a5a' if n_opt else '#00d4aa'};">
+    {'○' if n_opt else '● ACTIVE'}</div>
+</div>""", unsafe_allow_html=True)
 
     st.markdown("""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#6b6b8a;
