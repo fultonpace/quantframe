@@ -269,24 +269,63 @@ html, body, [class*="css"] {
 [data-testid="stSlider"] [data-testid="stMarkdownContainer"] p {
     color: var(--accent) !important;
 }
+/* ── BUTTONS — premium press aesthetic ────────────────────────────────── */
 .stButton > button {
-    background: var(--accent);
-    color: var(--bg);
+    background: transparent;
+    color: var(--accent);
     font-family: var(--mono);
     font-weight: 600;
-    font-size: 0.78rem;
-    letter-spacing: 0.1em;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    border: none;
+    border: 1px solid var(--accent);
     border-radius: 3px;
-    padding: 0.6rem 1.5rem;
-    transition: all 0.2s;
+    padding: 0.55rem 1.25rem;
     width: 100%;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.15s ease, color 0.15s ease,
+                transform 0.1s ease, box-shadow 0.1s ease,
+                border-color 0.15s ease;
+    box-shadow: 0 3px 0 rgba(0,212,170,0.35), 0 1px 6px rgba(0,0,0,0.4);
 }
 .stButton > button:hover {
-    background: #00f0c0;
+    background: rgba(0,212,170,0.08);
+    border-color: #00f0c0;
+    color: #00f0c0;
+    box-shadow: 0 3px 0 rgba(0,240,192,0.4), 0 2px 12px rgba(0,212,170,0.15);
     transform: translateY(-1px);
 }
+.stButton > button:active,
+.stButton > button:focus:not(:focus-visible) {
+    background: rgba(0,212,170,0.18);
+    color: #00d4aa;
+    border-color: var(--accent);
+    transform: translateY(2px);
+    box-shadow: 0 0px 0 rgba(0,212,170,0.2), 0 1px 4px rgba(0,0,0,0.3);
+}
+/* Primary (Run Optimization) — filled variant */
+.stButton > button[kind="primary"],
+[data-testid="stSidebar"] .stButton > button {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    box-shadow: 0 4px 0 rgba(0,150,110,0.6), 0 2px 8px rgba(0,212,170,0.2);
+}
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: #00f0c0;
+    border-color: #00f0c0;
+    color: var(--bg);
+    box-shadow: 0 4px 0 rgba(0,170,130,0.6), 0 4px 16px rgba(0,212,170,0.25);
+    transform: translateY(-1px);
+}
+[data-testid="stSidebar"] .stButton > button:active {
+    background: #00b894;
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 rgba(0,100,80,0.5), 0 1px 4px rgba(0,0,0,0.3);
+}
+/* Toggle */
+[data-testid="stToggle"] { accent-color: var(--accent) !important; }
 [data-testid="stExpander"] {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -494,7 +533,47 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("## Diversification")
     st.caption("Max assets with nonzero weight in optimal portfolio")
-    max_assets = st.slider("Max Holdings (N)", min_value=2, max_value=20, value=8, step=1)
+
+    if "optimize_n" not in st.session_state:
+        st.session_state.optimize_n       = False
+        st.session_state.suggested_n      = 8
+        st.session_state.max_assets_val   = 8
+
+    col_n1, col_n2 = st.columns([1, 1])
+    with col_n1:
+        if st.button("⬡ OPTIMIZE N", key="btn_optimize_n"):
+            st.session_state.optimize_n = True
+    with col_n2:
+        if st.button("MANUAL", key="btn_manual_n"):
+            st.session_state.optimize_n = False
+
+    st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#6b6b8a;
+            line-height:1.55;margin:0.4rem 0 0.6rem 0;padding:0.5rem 0.65rem;
+            background:#0a0a0f;border:1px solid #1a1a28;border-radius:3px;">
+  <b style="color:#e2e2f0;">OPTIMIZE N</b> sets holdings to the portfolio's
+  <b style="color:#00d4aa;">effective N</b> = 1/Σwᵢ² — the number of
+  assets the optimizer naturally concentrates into.
+</div>""", unsafe_allow_html=True)
+
+    if st.session_state.optimize_n:
+        # Will be resolved after optimization runs — use stored suggestion for now
+        sn = st.session_state.suggested_n
+        st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
+            padding:0.4rem 0.65rem;background:#0d0d14;
+            border-left:2px solid #00d4aa;border-radius:0 3px 3px 0;">
+  <span style="color:#6b6b8a;">Effective N = </span>
+  <span style="color:#00d4aa;font-weight:600;">{sn}</span>
+  <span style="color:#6b6b8a;"> (auto)</span>
+</div>""", unsafe_allow_html=True)
+        max_assets = sn
+        st.slider("Max Holdings (N)", min_value=2, max_value=20, value=sn,
+                  step=1, disabled=True, label_visibility="collapsed")
+    else:
+        max_assets = st.slider("Max Holdings (N)", min_value=2, max_value=20,
+                               value=st.session_state.max_assets_val, step=1)
+        st.session_state.max_assets_val = max_assets
 
     # ── Risk Tolerance ────────────────────────────────────────────────────────
     st.markdown("---")
@@ -677,6 +756,21 @@ with st.spinner("Running optimization…"):
         return w / w.sum()
 
     # ── Max Sharpe (Optimal Risky / Tangency) ─────────────────────────────────
+    # Run UNCONSTRAINED first to compute Effective N
+    bounds_free   = tuple((0.0, 1.0) for _ in range(n))
+    res_sharpe_uc = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
+                             method="SLSQP", bounds=bounds_free, constraints=constraints)
+    w_sharpe_uc   = res_sharpe_uc.x / res_sharpe_uc.x.sum()
+
+    # Effective N = inverse Herfindahl index
+    n_eff = int(round(1.0 / float(np.sum(w_sharpe_uc ** 2))))
+    n_eff = max(2, min(n_eff, n))
+    st.session_state.suggested_n = n_eff
+
+    # If OPTIMIZE N mode, override n_keep with effective N
+    if st.session_state.get("optimize_n", False):
+        n_keep = n_eff
+
     res_sharpe    = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
                              method="SLSQP", bounds=bounds, constraints=constraints)
     w_sharpe      = _apply_cardinality(res_sharpe.x / res_sharpe.x.sum(), n_keep)
