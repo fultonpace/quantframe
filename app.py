@@ -491,27 +491,37 @@ with st.sidebar:
         st.session_state.app_mode_radio = "analyze"
 
     # ── Mode switcher ─────────────────────────────────────────────────────────
-    _cur_mode = st.session_state.get("app_mode_radio", "analyze")
+    if "app_mode_radio" not in st.session_state:
+        st.session_state.app_mode_radio = "analyze"
+
+    _cur_mode = st.session_state.app_mode_radio
+
+    _a_pressed = _cur_mode == "analyze"
+    _d_pressed = _cur_mode == "discover"
 
     st.markdown(f"""
 <style>
-[data-testid="stSidebar"] [data-testid="stButton"]:has(button[key="btn_mode_analyze"]) button,
-[data-testid="stSidebar"] [data-testid="stButton"]:has(button[key="btn_mode_discover"]) button {{
-    width:100%; border-radius:3px; font-family:'IBM Plex Mono',monospace;
-    font-size:0.68rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
-    padding:0.5rem 0; transition:none;
+[data-testid="stSidebar"] button[key="btn_mode_analyze"] {{
+    background: {'#2d6a4f' if _a_pressed else '#ffffff'} !important;
+    color: {'#ffffff' if _a_pressed else '#8a8072'} !important;
+    border: 1px solid {'#1e5a3f' if _a_pressed else '#c8bfb2'} !important;
+    box-shadow: {'inset 0 4px 8px rgba(0,0,0,0.45), inset 0 1px 3px rgba(0,0,0,0.3)' if _a_pressed else '0 4px 0 #9a9088, 0 1px 3px rgba(0,0,0,0.08)'} !important;
+    transform: {'translateY(2px)' if _a_pressed else 'translateY(0)'} !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 0.68rem !important; font-weight: 600 !important;
+    letter-spacing: 0.1em !important; text-transform: uppercase !important;
+    width: 100% !important; border-radius: 3px !important;
 }}
-[data-testid="stSidebar"] [data-testid="stButton"]:has(button[key="btn_mode_analyze"]) button {{
-    background:{'#2d6a4f' if _cur_mode == 'analyze' else '#f7f5f0'} !important;
-    color:{'#f7f5f0' if _cur_mode == 'analyze' else '#8a8072'} !important;
-    border:1px solid {'#1e5a3f' if _cur_mode == 'analyze' else '#c8bfb2'} !important;
-    box-shadow:{'inset 0 3px 5px rgba(0,0,0,0.4)' if _cur_mode == 'analyze' else '0 3px 0 #b0a898'} !important;
-}}
-[data-testid="stSidebar"] [data-testid="stButton"]:has(button[key="btn_mode_discover"]) button {{
-    background:{'#2d6a4f' if _cur_mode == 'discover' else '#f7f5f0'} !important;
-    color:{'#f7f5f0' if _cur_mode == 'discover' else '#8a8072'} !important;
-    border:1px solid {'#1e5a3f' if _cur_mode == 'discover' else '#c8bfb2'} !important;
-    box-shadow:{'inset 0 3px 5px rgba(0,0,0,0.4)' if _cur_mode == 'discover' else '0 3px 0 #b0a898'} !important;
+[data-testid="stSidebar"] button[key="btn_mode_discover"] {{
+    background: {'#2d6a4f' if _d_pressed else '#ffffff'} !important;
+    color: {'#ffffff' if _d_pressed else '#8a8072'} !important;
+    border: 1px solid {'#1e5a3f' if _d_pressed else '#c8bfb2'} !important;
+    box-shadow: {'inset 0 4px 8px rgba(0,0,0,0.45), inset 0 1px 3px rgba(0,0,0,0.3)' if _d_pressed else '0 4px 0 #9a9088, 0 1px 3px rgba(0,0,0,0.08)'} !important;
+    transform: {'translateY(2px)' if _d_pressed else 'translateY(0)'} !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 0.68rem !important; font-weight: 600 !important;
+    letter-spacing: 0.1em !important; text-transform: uppercase !important;
+    width: 100% !important; border-radius: 3px !important;
 }}
 </style>""", unsafe_allow_html=True)
 
@@ -525,7 +535,7 @@ with st.sidebar:
             st.session_state.app_mode_radio = "discover"
             st.rerun()
 
-    _cur_mode = st.session_state.get("app_mode_radio", "analyze")
+    _cur_mode = st.session_state.app_mode_radio
 
     app_mode = "  🔍  Discovery  " if _cur_mode == "discover" else "  ⬡  Lab  "
     st.session_state.app_mode  = app_mode
