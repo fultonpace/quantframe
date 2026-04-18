@@ -269,16 +269,16 @@ html, body, [class*="css"] {
 [data-testid="stSlider"] [data-testid="stMarkdownContainer"] p {
     color: var(--accent) !important;
 }
-/* ── BUTTONS — premium press aesthetic ────────────────────────────────── */
+/* ── BUTTONS — default inactive (beige) ───────────────────────────────── */
 .stButton > button {
-    background: var(--bg);
-    color: var(--accent);
+    background: #f7f5f0;
+    color: #8a8072;
     font-family: var(--mono);
     font-weight: 600;
     font-size: 0.72rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    border: 1px solid var(--accent);
+    border: 1px solid #c8bfb2;
     border-radius: 3px;
     padding: 0.55rem 1.25rem;
     width: 100%;
@@ -287,24 +287,24 @@ html, body, [class*="css"] {
     transition: background 0.15s ease, color 0.15s ease,
                 transform 0.1s ease, box-shadow 0.1s ease,
                 border-color 0.15s ease;
-    box-shadow: 0 3px 0 rgba(45,106,79,0.35), 0 1px 6px rgba(0,0,0,0.4);
+    box-shadow: 0 3px 0 #b0a898, 0 1px 4px rgba(0,0,0,0.08);
 }
 .stButton > button:hover {
-    background: rgba(45,106,79,0.08);
-    border-color: #1e8f62;
-    color: #1e8f62;
-    box-shadow: 0 3px 0 rgba(30,143,98,0.4), 0 2px 12px rgba(45,106,79,0.15);
+    background: #f0ece4;
+    border-color: #a8a098;
+    color: #4a4a45;
+    box-shadow: 0 3px 0 #a8a098, 0 2px 8px rgba(0,0,0,0.08);
     transform: translateY(-1px);
 }
 .stButton > button:active,
 .stButton > button:focus:not(:focus-visible) {
-    background: rgba(45,106,79,0.18);
-    color: #2d6a4f;
-    border-color: var(--accent);
+    background: #e8e0d4;
+    color: #4a4a45;
+    border-color: #b0a898;
     transform: translateY(2px);
-    box-shadow: 0 0px 0 rgba(45,106,79,0.2), 0 1px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 0px 0 #a8a098;
 }
-/* Run Optimization — filled primary */
+/* Run Optimization + Run Discovery — filled primary green */
 [data-testid="stSidebar"] .stButton:last-of-type > button {
     background: var(--accent);
     color: var(--bg);
@@ -496,6 +496,15 @@ with st.sidebar:
         st.session_state.max_assets_val = 8
 
     _cur_mode = st.session_state.app_mode_radio
+    _analyze_active = _cur_mode == "analyze"
+    st.markdown(f"""<style>
+[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"]:nth-of-type(1) div[data-testid="stColumn"]:nth-child({'1' if _analyze_active else '2'}) button {{
+    background: #2d6a4f !important; color: #f7f5f0 !important;
+    border-color: #1a5c3a !important;
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.4) !important;
+    transform: translateY(2px) !important;
+}}
+</style>""", unsafe_allow_html=True)
     col_m1, col_m2 = st.columns([1, 1])
     with col_m1:
         if st.button("ANALYZE", key="btn_mode_analyze", use_container_width=True):
@@ -561,6 +570,14 @@ with st.sidebar:
         st.markdown("## Weight Constraint")
 
         wt_opt = st.session_state.optimize_weights
+        st.markdown(f"""<style>
+[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"]:nth-of-type(2) div[data-testid="stColumn"]:nth-child({'1' if wt_opt else '2'}) button {{
+    background: #2d6a4f !important; color: #f7f5f0 !important;
+    border-color: #1a5c3a !important;
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.4) !important;
+    transform: translateY(2px) !important;
+}}
+</style>""", unsafe_allow_html=True)
         col_w1, col_w2 = st.columns([1, 1])
         with col_w1:
             if st.button("OPTIMIZE", key="btn_wt_opt", use_container_width=True):
@@ -592,6 +609,14 @@ with st.sidebar:
         st.caption("Max assets with nonzero weight in optimal portfolio")
 
         n_opt = st.session_state.optimize_n
+        st.markdown(f"""<style>
+[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"]:nth-of-type(3) div[data-testid="stColumn"]:nth-child({'1' if n_opt else '2'}) button {{
+    background: #2d6a4f !important; color: #f7f5f0 !important;
+    border-color: #1a5c3a !important;
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.4) !important;
+    transform: translateY(2px) !important;
+}}
+</style>""", unsafe_allow_html=True)
         col_n1, col_n2 = st.columns([1, 1])
         with col_n1:
             if st.button("OPTIMIZE", key="btn_optimize_n", use_container_width=True):
