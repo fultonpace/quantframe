@@ -271,7 +271,7 @@ html, body, [class*="css"] {
 }
 /* ── BUTTONS — premium press aesthetic ────────────────────────────────── */
 .stButton > button {
-    background: transparent;
+    background: var(--bg);
     color: var(--accent);
     font-family: var(--mono);
     font-weight: 600;
