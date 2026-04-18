@@ -1037,13 +1037,7 @@ if "Discovery" in app_mode:
             _combo_str = "vast"; _cov_str = "&lt;0.01%"
 
         _disc_top.markdown(
-            '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:#8a3030;'
-            'background:#fdf0ef;border:1px solid #e8c4c0;border-radius:4px;'
-            'padding:0.65rem 1rem;margin-bottom:1rem;">'
-            '&#9888;&nbsp;&nbsp;<b>Warning:</b> larger runs can take 30+ minutes. '
-            'Check estimated run time before executing.'
-            '</div>'
-            '<div style="max-width:640px;margin:0 auto 1.5rem auto;font-family:\'IBM Plex Mono\',monospace;'
+            '<div style="max-width:640px;margin:0 auto 1rem auto;font-family:\'IBM Plex Mono\',monospace;'
             'background:#ffffff;border:1px solid #e0d9ce;border-radius:6px;padding:2rem 2.25rem;">'
             '<div style="font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:#8a8072;margin-bottom:0.3rem;">Ready to search</div>'
             '<div style="font-size:1rem;font-weight:600;color:#1a1a18;margin-bottom:1.25rem;">Stochastic Portfolio Search</div>'
@@ -1060,7 +1054,13 @@ if "Discovery" in app_mode:
             f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Coverage</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_cov_str}</div></div>'
             f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Iterations</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{disc_iterations:,}</div></div>'
             f'<div><div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.2rem;">Universe</div><div style="font-size:0.85rem;font-weight:600;color:#1a1a18;">{_univ_size} tickers</div></div>'
-            '</div></div>',
+            '</div></div>'
+            '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:#8a3030;'
+            'background:#fdf0ef;border:1px solid #e8c4c0;border-radius:4px;'
+            'padding:0.65rem 1rem;margin-top:0.75rem;">'
+            '&#9888;&nbsp;&nbsp;<b>Warning:</b> larger runs can take 30+ minutes. '
+            'Check estimated run time before executing.'
+            '</div>',
             unsafe_allow_html=True)
     else:
         # ── Run discovery ──────────────────────────────────────────────────────
