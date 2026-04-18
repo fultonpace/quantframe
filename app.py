@@ -19,7 +19,7 @@ warnings.filterwarnings("ignore")
 # ── Page Config ─────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="QuantFrame | Portfolio Intelligence",
-    page_icon="⬡",
+    page_icon="logo.svg",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -484,175 +484,135 @@ with st.sidebar:
     st.markdown("## ⬡ QuantFrame")
     st.markdown('<p class="app-subtitle">Portfolio Intelligence</p>', unsafe_allow_html=True)
 
-    # Mode stored in session state so sidebar + main area stay in sync
     if "app_mode" not in st.session_state:
         st.session_state.app_mode = "Portfolio Lab"
 
+    _sidebar_mode = st.session_state.get("app_mode_radio", "  ⬡  Portfolio Lab  ")
+    _is_disc_sidebar = "Discovery" in _sidebar_mode
+
     st.markdown("---")
 
-    st.markdown("## Universe")
-    preset = st.selectbox("Asset Universe", list(PRESET_UNIVERSES.keys()), index=0, label_visibility="collapsed")
+    if not _is_disc_sidebar:
+        # ══════════════════════════════════════════════════════════════════════
+        # PORTFOLIO LAB SIDEBAR
+        # ══════════════════════════════════════════════════════════════════════
 
-    if preset == "Custom":
-        custom_raw = st.text_input("Enter tickers (comma-separated)", "AAPL, MSFT, GOOGL, AMZN")
-        tickers = [t.strip().upper() for t in custom_raw.split(",") if t.strip()]
-        n_typed = len(tickers)
-        if n_typed > 20:
-            hint_color  = "#b5873a"
-            hint_icon   = "⚠"
-            hint_text   = f"{n_typed} tickers · Large universes may slow optimization"
+        st.markdown("## Universe")
+        preset = st.selectbox("Asset Universe", list(PRESET_UNIVERSES.keys()), index=0, label_visibility="collapsed")
+
+        if preset == "Custom":
+            custom_raw = st.text_input("Enter tickers (comma-separated)", "AAPL, MSFT, GOOGL, AMZN")
+            tickers = [t.strip().upper() for t in custom_raw.split(",") if t.strip()]
+            n_typed = len(tickers)
+            if n_typed > 20:
+                hint_color = "#b5873a"; hint_icon = "⚠"
+                hint_text  = f"{n_typed} tickers · Large universes may slow optimization"
+            else:
+                hint_color = "#8a8072"; hint_icon = "·"
+                hint_text  = f"{n_typed} ticker{'s' if n_typed != 1 else ''} · Recommended: 5–20 · No hard limit"
+            st.markdown(f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:{hint_color};margin-top:0.2rem;letter-spacing:0.04em;">{hint_icon} {hint_text}</div>', unsafe_allow_html=True)
         else:
-            hint_color  = "#8a8072"
-            hint_icon   = "·"
-            hint_text   = f"{n_typed} ticker{'s' if n_typed != 1 else ''} · Recommended: 5–20 · No hard limit"
-        st.markdown(f"""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
-            color:{hint_color};margin-top:0.2rem;letter-spacing:0.04em;">
-  {hint_icon} {hint_text}
-</div>""", unsafe_allow_html=True)
-    else:
-        tickers = PRESET_UNIVERSES[preset]
-        st.caption(f"**Assets:** {', '.join(tickers)}")
+            tickers = PRESET_UNIVERSES[preset]
+            st.caption(f"**Assets:** {', '.join(tickers)}")
 
-    st.markdown("---")
-    st.markdown("## Parameters")
+        st.markdown("---")
+        st.markdown("## Parameters")
 
-    period_map = {
-        "1 Year": "1y", "2 Years": "2y", "3 Years": "3y",
-        "5 Years": "5y", "10 Years": "10y", "15 Years": "15y", "Max": "max"
-    }
-    period_label = st.select_slider("Lookback Period", list(period_map.keys()), value="2 Years")
-    period = period_map[period_label]
+        period_map = {
+            "1 Year": "1y", "2 Years": "2y", "3 Years": "3y",
+            "5 Years": "5y", "10 Years": "10y", "15 Years": "15y", "Max": "max"
+        }
+        period_label = st.select_slider("Lookback Period", list(period_map.keys()), value="2 Years")
+        period = period_map[period_label]
 
-    confidence = st.slider("VaR / CVaR Confidence", 0.90, 0.99, 0.95, 0.01, format="%.2f")
-    rf_input   = st.number_input("Risk-Free Rate (%)", 0.0, 10.0, RF_RATE * 100, 0.25, format="%.2f")
-    rf = rf_input / 100
+        confidence = st.slider("VaR / CVaR Confidence", 0.90, 0.99, 0.95, 0.01, format="%.2f")
+        rf_input   = st.number_input("Risk-Free Rate (%)", 0.0, 10.0, RF_RATE * 100, 0.25, format="%.2f")
+        rf = rf_input / 100
 
-    # ── Max Weight Constraint ─────────────────────────────────────────────────
-    st.markdown("---")
-    st.markdown("## Weight Constraint")
+        # ── Weight Constraint ─────────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("## Weight Constraint")
 
-    if "optimize_weights" not in st.session_state:
-        st.session_state.optimize_weights = False
-
-    col_w1, col_w2 = st.columns([1, 1])
-    with col_w1:
-        if st.button("OPTIMIZE", key="btn_wt_opt"):
-            st.session_state.optimize_weights = True
-    with col_w2:
-        if st.button("MANUAL", key="btn_wt_manual"):
+        if "optimize_weights" not in st.session_state:
             st.session_state.optimize_weights = False
 
-    wt_opt = st.session_state.optimize_weights
-    st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.4rem;margin-bottom:0.5rem;">
-  <div style="text-align:center;">
-    <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
-                background:{'#2d6a4f' if wt_opt else 'transparent'};
-                box-shadow:{'0 0 6px #2d6a4f' if wt_opt else 'none'};
-                transition:all 0.2s;"></div>
-  </div>
-  <div style="text-align:center;">
-    <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
-                background:{'transparent' if wt_opt else '#2d6a4f'};
-                box-shadow:{'none' if wt_opt else '0 0 6px #2d6a4f'};
-                transition:all 0.2s;"></div>
-  </div>
-</div>""", unsafe_allow_html=True)
+        col_w1, col_w2 = st.columns([1, 1])
+        with col_w1:
+            if st.button("OPTIMIZE", key="btn_wt_opt"):
+                st.session_state.optimize_weights = True
+        with col_w2:
+            if st.button("MANUAL", key="btn_wt_manual"):
+                st.session_state.optimize_weights = False
 
-    wt_opt = st.session_state.optimize_weights
-    st.markdown(f"""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
-            padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-bottom:0.25rem;
-            background:{'#f0ece4' if wt_opt else 'transparent'};
-            border:1px solid {'#d6cfc4' if wt_opt else 'transparent'};
-            color:{'#8a8072' if wt_opt else 'transparent'};">
+        wt_opt = st.session_state.optimize_weights
+        st.markdown(f"""
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.4rem;margin-bottom:0.5rem;">
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if wt_opt else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if wt_opt else 'none'};transition:all 0.2s;"></div></div>
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'transparent' if wt_opt else '#2d6a4f'};box-shadow:{'none' if wt_opt else '0 0 6px #2d6a4f'};transition:all 0.2s;"></div></div>
+</div>""", unsafe_allow_html=True)
+        st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-bottom:0.25rem;background:{'#f0ece4' if wt_opt else 'transparent'};border:1px solid {'#d6cfc4' if wt_opt else 'transparent'};color:{'#8a8072' if wt_opt else 'transparent'};">
   {'◆ Unconstrained — optimizer controls allocation' if wt_opt else '◆'}
 </div>""", unsafe_allow_html=True)
-    slider_wt = st.slider("Max Single Asset Weight", 0.10, 1.0,
-                          value=1.0 if wt_opt else 0.40,
-                          step=0.05, format="%.2f", disabled=wt_opt)
-    max_weight = 1.0 if wt_opt else slider_wt
+        slider_wt = st.slider("Max Single Asset Weight", 0.10, 1.0, value=1.0 if wt_opt else 0.40, step=0.05, format="%.2f", disabled=wt_opt)
+        max_weight = 1.0 if wt_opt else slider_wt
 
-    slider_min_wt = st.slider("Min Single Asset Weight", 0.00, 0.20,
-                              value=0.0,
-                              step=0.01, format="%.2f", disabled=wt_opt,
-                              help="Forces each active holding to carry at least this weight. Prevents token allocations and biasing towards too few stocks.")
-    min_weight = 0.0 if wt_opt else slider_min_wt
+        slider_min_wt = st.slider("Min Single Asset Weight", 0.00, 0.20, value=0.0, step=0.01, format="%.2f", disabled=wt_opt,
+                                  help="Forces each active holding to carry at least this weight. Prevents token allocations.")
+        min_weight = 0.0 if wt_opt else slider_min_wt
 
-    # ── Diversification ───────────────────────────────────────────────────────
-    st.markdown("---")
-    st.markdown("## Diversification")
-    st.caption("Max assets with nonzero weight in optimal portfolio")
+        # ── Diversification ───────────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("## Diversification")
+        st.caption("Max assets with nonzero weight in optimal portfolio")
 
-    if "optimize_n" not in st.session_state:
-        st.session_state.optimize_n       = False
-        st.session_state.suggested_n      = 8
-        st.session_state.max_assets_val   = 8
+        if "optimize_n" not in st.session_state:
+            st.session_state.optimize_n     = False
+            st.session_state.suggested_n    = 8
+            st.session_state.max_assets_val = 8
 
-    col_n1, col_n2 = st.columns([1, 1])
-    with col_n1:
-        if st.button("OPTIMIZE", key="btn_optimize_n"):
-            st.session_state.optimize_n = True
-    with col_n2:
-        if st.button("MANUAL", key="btn_manual_n"):
-            st.session_state.optimize_n = False
+        col_n1, col_n2 = st.columns([1, 1])
+        with col_n1:
+            if st.button("OPTIMIZE", key="btn_optimize_n"):
+                st.session_state.optimize_n = True
+        with col_n2:
+            if st.button("MANUAL", key="btn_manual_n"):
+                st.session_state.optimize_n = False
 
-    n_opt = st.session_state.optimize_n
-    st.markdown(f"""
+        n_opt = st.session_state.optimize_n
+        st.markdown(f"""
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.4rem;margin-bottom:0.5rem;">
-  <div style="text-align:center;">
-    <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
-                background:{'#2d6a4f' if n_opt else 'transparent'};
-                box-shadow:{'0 0 6px #2d6a4f' if n_opt else 'none'};
-                transition:all 0.2s;"></div>
-  </div>
-  <div style="text-align:center;">
-    <div style="width:5px;height:5px;border-radius:50%;margin:0 auto;
-                background:{'transparent' if n_opt else '#2d6a4f'};
-                box-shadow:{'none' if n_opt else '0 0 6px #2d6a4f'};
-                transition:all 0.2s;"></div>
-  </div>
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if n_opt else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if n_opt else 'none'};transition:all 0.2s;"></div></div>
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'transparent' if n_opt else '#2d6a4f'};box-shadow:{'none' if n_opt else '0 0 6px #2d6a4f'};transition:all 0.2s;"></div></div>
 </div>""", unsafe_allow_html=True)
-
-    st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;
-            line-height:1.55;margin:0.4rem 0 0.6rem 0;padding:0.5rem 0.65rem;
-            background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;">
+        st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;line-height:1.55;margin:0.4rem 0 0.6rem 0;padding:0.5rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;">
   <b style="color:#1a1a18;">OPTIMIZE N</b> sets holdings to the portfolio's
-  <b style="color:#2d6a4f;">effective N</b> = 1/Σwᵢ² — the number of
-  assets the optimizer naturally concentrates into.
+  <b style="color:#2d6a4f;">effective N</b> = 1/Σwᵢ² — the number of assets the optimizer naturally concentrates into.
 </div>""", unsafe_allow_html=True)
 
-    n_opt = st.session_state.optimize_n
-    sn    = st.session_state.suggested_n
-
-    # Status line — always same height, content changes color not presence
-    st.markdown(f"""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
-            padding:0.3rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;
-            border-radius:3px;margin-bottom:0.25rem;min-height:1.55rem;">
+        n_opt = st.session_state.optimize_n
+        sn    = st.session_state.suggested_n
+        st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:0.3rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;margin-bottom:0.25rem;min-height:1.55rem;">
   <span style="color:{'#8a8072' if n_opt else 'transparent'};">Effective N = </span>
   <span style="color:{'#2d6a4f' if n_opt else 'transparent'};font-weight:600;">{sn}</span>
   <span style="color:{'#8a8072' if n_opt else 'transparent'};"> (auto)</span>
 </div>""", unsafe_allow_html=True)
 
-    # Slider — always rendered, disabled when optimize is active
-    slider_n = st.slider("Max Holdings (N)", min_value=2, max_value=20,
-                         value=sn if n_opt else st.session_state.max_assets_val,
-                         step=1, disabled=n_opt)
-    if n_opt:
-        max_assets = sn
-    else:
-        max_assets = slider_n
-        st.session_state.max_assets_val = slider_n
+        slider_n = st.slider("Max Holdings (N)", min_value=2, max_value=20,
+                             value=sn if n_opt else st.session_state.max_assets_val, step=1, disabled=n_opt)
+        if n_opt:
+            max_assets = sn
+        else:
+            max_assets = slider_n
+            st.session_state.max_assets_val = slider_n
 
-    # ── Risk Tolerance ────────────────────────────────────────────────────────
-    st.markdown("---")
-    st.markdown("## Risk Tolerance")
-    st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#8a8072;
-            line-height:1.6;margin-bottom:0.75rem;">
+        # ── Risk Tolerance ────────────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("## Risk Tolerance")
+        st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#8a8072;line-height:1.6;margin-bottom:0.75rem;">
 Selects a portfolio on the efficient frontier via a <b style="color:#1a1a18;">utility function</b>:<br>
 <span style="color:#2d6a4f;">max U = μ − (λ/2)σ²</span><br>
 where λ is your risk aversion coefficient.<br>
@@ -661,113 +621,74 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
 </div>
 """, unsafe_allow_html=True)
 
-    # 5 presets in ascending risk order + Variable option
-    RISK_PRESETS = [
-        ("NO GUTS — Min Variance Portfolio",      "minvar",   None,  "#4a7c9e"),
-        ("STEADY — Low Risk  (λ=10)",             "steady",   10.0,  "#2d6a4f"),
-        ("AVERAGE — Moderate  (λ=4)",             "average",  4.0,   "#b5873a"),
-        ("HIGH ROLLER — Aggressive  (λ=1.5)",     "roller",   1.5,   "#c0392b"),
-        ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal",  None,  "#6b3fa0"),
-        ("VARIABLE — Custom λ",                   "custom",   4.0,   "#5a7a6a"),
-    ]
-    PRESET_LABELS = [p[0] for p in RISK_PRESETS]
-    key_to_idx    = {p[1]: i for i, p in enumerate(RISK_PRESETS)}
+        RISK_PRESETS = [
+            ("NO GUTS — Min Variance Portfolio",      "minvar",   None,  "#4a7c9e"),
+            ("STEADY — Low Risk  (λ=10)",             "steady",   10.0,  "#2d6a4f"),
+            ("AVERAGE — Moderate  (λ=4)",             "average",  4.0,   "#b5873a"),
+            ("HIGH ROLLER — Aggressive  (λ=1.5)",     "roller",   1.5,   "#c0392b"),
+            ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal",  None,  "#6b3fa0"),
+            ("VARIABLE — Custom λ",                   "custom",   4.0,   "#5a7a6a"),
+        ]
+        PRESET_LABELS = [p[0] for p in RISK_PRESETS]
+        key_to_idx    = {p[1]: i for i, p in enumerate(RISK_PRESETS)}
 
-    if "risk_preset" not in st.session_state:
-        st.session_state.risk_preset = "average"
-    if "risk_lambda_val" not in st.session_state:
-        st.session_state.risk_lambda_val = 4.0
+        if "risk_preset" not in st.session_state:
+            st.session_state.risk_preset = "average"
+        if "risk_lambda_val" not in st.session_state:
+            st.session_state.risk_lambda_val = 4.0
 
-    default_idx = key_to_idx.get(st.session_state.risk_preset, 2)
+        default_idx   = key_to_idx.get(st.session_state.risk_preset, 2)
+        selected_label = st.selectbox("Risk Profile", PRESET_LABELS, index=default_idx, label_visibility="collapsed", key="risk_dropdown")
+        active_preset  = RISK_PRESETS[PRESET_LABELS.index(selected_label)]
 
-    selected_label = st.selectbox(
-        "Risk Profile",
-        PRESET_LABELS,
-        index=default_idx,
-        label_visibility="collapsed",
-        key="risk_dropdown",
-    )
-    active_preset = RISK_PRESETS[PRESET_LABELS.index(selected_label)]
+        if active_preset[1] != "custom" and active_preset[2] is not None:
+            st.session_state.risk_lambda_val = active_preset[2]
 
-    # When dropdown changes to a non-Variable preset, snap slider to that λ
-    if active_preset[1] != "custom" and active_preset[2] is not None:
-        st.session_state.risk_lambda_val = active_preset[2]
-    elif active_preset[1] == "minvar" or active_preset[1] == "optimal":
-        pass  # no lambda to snap to
-
-    st.session_state.risk_preset = active_preset[1]
-    risk_color = active_preset[3]
-
-    # Active preset pill
-    short_name = active_preset[0].split("—")[0].strip()
-    sub_name   = active_preset[0].split("—")[1].strip() if "—" in active_preset[0] else ""
-    st.markdown(f"""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
-            padding:0.45rem 0.75rem;margin-top:0.25rem;margin-bottom:0.5rem;
-            background:#f0ece4;border-left:2px solid {risk_color};border-radius:0 3px 3px 0;">
+        st.session_state.risk_preset = active_preset[1]
+        risk_color = active_preset[3]
+        short_name = active_preset[0].split("—")[0].strip()
+        sub_name   = active_preset[0].split("—")[1].strip() if "—" in active_preset[0] else ""
+        st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;padding:0.45rem 0.75rem;margin-top:0.25rem;margin-bottom:0.5rem;background:#f0ece4;border-left:2px solid {risk_color};border-radius:0 3px 3px 0;">
   <span style="color:{risk_color};font-weight:600;">{short_name}</span>
   <span style="color:#8a8072;"> · {sub_name}</span>
 </div>""", unsafe_allow_html=True)
 
-    # Lambda slider — always visible
-    # Disabled (grayed) for minvar and optimal since λ is irrelevant there
-    slider_disabled = active_preset[1] in ("minvar", "optimal")
+        slider_disabled = active_preset[1] in ("minvar", "optimal")
+        slider_val = st.slider("λ (risk aversion coefficient)", 0.5, 15.0,
+                               value=st.session_state.risk_lambda_val, step=0.5, format="%.1f",
+                               disabled=slider_disabled,
+                               help="λ=0.5 → maximum risk. λ=15 → near min variance.")
 
-    slider_val = st.slider(
-        "λ (risk aversion coefficient)",
-        0.5, 15.0,
-        value=st.session_state.risk_lambda_val,
-        step=0.5,
-        format="%.1f",
-        disabled=slider_disabled,
-        help="λ=0.5 → maximum risk. λ=15 → near min variance. Moving this sets dropdown to VARIABLE.",
-    )
+        if not slider_disabled and active_preset[1] != "custom":
+            expected = active_preset[2]
+            if expected is not None and abs(slider_val - expected) > 0.01:
+                st.session_state.risk_preset     = "custom"
+                st.session_state.risk_lambda_val = slider_val
+                st.rerun()
 
-    # If slider moved away from preset's λ → snap dropdown to VARIABLE
-    if not slider_disabled and active_preset[1] != "custom":
-        expected = active_preset[2]
-        if expected is not None and abs(slider_val - expected) > 0.01:
-            st.session_state.risk_preset      = "custom"
-            st.session_state.risk_lambda_val  = slider_val
-            st.rerun()
+        if slider_disabled:
+            st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-top:0.25rem;background:#f0ece4;border:1px solid #d6cfc4;color:#8a8072;">◆ λ not applicable for this portfolio</div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-top:0.25rem;background:#f0ece4;border:1px solid #d6cfc4;color:#8a8072;">Higher λ → less risk &nbsp;·&nbsp; Lower λ → more risk</div>', unsafe_allow_html=True)
 
-    if slider_disabled:
-        st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
-            padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-top:0.25rem;
-            background:#f0ece4;border:1px solid #d6cfc4;color:#8a8072;">
-  ◆ λ not applicable for this portfolio
-</div>""", unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
-            padding:0.3rem 0.6rem;min-height:1.55rem;border-radius:3px;margin-top:0.25rem;
-            background:#f0ece4;border:1px solid #d6cfc4;color:#8a8072;">
-  Higher λ → less risk, closer to Min Variance &nbsp;·&nbsp; Lower λ → more risk, closer to Optimal Risky
-</div>""", unsafe_allow_html=True)
+        st.session_state.risk_lambda_val = slider_val
 
-    # Store slider value
-    st.session_state.risk_lambda_val = slider_val
+        if active_preset[1] == "minvar":
+            effective_lambda = None; lambda_source = "minvar"
+        elif active_preset[1] == "optimal":
+            effective_lambda = None; lambda_source = "optimal"
+        else:
+            effective_lambda = slider_val; lambda_source = active_preset[1]
 
-    # Resolve final lambda + source
-    if active_preset[1] == "minvar":
-        effective_lambda = None
-        lambda_source    = "minvar"
-    elif active_preset[1] == "optimal":
-        effective_lambda = None
-        lambda_source    = "optimal"
-    else:
-        effective_lambda = slider_val
-        lambda_source    = active_preset[1]
+        st.markdown("---")
+        if st.button("▶  Run Optimization"):
+            st.session_state.run_optimization = True
+        run_btn = st.session_state.get("run_optimization", False)
 
-    st.markdown("---")
-    if st.button("▶  Run Optimization"):
-        st.session_state.run_optimization = True
-    run_btn = st.session_state.get("run_optimization", False)
-
-    st.markdown("---")
-    with st.expander("ℹ Model Reference"):
-        st.markdown("""
+        st.markdown("---")
+        with st.expander("ℹ Model Reference"):
+            st.markdown("""
 **Mean-Variance Optimization**  
 Markowitz (1952): maximize Sharpe ratio on the efficient frontier.
 
@@ -782,12 +703,22 @@ Historical simulation. CVaR = expected loss beyond VaR threshold.
 
 **Sortino / Calmar**  
 Downside-adjusted return ratios.
-        """)
+            """)
 
-    # ── Discovery Mode sidebar (only shown when Discovery tab is active) ──────
-    if "Discovery" in st.session_state.get("app_mode", ""):
-        st.markdown("---")
-        st.markdown("## Discovery Mode")
+    else:
+        # ══════════════════════════════════════════════════════════════════════
+        # DISCOVERY MODE SIDEBAR
+        # ══════════════════════════════════════════════════════════════════════
+
+        # Provide safe defaults for Portfolio Lab variables not set in this branch
+        tickers = PRESET_UNIVERSES["Mega-Cap Tech"]
+        period = "2y"; confidence = 0.95; rf = RF_RATE
+        max_weight = 1.0; min_weight = 0.0; max_assets = 10
+        effective_lambda = None; lambda_source = "optimal"
+        active_preset = ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal", None, "#6b3fa0")
+        run_btn = False
+
+        st.markdown("## Discovery")
 
         _DISC_SECTORS = [
             "All S&P 500 (~490 tickers)",
@@ -795,23 +726,26 @@ Downside-adjusted return ratios.
             "Consumer Staples", "Industrials", "Consumer Discret",
         ]
         _disc_sector = st.selectbox("Sector Filter", _DISC_SECTORS,
-                                    index=_DISC_SECTORS.index(
-                                        st.session_state.get("disc_sector", "All S&P 500 (~490 tickers)")),
+                                    index=_DISC_SECTORS.index(st.session_state.get("disc_sector", "All S&P 500 (~490 tickers)")),
                                     label_visibility="collapsed")
         st.session_state.disc_sector = _disc_sector
 
-        _disc_port_size = st.slider("Portfolio Size (N stocks)", 5, 20,
-                                    st.session_state.get("disc_port_size", 10), 1)
+        st.markdown("---")
+        st.markdown("## Portfolio Size")
+        _disc_port_size = st.slider("Stocks per combination", 5, 20, st.session_state.get("disc_port_size", 10), 1)
         st.session_state.disc_port_size = _disc_port_size
 
-        _disc_iterations = st.slider("Iterations", 10, 5000,
-                                     st.session_state.get("disc_iterations", 50), 10)
+        st.markdown("---")
+        st.markdown("## Iterations")
+        _disc_iterations = st.slider("Number of combinations to test", 10, 5000, st.session_state.get("disc_iterations", 50), 10)
         st.session_state.disc_iterations = _disc_iterations
 
-        _disc_start = st.selectbox("Lookback Start",
-                                   ["2018-01-01","2019-01-01","2020-01-01","2021-01-01"],
+        st.markdown("---")
+        st.markdown("## Lookback")
+        _disc_start = st.selectbox("Start date", ["2018-01-01","2019-01-01","2020-01-01","2021-01-01"],
                                    index=["2018-01-01","2019-01-01","2020-01-01","2021-01-01"].index(
-                                       st.session_state.get("disc_start", "2018-01-01")))
+                                       st.session_state.get("disc_start", "2018-01-01")),
+                                   label_visibility="collapsed")
         st.session_state.disc_start = _disc_start
 
         st.markdown("---")
@@ -820,6 +754,22 @@ Downside-adjusted return ratios.
         else:
             if "run_discovery" not in st.session_state:
                 st.session_state.run_discovery = False
+
+        st.markdown("---")
+        with st.expander("ℹ About Discovery"):
+            st.markdown("""
+**How it works**  
+Randomly samples stock combinations from the selected universe and runs Max Sharpe optimization on each one.
+
+**Search space**  
+Combinatorially vast — you are sampling a small fraction of all possible portfolios.
+
+**Result**  
+The combination with the highest Sharpe ratio across all iterations is returned.
+
+**Limitation**  
+No guarantee of global optimality. Results vary across runs.
+            """)
 
 # ── Header ─────────────────────────────────────────────────────────────────
 col_title, col_badge = st.columns([5, 1])
@@ -905,7 +855,7 @@ st.markdown('<hr class="divider" style="margin-top:0.75rem;">', unsafe_allow_htm
 # DISCOVERY MODE
 # ══════════════════════════════════════════════════════════════════════════════
 if "Discovery" in app_mode:
-    st.session_state.run_optimization = False  # reset so switching back shows idle Portfolio Lab
+    st.session_state.run_optimization = False
 
     SECTORS = {
         "All S&P 500 (~490 tickers)": None,
@@ -918,114 +868,15 @@ if "Discovery" in app_mode:
         "Consumer Discret":["AMZN","TSLA","HD","MCD","NKE","SBUX","TJX","LOW","BKNG","CMG","YUM","DPZ","RCL","CCL","MAR","HLT","EXPE","LVS","MGM","WYNN"],
     }
 
-    SECTOR_COLORS = {
-        "Technology":       "#4a7c9e",
-        "Healthcare":       "#2d6a4f",
-        "Financials":       "#6b3fa0",
-        "Energy":           "#c0392b",
-        "Consumer Staples": "#b5873a",
-        "Industrials":      "#5a7a6a",
-        "Consumer Discret": "#c9a84c",
-    }
+    # Read all values from session state (set by sidebar)
+    disc_sector     = st.session_state.get("disc_sector",     "All S&P 500 (~490 tickers)")
+    disc_port_size  = st.session_state.get("disc_port_size",  10)
+    disc_iterations = st.session_state.get("disc_iterations", 50)
+    disc_start      = st.session_state.get("disc_start",      "2018-01-01")
+    run_discovery   = st.session_state.get("run_discovery",   False)
 
-    # ── Placeholder sits at the top — filled with idle card or cleared on run ──
+    # ── Placeholder for idle card ─────────────────────────────────────────────
     _disc_top = st.empty()
-
-    # ── Discovery controls — must render to produce variable values ───────────
-    st.markdown('<div class="section-header">Discovery Settings</div>', unsafe_allow_html=True)
-    col_d1, col_d2, col_d3, col_d4 = st.columns(4)
-    with col_d1:
-        disc_sector = st.selectbox("Sector Filter", list(SECTORS.keys()),
-            index=list(SECTORS.keys()).index(st.session_state.get("disc_sector","All S&P 500 (~490 tickers)")))
-        st.session_state.disc_sector = disc_sector
-    with col_d2:
-        disc_port_size = st.slider("Portfolio Size (N)", 5, 20, st.session_state.get("disc_port_size",10), 1)
-        st.session_state.disc_port_size = disc_port_size
-    with col_d3:
-        disc_iterations = st.slider("Iterations", 10, 5000, st.session_state.get("disc_iterations",50), 10)
-        st.session_state.disc_iterations = disc_iterations
-    with col_d4:
-        disc_start = st.selectbox("Lookback Start", ["2018-01-01","2019-01-01","2020-01-01","2021-01-01"],
-            index=["2018-01-01","2019-01-01","2020-01-01","2021-01-01"].index(st.session_state.get("disc_start","2018-01-01")))
-        st.session_state.disc_start = disc_start
-    run_discovery = st.session_state.get("run_discovery", False)
-
-    # ── Live time estimate ────────────────────────────────────────────────────
-    SECS_PER_ITER = 2.5
-    est_secs  = disc_iterations * SECS_PER_ITER
-    est_mins  = est_secs / 60
-    est_hrs   = est_mins / 60
-
-    if est_secs < 60:
-        est_str = f"~{int(est_secs)} seconds";  est_col = "#2d6a4f"; est_msg = "Quick run ☑"
-    elif est_mins < 3:
-        est_str = f"~{est_mins:.1f} minutes";   est_col = "#2d6a4f"; est_msg = "Grab a sip of water 💧"
-    elif est_mins < 7:
-        est_str = f"~{est_mins:.0f} minutes";   est_col = "#b5873a"; est_msg = "Go get a coffee ☕"
-    elif est_mins < 12:
-        est_str = f"~{est_mins:.0f} minutes";   est_col = "#b5873a"; est_msg = "Take a walk outside 🚶"
-    elif est_mins < 20:
-        est_str = f"~{est_mins:.0f} minutes";   est_col = "#c0392b"; est_msg = "Call your mom 📞"
-    elif est_mins < 35:
-        est_str = f"~{est_mins:.0f} minutes";   est_col = "#c0392b"; est_msg = "Watch an episode of something 📺"
-    elif est_mins < 60:
-        est_str = f"~{est_mins:.0f} minutes";   est_col = "#c0392b"; est_msg = "Hit the gym 🏋️ — seriously"
-    elif est_hrs < 2:
-        est_str = f"~{est_hrs:.1f} hours";      est_col = "#c0392b"; est_msg = "Take a nap. A real one. 😴"
-    elif est_hrs < 3:
-        est_str = f"~{est_hrs:.1f} hours";      est_col = "#c0392b"; est_msg = "Watch a full movie 🎬"
-    else:
-        est_str = f"~{est_hrs:.1f} hours";      est_col = "#c0392b"; est_msg = "Read War and Peace 📖"
-
-    universe_size = len(SECTORS[disc_sector]) if SECTORS[disc_sector] else 490
-
-    # ── Metric cards ─────────────────────────────────────────────────────────
-    st.markdown(f"""
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1rem 0;">
-      <div class="metric-card">
-    <div class="metric-label">Estimated Runtime</div>
-    <div class="metric-value" style="font-size:1.1rem;color:{est_col};">{est_str}</div>
-    <div class="metric-sub" style="color:{est_col};margin-top:0.3rem;">{est_msg}</div>
-      </div>
-      <div class="metric-card">
-    <div class="metric-label">Universe Size</div>
-    <div class="metric-value" style="font-size:1.2rem;">{universe_size} tickers</div>
-      </div>
-      <div class="metric-card">
-    <div class="metric-label">Combinations Tested</div>
-    <div class="metric-value" style="font-size:1.2rem;">{disc_iterations:,}</div>
-      </div>
-      <div class="metric-card">
-    <div class="metric-label">Search Space</div>
-    <div class="metric-value" style="font-size:1.2rem;color:#8a8072;">&#8776;10&#185;&#178;</div>
-    <div class="metric-sub">combinatorially vast</div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ── Sector Legend ─────────────────────────────────────────────────────────
-    with st.expander("📋  Sector Universe Reference", expanded=False):
-        st.markdown("""
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;
-            margin-bottom:1rem;">
-      Tickers in each sector filter. Selecting a sector dramatically reduces runtime
-      by narrowing the search universe from ~490 to ~20–30 stocks.
-    </div>""", unsafe_allow_html=True)
-        leg_cols = st.columns(2)
-        for i, (sname, tlist) in enumerate([(k, v) for k, v in SECTORS.items() if v is not None]):
-            with leg_cols[i % 2]:
-                scolor = SECTOR_COLORS.get(sname, "#8a8072")
-                st.markdown(
-                    '<div style="background:#ffffff;border:1px solid #e0d9ce;border-left:3px solid ' + scolor + ';'
-                    'border-radius:0 4px 4px 0;padding:0.75rem 1rem;margin-bottom:0.75rem;">'
-                    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;font-weight:600;'
-                    'color:' + scolor + ';letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.4rem;">'
-                    + sname + ' &middot; ' + str(len(tlist)) + ' tickers</div>'
-                    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:#8a8072;'
-                    'line-height:1.8;word-break:break-word;">'
-                    + '  &middot;  '.join(tlist) +
-                    '</div></div>',
-                    unsafe_allow_html=True)
 
     # ── Now fill the top placeholder with idle card, or run ───────────────────
     if not run_discovery:
@@ -1290,7 +1141,7 @@ if not run_btn:
         'the <b style="color:#6b3fa0;">tangency portfolio</b> that sits on the efficient frontier at maximum Sharpe, '
         'the <b style="color:#4a7c9e;">minimum variance</b> portfolio that takes the least risk for any given return, '
         'and an <b style="color:#c9a84c;">equal-weight baseline</b>. '
-        f'Your <b style="color:{_preset_color};">{_preset_display}</b> risk profile determines which of these '
+        f'Your <b style="color:{_preset_color};">selected risk profile</b> determines which of these '
         'is highlighted as your primary portfolio across all tabs.'
         '</div>'
         '</div></div>'
@@ -1317,6 +1168,12 @@ n       = len(valid_tickers)
 
 # ── Optimization ──────────────────────────────────────────────────────────────
 with st.spinner("Running optimization…"):
+    # Guard: min_weight × effective holdings must be ≤ 1
+    _effective_n_check = min(max_assets, n)
+    if min_weight > 0 and min_weight * _effective_n_check > 1.0:
+        max_assets = int(np.floor(1.0 / min_weight))
+        st.warning(f"Min weight × holdings would exceed 100%. Holdings cap reduced to {max_assets} to maintain feasibility.")
+
     bounds      = tuple((min_weight, max_weight) for _ in range(n))
     constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1}]
     w0          = np.ones(n) / n
