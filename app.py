@@ -491,6 +491,20 @@ with st.sidebar:
     if preset == "Custom":
         custom_raw = st.text_input("Enter tickers (comma-separated)", "AAPL, MSFT, GOOGL, AMZN")
         tickers = [t.strip().upper() for t in custom_raw.split(",") if t.strip()]
+        n_typed = len(tickers)
+        if n_typed > 20:
+            hint_color  = "#b5873a"
+            hint_icon   = "⚠"
+            hint_text   = f"{n_typed} tickers · Large universes may slow optimization"
+        else:
+            hint_color  = "#8a8072"
+            hint_icon   = "·"
+            hint_text   = f"{n_typed} ticker{'s' if n_typed != 1 else ''} · Recommended: 5–20 · No hard limit"
+        st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
+            color:{hint_color};margin-top:0.2rem;letter-spacing:0.04em;">
+  {hint_icon} {hint_text}
+</div>""", unsafe_allow_html=True)
     else:
         tickers = PRESET_UNIVERSES[preset]
         st.caption(f"**Assets:** {', '.join(tickers)}")
