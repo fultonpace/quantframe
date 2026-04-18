@@ -179,14 +179,96 @@ html, body, [class*="css"] {
     background: transparent !important;
 }
 
-/* Streamlit widget styling */
-.stTextInput input, .stSelectbox select, .stMultiSelect div {
-    background: var(--surface) !important;
-    border-color: var(--border) !important;
+/* Sidebar text contrast */
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] .stMarkdown p {
     color: var(--text) !important;
     font-family: var(--mono) !important;
+    font-size: 0.78rem !important;
 }
-.stSlider > div > div { background: var(--accent) !important; }
+[data-testid="stSidebar"] caption,
+[data-testid="stSidebar"] small {
+    color: var(--muted) !important;
+}
+
+/* Selectbox, inputs */
+[data-testid="stSelectbox"] > div > div,
+[data-testid="stTextInput"] > div > div > input,
+[data-testid="stNumberInput"] > div > div > input {
+    background: #16161f !important;
+    border: 1px solid #2a2a3e !important;
+    color: var(--text) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.8rem !important;
+    border-radius: 3px !important;
+}
+[data-testid="stSelectbox"] svg { color: var(--muted) !important; }
+
+/* Tab styling */
+[data-testid="stTabs"] [role="tab"] {
+    font-family: var(--mono) !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.08em !important;
+    color: var(--muted) !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0.6rem 1rem !important;
+}
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] {
+    color: var(--accent) !important;
+    border-bottom: 2px solid var(--accent) !important;
+}
+[data-testid="stTabs"] [role="tablist"] {
+    border-bottom: 1px solid var(--border) !important;
+    gap: 0 !important;
+}
+
+/* Dataframe */
+[data-testid="stDataFrame"] {
+    border: 1px solid var(--border) !important;
+    border-radius: 4px !important;
+}
+
+/* Expander */
+[data-testid="stExpander"] summary {
+    font-family: var(--mono) !important;
+    font-size: 0.75rem !important;
+    color: var(--muted) !important;
+}
+[data-testid="stExpander"] p {
+    font-family: var(--mono) !important;
+    font-size: 0.72rem !important;
+    color: var(--muted) !important;
+    line-height: 1.7 !important;
+}
+
+/* Caption text */
+[data-testid="stCaptionContainer"] p {
+    color: var(--muted) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.65rem !important;
+}
+
+/* Spinner */
+[data-testid="stSpinner"] p { color: var(--accent) !important; }
+/* Slider track and thumb */
+[data-testid="stSlider"] > div > div > div { background: var(--border) !important; }
+[data-testid="stSlider"] > div > div > div > div { background: var(--accent) !important; }
+[data-testid="stSlider"] [role="slider"] {
+    background: var(--accent) !important;
+    border: 2px solid var(--bg) !important;
+    box-shadow: 0 0 0 2px var(--accent) !important;
+}
+[data-testid="stSlider"] label, [data-testid="stSlider"] p {
+    color: var(--text) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.75rem !important;
+}
+/* Slider value display */
+[data-testid="stSlider"] [data-testid="stMarkdownContainer"] p {
+    color: var(--accent) !important;
+}
 .stButton > button {
     background: var(--accent);
     color: var(--bg);
@@ -376,7 +458,7 @@ with st.sidebar:
     period = period_map[period_label]
 
     confidence = st.slider("VaR / CVaR Confidence", 0.90, 0.99, 0.95, 0.01, format="%.2f")
-    max_weight = st.slider("Max Single Asset Weight", 0.10, 1.0, 0.40, 0.05, format="%.0%%")
+    max_weight = st.slider("Max Single Asset Weight", 0.10, 1.0, 0.40, 0.05, format="%.2f")
     rf_input   = st.number_input("Risk-Free Rate (%)", 0.0, 10.0, RF_RATE * 100, 0.25, format="%.2f")
     rf = rf_input / 100
 
