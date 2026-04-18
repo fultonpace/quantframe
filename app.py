@@ -483,6 +483,11 @@ def utility_obj(w, mu, cov, lam):
 with st.sidebar:
     st.markdown("## ⬡ QuantFrame")
     st.markdown('<p class="app-subtitle">Portfolio Intelligence</p>', unsafe_allow_html=True)
+
+    # Mode stored in session state so sidebar + main area stay in sync
+    if "app_mode" not in st.session_state:
+        st.session_state.app_mode = "Portfolio Lab"
+
     st.markdown("---")
 
     st.markdown("## Universe")
@@ -772,8 +777,7 @@ Downside-adjusted return ratios.
         """)
 
     # ── Discovery Mode sidebar (only shown when Discovery tab is active) ──────
-    _disc_mode = st.session_state.get("_app_mode", "Portfolio Lab")
-    if "Discovery" in _disc_mode:
+    if "Discovery" in st.session_state.get("app_mode", ""):
         st.markdown("---")
         st.markdown("## Discovery Mode")
 
@@ -868,8 +872,10 @@ div[data-testid="stRadio"] > label { display: none !important; }
 """, unsafe_allow_html=True)
 
 app_mode = st.radio("Mode", ["  ⬡  Portfolio Lab  ", "  🔍  Discovery Mode  "],
-                    horizontal=True, label_visibility="collapsed")
-st.session_state._app_mode = app_mode
+                    horizontal=True, label_visibility="collapsed",
+                    index=0 if "Discovery" not in st.session_state.get("app_mode","") else 1)
+st.session_state.app_mode    = app_mode
+st.session_state._app_mode   = app_mode
 
 st.markdown('<hr class="divider" style="margin-top:0.75rem;">', unsafe_allow_html=True)
 
@@ -920,12 +926,24 @@ if "Discovery" in app_mode:
         "Consumer Discret": "#c9a84c",
     }
 
-    # Read controls from session state (set by sidebar)
-    disc_sector     = st.session_state.get("disc_sector",     "All S&P 500 (~490 tickers)")
-    disc_port_size  = st.session_state.get("disc_port_size",  10)
-    disc_iterations = st.session_state.get("disc_iterations", 50)
-    disc_start      = st.session_state.get("disc_start",      "2018-01-01")
-    run_discovery   = st.session_state.get("run_discovery",   False)
+    # ── Discovery controls — in main window ──────────────────────────────────
+    st.markdown('<div class="section-header">Discovery Settings</div>', unsafe_allow_html=True)
+    col_d1, col_d2, col_d3, col_d4 = st.columns(4)
+    with col_d1:
+        disc_sector = st.selectbox("Sector Filter", list(SECTORS.keys()),
+            index=list(SECTORS.keys()).index(st.session_state.get("disc_sector","All S&P 500 (~490 tickers)")))
+        st.session_state.disc_sector = disc_sector
+    with col_d2:
+        disc_port_size = st.slider("Portfolio Size (N)", 5, 20, st.session_state.get("disc_port_size",10), 1)
+        st.session_state.disc_port_size = disc_port_size
+    with col_d3:
+        disc_iterations = st.slider("Iterations", 10, 5000, st.session_state.get("disc_iterations",50), 10)
+        st.session_state.disc_iterations = disc_iterations
+    with col_d4:
+        disc_start = st.selectbox("Lookback Start", ["2018-01-01","2019-01-01","2020-01-01","2021-01-01"],
+            index=["2018-01-01","2019-01-01","2020-01-01","2021-01-01"].index(st.session_state.get("disc_start","2018-01-01")))
+        st.session_state.disc_start = disc_start
+    run_discovery = st.session_state.get("run_discovery", False)
 
     # ── Live time estimate ────────────────────────────────────────────────────
     SECS_PER_ITER = 2.5
