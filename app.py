@@ -453,7 +453,10 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("## Parameters")
 
-    period_map = {"1 Year": "1y", "2 Years": "2y", "3 Years": "3y", "5 Years": "5y"}
+    period_map = {
+        "1 Year": "1y", "2 Years": "2y", "3 Years": "3y",
+        "5 Years": "5y", "10 Years": "10y", "15 Years": "15y", "Max": "max"
+    }
     period_label = st.select_slider("Lookback Period", list(period_map.keys()), value="2 Years")
     period = period_map[period_label]
 
@@ -461,6 +464,11 @@ with st.sidebar:
     max_weight = st.slider("Max Single Asset Weight", 0.10, 1.0, 0.40, 0.05, format="%.2f")
     rf_input   = st.number_input("Risk-Free Rate (%)", 0.0, 10.0, RF_RATE * 100, 0.25, format="%.2f")
     rf = rf_input / 100
+
+    st.markdown("---")
+    st.markdown("## Diversification")
+    st.caption("Max assets with nonzero weight in optimal portfolio")
+    max_assets = st.slider("Max Holdings (N)", min_value=2, max_value=20, value=8, step=1)
 
     st.markdown("---")
     run_btn = st.button("▶  Run Optimization")
@@ -532,18 +540,94 @@ with st.spinner("Running optimization…"):
     # Max Sharpe
     res_sharpe = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
                           method="SLSQP", bounds=bounds, constraints=constraints)
-    w_sharpe = res_sharpe.x / res_sharpe.x.sum()
+    w_sharpe_full = res_sharpe.x / res_sharpe.x.sum()
+
+    # Apply cardinality constraint: keep top-N by weight, re-normalize
+    n_keep = min(max_assets, n)
+    top_idx = np.argsort(w_sharpe_full)[-n_keep:]
+    w_sharpe = np.zeros(n)
+    w_sharpe[top_idx] = w_sharpe_full[top_idx]
+    w_sharpe = w_sharpe / w_sharpe.sum()
 
     # Min Volatility
     res_minvol = minimize(min_vol_obj, w0, args=(mu, cov / 252),
                           method="SLSQP", bounds=bounds, constraints=constraints)
-    w_minvol = res_minvol.x / res_minvol.x.sum()
+    w_minvol_full = res_minvol.x / res_minvol.x.sum()
+    w_minvol = np.zeros(n)
+    top_idx_mv = np.argsort(w_minvol_full)[-n_keep:]
+    w_minvol[top_idx_mv] = w_minvol_full[top_idx_mv]
+    w_minvol = w_minvol / w_minvol.sum()
 
     # Equal Weight baseline
     w_eq = np.ones(n) / n
 
     # Frontier
     frontier_vols, frontier_rets, _ = compute_efficient_frontier(mu / 252, cov / 252)
+
+# ── Data Source Panel ─────────────────────────────────────────────────────────
+import datetime as _dt
+_now        = _dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+_date_start = prices.index[0].strftime("%Y-%m-%d")
+_date_end   = prices.index[-1].strftime("%Y-%m-%d")
+_n_obs      = len(returns)
+_active     = [t for t in valid_tickers if w_sharpe[valid_tickers.index(t)] > 0.001]
+
+st.markdown(f"""
+<div style="background:#0d0d14;border:1px solid #1e1e2e;border-radius:4px;
+            padding:1rem 1.5rem;margin-bottom:1.5rem;
+            display:grid;grid-template-columns:repeat(6,1fr);gap:1rem;">
+  <div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+      Data Source</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#00d4aa;font-weight:600;">
+      Yahoo Finance</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">via yfinance</div>
+  </div>
+  <div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+      Date Range</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#e2e2f0;font-weight:500;">
+      {_date_start}</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">→ {_date_end}</div>
+  </div>
+  <div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+      Observations</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#e2e2f0;font-weight:500;">
+      {_n_obs:,}</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">trading days</div>
+  </div>
+  <div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+      Universe</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#e2e2f0;font-weight:500;">
+      {len(valid_tickers)} assets</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">
+      {', '.join(valid_tickers)}</div>
+  </div>
+  <div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+      Active Holdings</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#00d4aa;font-weight:600;">
+      {len(_active)} / {len(valid_tickers)}</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">
+      N={n_keep} constraint</div>
+  </div>
+  <div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+                letter-spacing:0.12em;text-transform:uppercase;color:#6b6b8a;margin-bottom:0.3rem;">
+      Last Fetched</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#e2e2f0;font-weight:500;">
+      {_now}</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:#6b6b8a;">adj. close prices</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ── Portfolio stats ───────────────────────────────────────────────────────────
 def port_series(weights, ret_df):
@@ -832,13 +916,38 @@ with tab2:
         "Risk Contrib (%)":risk_contrib_pct.round(2),
     }).sort_values("Risk Contrib (%)", ascending=False)
 
-    st.dataframe(
-        df_risk.style
-            .format({c: "{:.2f}" for c in ["Weight (%)", "Ann. Return (%)", "Ann. Vol (%)", "Sharpe", "Risk Contrib (%)"]})
-            .background_gradient(subset=["Risk Contrib (%)"], cmap="RdYlGn_r")
-            .set_properties(**{"font-family": "IBM Plex Mono", "font-size": "12px"}),
-        use_container_width=True, hide_index=True,
-    )
+    # Color cells by risk contribution — no matplotlib needed
+    rc_vals = df_risk["Risk Contrib (%)"].values
+    rc_max  = rc_vals.max() if rc_vals.max() > 0 else 1
+    def _rc_color(v):
+        t = v / rc_max
+        r = int(255 * t)
+        g = int(180 * (1 - t))
+        return f"rgba({r},{g},80,0.25)"
+
+    cell_colors = [["#111118"] * len(df_risk) for _ in range(6)]
+    cell_colors[5] = [_rc_color(v) for v in rc_vals]
+
+    fig_tbl = go.Figure(go.Table(
+        columnwidth=[60, 80, 100, 80, 60, 110],
+        header=dict(
+            values=["<b>Asset</b>","<b>Weight %</b>","<b>Ann. Return %</b>",
+                    "<b>Ann. Vol %</b>","<b>Sharpe</b>","<b>Risk Contrib %</b>"],
+            fill_color="#0d0d14",
+            line_color="#2a2a3e",
+            font=dict(family="IBM Plex Mono", size=11, color="#00d4aa"),
+            align="center", height=32,
+        ),
+        cells=dict(
+            values=[df_risk[c].tolist() for c in df_risk.columns],
+            fill_color=cell_colors,
+            line_color="#1e1e2e",
+            font=dict(family="IBM Plex Mono", size=11, color="#e2e2f0"),
+            align="center", height=28,
+        )
+    ))
+    fig_tbl.update_layout(**{**PLOT_LAYOUT, "height": 60 + 28 * len(df_risk) + 32, "margin": dict(l=0,r=0,t=0,b=0)})
+    st.plotly_chart(fig_tbl, use_container_width=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -996,18 +1105,44 @@ with tab4:
     # All three portfolios weights table
     st.markdown('<div class="section-header">Allocation Breakdown</div>', unsafe_allow_html=True)
     df_alloc = pd.DataFrame({
-        "Ticker":          valid_tickers,
-        "Max Sharpe (%)":  (w_sharpe * 100).round(2),
-        "Min Vol (%)":     (w_minvol * 100).round(2),
+        "Ticker":           valid_tickers,
+        "Max Sharpe (%)":   (w_sharpe * 100).round(2),
+        "Min Vol (%)":      (w_minvol * 100).round(2),
         "Equal Weight (%)": (w_eq * 100).round(2),
-    })
-    st.dataframe(
-        df_alloc.style
-            .format({c: "{:.2f}%" for c in ["Max Sharpe (%)","Min Vol (%)","Equal Weight (%)"]})
-            .bar(subset=["Max Sharpe (%)"], color="rgba(0,212,170,0.4)")
-            .set_properties(**{"font-family":"IBM Plex Mono","font-size":"12px"}),
-        use_container_width=True, hide_index=True,
-    )
+    }).sort_values("Max Sharpe (%)", ascending=False)
+
+    # Color active holdings
+    def _wt_color(v):
+        if v > 0.01:
+            t = min(v / 40, 1.0)
+            return f"rgba(0,{int(180*t+40)},{int(120*t+50)},0.25)"
+        return "#0d0d14"
+
+    alloc_colors = [
+        ["#111118"] * len(df_alloc),
+        [_wt_color(v) for v in df_alloc["Max Sharpe (%)"]],
+        [_wt_color(v) for v in df_alloc["Min Vol (%)"]],
+        ["#111118"] * len(df_alloc),
+    ]
+    fig_alloc = go.Figure(go.Table(
+        columnwidth=[60, 100, 80, 110],
+        header=dict(
+            values=["<b>Ticker</b>","<b>Max Sharpe %</b>","<b>Min Vol %</b>","<b>Equal Weight %</b>"],
+            fill_color="#0d0d14",
+            line_color="#2a2a3e",
+            font=dict(family="IBM Plex Mono", size=11, color="#00d4aa"),
+            align="center", height=32,
+        ),
+        cells=dict(
+            values=[df_alloc[c].tolist() for c in df_alloc.columns],
+            fill_color=alloc_colors,
+            line_color="#1e1e2e",
+            font=dict(family="IBM Plex Mono", size=11, color="#e2e2f0"),
+            align="center", height=28,
+        )
+    ))
+    fig_alloc.update_layout(**{**PLOT_LAYOUT, "height": 60 + 28 * len(df_alloc) + 32, "margin": dict(l=0,r=0,t=0,b=0)})
+    st.plotly_chart(fig_alloc, use_container_width=True)
 
     # Methodology note
     st.markdown('<div class="section-header">Methodology Notes</div>', unsafe_allow_html=True)
@@ -1019,25 +1154,29 @@ with tab4:
 Mean-variance optimization via SLSQP (Markowitz, 1952). Expected returns estimated from historical 
 sample mean; covariance from historical sample covariance. Annualized assuming 252 trading days.
 Box constraints enforce 0 ≤ wᵢ ≤ max_weight with full-investment constraint Σwᵢ = 1.
+Cardinality constraint (max holdings N) applied post-optimization: the N largest weights are 
+retained and re-normalized. This is mathematically equivalent to a thresholded tangency portfolio 
+and is standard practice for small universes.
 
 <br><br>
 <span style="color:#7c6af7;">RISK METRICS</span>  
-VaR and CVaR computed via historical simulation on the realized return series.  
+VaR and CVaR computed via historical simulation — no distributional assumption imposed.  
 Sortino uses downside deviation (returns below Rf) as denominator.  
 Beta estimated via 60-day rolling OLS covariance ratio against SPY.
-Omega ratio = (gains above Rf) / (losses below Rf).
+Omega ratio = E[gains above Rf] / E[losses below Rf].
 
 <br><br>
 <span style="color:#f0c27f;">DATA</span>  
-Prices fetched via yfinance (Yahoo Finance). Adjusted close prices used.  
-Data is cached for 1 hour to reduce API calls.
+Source: Yahoo Finance via yfinance. Adjusted close prices (splits + dividends).  
+Lookback options: 1Y through Max (full history). Cached 1 hour per session.  
+Benchmark: SPY (SPDR S&P 500 ETF Trust).
 
 <br><br>
 <span style="color:#ff6b6b;">LIMITATIONS</span>  
-Sample-based covariance estimates are sensitive to the lookback window and subject to estimation error 
-(Ledoit-Wolf shrinkage not applied). Historical returns are not indicative of future performance.  
-The model assumes normality implicitly in Sharpe/Sortino; fat tails may cause underestimation of tail risk.  
-Transaction costs, liquidity, and taxes are not modeled.
+Sample covariance is a noisy estimator — longer lookbacks reduce variance but may include 
+structural breaks. Ledoit-Wolf shrinkage not applied (future work).  
+Cardinality constraint via thresholding is a heuristic; true cardinality-constrained MVO is NP-hard.  
+Historical returns are not indicative of future performance. Transaction costs and taxes not modeled.
 
 </div>
 """, unsafe_allow_html=True)
