@@ -1,0 +1,17 @@
+[server]
+headless = true
+enableCORS = false
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+backgroundColor = "#f7f5f0"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#1a1a18"
+font = "monospace"
+
+[ui]
+# Collapse sidebar by default — better on mobile
+hideSidebarNav = false

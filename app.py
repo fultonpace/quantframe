@@ -21,7 +21,13 @@ st.set_page_config(
     page_title="QuantFrame | Portfolio Intelligence",
     page_icon="logo.svg",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
+)
+
+# ── Viewport meta (ensures correct mobile scaling) ───────────────────────────
+st.markdown(
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">',
+    unsafe_allow_html=True,
 )
 
 # ── Custom CSS ───────────────────────────────────────────────────────────────
@@ -172,6 +178,23 @@ html, body, [class*="css"] {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
+}
+
+/* Responsive grid helpers */
+.grid-4col {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+.grid-7col {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1rem;
+}
+.grid-3col {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
 }
 
 /* Plotly dark override */
@@ -354,6 +377,204 @@ html, body, [class*="css"] {
     color: var(--danger);
     border-color: rgba(192,57,43,0.3);
 }
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — screens ≤ 768px
+   ═══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    /* Container: tighter padding on mobile */
+    .block-container {
+        padding: 1rem 1rem !important;
+    }
+
+    /* Title: smaller on mobile */
+    .app-title {
+        font-size: 1.3rem !important;
+    }
+    .app-subtitle {
+        font-size: 0.6rem !important;
+        letter-spacing: 0.06em !important;
+    }
+
+    /* Metric cards: reduce padding and font on mobile */
+    .metric-card {
+        padding: 0.85rem 1rem !important;
+    }
+    .metric-value {
+        font-size: 1.2rem !important;
+    }
+    .metric-label {
+        font-size: 0.6rem !important;
+    }
+
+    /* Collapse all inline multi-column grids to 2 columns on mobile */
+    div[style*="grid-template-columns: repeat(4"],
+    div[style*="grid-template-columns:repeat(4"],
+    div[style*="grid-template-columns: repeat(7"],
+    div[style*="grid-template-columns:repeat(7"],
+    .grid-4col,
+    .grid-7col {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* 3-col grids → 1 col on very narrow */
+    div[style*="grid-template-columns: repeat(3"],
+    div[style*="grid-template-columns:repeat(3"],
+    .grid-3col {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* info-grid: 1 column on mobile */
+    .info-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Section headers: smaller */
+    .section-header {
+        font-size: 0.6rem !important;
+        letter-spacing: 0.1em !important;
+        margin-top: 1.25rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Tabs: smaller text so all 4 tabs fit */
+    [data-testid="stTabs"] [role="tab"] {
+        font-size: 0.6rem !important;
+        padding: 0.5rem 0.5rem !important;
+        letter-spacing: 0.04em !important;
+    }
+
+    /* Buttons: taller tap targets */
+    .stButton > button {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.7rem !important;
+        min-height: 44px;
+    }
+
+    /* Sliders: larger thumb for touch */
+    [data-testid="stSlider"] [role="slider"] {
+        width: 20px !important;
+        height: 20px !important;
+    }
+
+    /* Sidebar: slightly wider on mobile for usability */
+    [data-testid="stSidebar"] {
+        min-width: 280px !important;
+    }
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] .stMarkdown p {
+        font-size: 0.85rem !important;
+    }
+
+    /* Select/input fields: larger touch target */
+    [data-testid="stSelectbox"] > div > div,
+    [data-testid="stTextInput"] > div > div > input,
+    [data-testid="stNumberInput"] > div > div > input {
+        font-size: 0.9rem !important;
+        min-height: 40px !important;
+    }
+
+    /* Plotly charts: ensure full width and don't clip */
+    .js-plotly-plot {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+    }
+
+    /* Inline data source panel: 2 cols instead of 7 */
+    div[style*="grid-template-columns:repeat(7,1fr)"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Discovery idle card: full width on mobile */
+    div[style*="max-width:640px"] {
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    /* Reduce large inline font sizes in HTML blocks */
+    .metric-value[style*="font-size:1.6rem"] {
+        font-size: 1.1rem !important;
+    }
+
+    /* Weight row: allow wrap on narrow screens */
+    .weight-row {
+        flex-wrap: wrap !important;
+        gap: 0.25rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* Divider margin */
+    .divider {
+        margin: 1rem 0 !important;
+    }
+
+    /* Expander: larger tap target for summary */
+    [data-testid="stExpander"] summary {
+        font-size: 0.8rem !important;
+        padding: 0.75rem 0 !important;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Caption */
+    [data-testid="stCaptionContainer"] p {
+        font-size: 0.6rem !important;
+    }
+}
+
+/* Extra-small phones (≤ 480px): single-column everything */
+@media (max-width: 480px) {
+    .block-container {
+        padding: 0.75rem 0.75rem !important;
+    }
+    div[style*="grid-template-columns: repeat(4"],
+    div[style*="grid-template-columns:repeat(4"],
+    div[style*="grid-template-columns: repeat(7"],
+    div[style*="grid-template-columns:repeat(7"],
+    div[style*="grid-template-columns: repeat(3"],
+    div[style*="grid-template-columns:repeat(3"],
+    div[style*="grid-template-columns:repeat(7,1fr)"],
+    .grid-4col, .grid-7col, .grid-3col {
+        grid-template-columns: 1fr !important;
+    }
+    .app-title {
+        font-size: 1.1rem !important;
+    }
+    .metric-value {
+        font-size: 1rem !important;
+    }
+    /* Stack the mode badge and run button vertically */
+    div[style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ── Force Streamlit native st.columns() to stack on mobile ── */
+@media (max-width: 640px) {
+    /* Streamlit wraps columns in a flex container with data-testid="stHorizontalBlock"
+       and each column in data-testid="stColumn". Force vertical stacking. */
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+    }
+    [data-testid="stColumn"] {
+        min-width: calc(50% - 0.5rem) !important;
+        flex: 1 1 calc(50% - 0.5rem) !important;
+    }
+    /* For very narrow columns (5 across), force full width */
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(n+4) {
+        min-width: calc(50% - 0.5rem) !important;
+    }
+}
+
+@media (max-width: 420px) {
+    [data-testid="stColumn"] {
+        min-width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -362,10 +583,12 @@ PLOT_LAYOUT = dict(
     paper_bgcolor="rgba(247,245,240,0)",
     plot_bgcolor="rgba(247,245,240,0)",
     font=dict(family="IBM Plex Mono", color="#8a8072", size=11),
-    margin=dict(l=50, r=30, t=40, b=50),
+    margin=dict(l=45, r=20, t=40, b=45),
     xaxis=dict(gridcolor="#e0d9ce", zerolinecolor="#e0d9ce", linecolor="#e0d9ce"),
     yaxis=dict(gridcolor="#e0d9ce", zerolinecolor="#e0d9ce", linecolor="#e0d9ce"),
-    legend=dict(bgcolor="rgba(247,245,240,0)", bordercolor="#e0d9ce"),
+    legend=dict(bgcolor="rgba(247,245,240,0)", bordercolor="#e0d9ce",
+                orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0),
+    autosize=True,
 )
 
 PRESET_UNIVERSES = {
@@ -928,7 +1151,7 @@ if _cur_mode == "discover":
 
     # ── Metric cards ─────────────────────────────────────────────────────────
     st.markdown(f"""
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1rem 0;">
+<div class="grid-4col" style="margin:1rem 0;">
   <div class="metric-card">
     <div class="metric-label">Estimated Runtime</div>
     <div class="metric-value" style="font-size:1.1rem;color:{est_col};">{est_str}</div>
@@ -1100,20 +1323,28 @@ if _cur_mode == "discover":
         # ── Results ────────────────────────────────────────────────────────────
         st.markdown('<div class="section-header">Discovery Results · Best Portfolio Found</div>', unsafe_allow_html=True)
 
-        res_cols = st.columns(5)
-        for col, (label, val, color) in zip(res_cols, [
-            ("Sharpe Ratio",        f"{best['sharpe']:.4f}",          "#2d6a4f"),
-            ("Ann. Return",         f"{best['ret']*100:.2f}%",         "#2d6a4f"),
-            ("Ann. Volatility",     f"{best['vol']*100:.2f}%",         "#1a1a18"),
-            ("Portfolio Size",      f"{len(best['stocks'])} stocks",   "#b5873a"),
-            ("Iterations Run",      f"{disc_iterations}",              "#8a8072"),
-        ]):
-            with col:
-                st.markdown(f"""
-    <div class="metric-card">
-      <div class="metric-label">{label}</div>
-      <div class="metric-value" style="color:{color};">{val}</div>
-    </div>""", unsafe_allow_html=True)
+        disc_result_cards = [
+            ("Sharpe Ratio",    f"{best['sharpe']:.4f}",        "#2d6a4f"),
+            ("Ann. Return",     f"{best['ret']*100:.2f}%",       "#2d6a4f"),
+            ("Ann. Volatility", f"{best['vol']*100:.2f}%",       "#1a1a18"),
+            ("Portfolio Size",  f"{len(best['stocks'])} stocks", "#b5873a"),
+            ("Iterations Run",  f"{disc_iterations}",            "#8a8072"),
+        ]
+        disc_cards_html = "".join(f"""
+<div class="metric-card">
+  <div class="metric-label">{label}</div>
+  <div class="metric-value" style="color:{color};">{val}</div>
+</div>""" for label, val, color in disc_result_cards)
+        st.markdown(f"""
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;" class="disc-results-grid">
+{disc_cards_html}
+</div>
+<style>
+@media (max-width: 768px) {{
+  .disc-results-grid {{ grid-template-columns: repeat(2, 1fr) !important; }}
+}}
+</style>
+""", unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -1339,8 +1570,8 @@ _preset_col = active_preset[3]
 
 st.markdown(f"""
 <div style="background:#f0ece4;border:1px solid #e0d9ce;border-radius:4px;
-            padding:1rem 1.5rem;margin-bottom:1.5rem;
-            display:grid;grid-template-columns:repeat(7,1fr);gap:1rem;">
+            padding:1rem 1.5rem;margin-bottom:1.5rem;"
+     class="grid-7col">
   <div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
                 letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;margin-bottom:0.3rem;">
@@ -1411,10 +1642,10 @@ bench_ret = bench.pct_change().dropna()
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4 = st.tabs([
-    "  📐  Efficient Frontier  ",
-    "  📊  Risk Analytics  ",
-    "  🔁  Rolling Metrics  ",
-    "  📋  Portfolio Report  ",
+    "📐 Frontier",
+    "📊 Risk",
+    "🔁 Rolling",
+    "📋 Report",
 ])
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1526,36 +1757,50 @@ with tab1:
     if is_custom:
         card_list.insert(2, (f"Your Portfolio\n({_preset_lbl})", w_primary, r_ut, v_ut, s_ut, _preset_col))
 
-    cols = st.columns(len(card_list))
-    for col, (label, weights, ret, vol, sharpe, color) in zip(cols, card_list):
+    n_cards = len(card_list)
+    cards_html_ef = ""
+    for label, weights, ret, vol, sharpe, color in card_list:
         is_selected = np.allclose(weights, w_primary, atol=1e-4)
-        border_style = f"box-shadow:0 0 0 1px {color}; " if is_selected else ""
-        with col:
-            st.markdown(f"""
+        border_style = f"box-shadow:0 0 0 1px {color};" if is_selected else ""
+        active_badge = f'<span class="badge" style="background:rgba(45,106,79,0.12);color:{color};border-color:{color}60;">ACTIVE</span>' if is_selected else ''
+        cards_html_ef += f"""
 <div class="metric-card" style="--accent:{color};{border_style}">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
-  <div class="metric-label" style="white-space:pre;">{label}</div>
-  {'<span class="badge" style="background:rgba(45,106,79,0.12);color:' + color + ';border-color:' + color + '60;">ACTIVE</span>' if is_selected else ''}
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.3rem;">
+    <div class="metric-label" style="white-space:pre;">{label}</div>
+    {active_badge}
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+    <div>
+      <div class="metric-label">Ann. Return</div>
+      <div class="metric-value" style="font-size:1.1rem;color:{color};">{ret*100:.2f}%</div>
+    </div>
+    <div>
+      <div class="metric-label">Ann. Vol</div>
+      <div class="metric-value" style="font-size:1.1rem;">{vol*100:.2f}%</div>
+    </div>
+    <div>
+      <div class="metric-label">Sharpe</div>
+      <div class="metric-value" style="font-size:1.1rem;color:{color};">{sharpe:.3f}</div>
+    </div>
+    <div>
+      <div class="metric-label">Max Wt</div>
+      <div class="metric-value" style="font-size:1.1rem;">{weights.max()*100:.1f}%</div>
+    </div>
+  </div>
+</div>"""
+
+    st.markdown(f"""
+<div style="display:grid;grid-template-columns:repeat({n_cards},1fr);gap:1rem;" class="portfolio-cards-grid">
+{cards_html_ef}
 </div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-  <div>
-    <div class="metric-label">Ann. Return</div>
-    <div class="metric-value" style="font-size:1.1rem;color:{color};">{ret*100:.2f}%</div>
-  </div>
-  <div>
-    <div class="metric-label">Ann. Vol</div>
-    <div class="metric-value" style="font-size:1.1rem;">{vol*100:.2f}%</div>
-  </div>
-  <div>
-    <div class="metric-label">Sharpe</div>
-    <div class="metric-value" style="font-size:1.1rem;color:{color};">{sharpe:.3f}</div>
-  </div>
-  <div>
-    <div class="metric-label">Max Wt</div>
-    <div class="metric-value" style="font-size:1.1rem;">{weights.max()*100:.1f}%</div>
-  </div>
-</div>
-</div>
+<style>
+@media (max-width: 768px) {{
+  .portfolio-cards-grid {{ grid-template-columns: repeat(2, 1fr) !important; }}
+}}
+@media (max-width: 420px) {{
+  .portfolio-cards-grid {{ grid-template-columns: 1fr !important; }}
+}}
+</style>
 """, unsafe_allow_html=True)
 
     # ── Weights chart
@@ -1604,8 +1849,7 @@ with tab2:
     max_dd  = compute_max_drawdown(cum_ret)
     calmar  = compute_calmar(r_ut, max_dd)
 
-    # Top metrics row
-    m1, m2, m3, m4, m5 = st.columns(5)
+    # Top metrics row — responsive HTML grid (5 on desktop, 2-3 on mobile)
     metrics = [
         ("VaR", f"{var_h*100:.2f}%", f"{confidence*100:.0f}% 1-day historical", "negative"),
         ("CVaR", f"{cvar_h*100:.2f}%", "Expected shortfall", "negative"),
@@ -1613,17 +1857,33 @@ with tab2:
         ("Max Drawdown", f"{max_dd*100:.2f}%", "Peak-to-trough", "negative"),
         ("Calmar", f"{calmar:.3f}", "Return / Max DD", "positive" if calmar > 0 else "negative"),
     ]
-    for col, (label, val, sub, cls) in zip([m1,m2,m3,m4,m5], metrics):
-        with col:
-            st.markdown(f"""
+    cards_html = "".join(f"""
 <div class="metric-card">
   <div class="metric-label">{label}</div>
   <div class="metric-value {cls}">{val}</div>
   <div class="metric-sub">{sub}</div>
-</div>""", unsafe_allow_html=True)
+</div>""" for label, val, sub, cls in metrics)
+    st.markdown(f"""
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;" class="risk-metrics-grid">
+{cards_html}
+</div>
+<style>
+@media (max-width: 768px) {{
+  .risk-metrics-grid {{ grid-template-columns: repeat(2, 1fr) !important; }}
+}}
+@media (max-width: 480px) {{
+  .risk-metrics-grid {{ grid-template-columns: 1fr 1fr !important; }}
+}}
+</style>
+""", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # On desktop: [3,2] side-by-side charts. CSS will stack them on mobile.
+    st.markdown("""<style>
+.risk-chart-wrap [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; }
+.risk-chart-wrap [data-testid="stColumn"] { min-width: min(100%, 300px) !important; flex: 1 1 300px !important; }
+</style><div class="risk-chart-wrap">""", unsafe_allow_html=True)
     # Return distribution + VaR
     col_left, col_right = st.columns([3, 2])
 
@@ -1677,6 +1937,8 @@ with tab2:
             "yaxis_title":"Drawdown (%)",
         })
         st.plotly_chart(fig4, use_container_width=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)  # close risk-chart-wrap
 
     # Correlation heatmap
     st.markdown('<div class="section-header">Correlation Matrix</div>', unsafe_allow_html=True)
@@ -1837,7 +2099,7 @@ with tab4:
 
     st.markdown(f"""
 <div class="metric-card" style="margin-bottom:1.5rem;border-left:3px solid {_preset_col};">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;">
     <div class="metric-label" style="font-size:0.7rem;">
       QUANTFRAME ANALYTICS REPORT &nbsp;·&nbsp;
       Universe: {', '.join(valid_tickers)} &nbsp;·&nbsp;
@@ -1850,7 +2112,7 @@ with tab4:
       {_preset_lbl} · {_preset_sub}
     </span>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+  <div class="grid-4col">
     <div>
       <div class="metric-label">Annualized Return</div>
       <div class="metric-value {'positive' if r_ut>0 else 'negative'}">{r_ut*100:.2f}%</div>
