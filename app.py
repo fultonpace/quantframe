@@ -638,6 +638,21 @@ with st.sidebar:
 
         n_opt = st.session_state.optimize_n
         sn    = st.session_state.suggested_n
+
+        # ── Constraint linkage: compute hard cap on N BEFORE the slider renders
+        # so the slider's max_value physically prevents infeasible combinations.
+        # Rule: min_weight × N ≤ 1.0  →  N ≤ floor(1 / min_weight)
+        if not wt_opt and not n_opt and min_weight > 0:
+            _hard_max_n = max(2, int(np.floor(1.0 / min_weight)))
+        else:
+            _hard_max_n = 20
+
+        # Also clamp the stored value so the slider doesn't open above its new max
+        _stored_n = st.session_state.max_assets_val
+        if _stored_n > _hard_max_n:
+            st.session_state.max_assets_val = _hard_max_n
+            _stored_n = _hard_max_n
+
         st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:0.3rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;margin-bottom:0.25rem;min-height:1.55rem;">
   <span style="color:{'#8a8072' if n_opt else 'transparent'};">Effective N = </span>
@@ -645,45 +660,30 @@ with st.sidebar:
   <span style="color:{'#8a8072' if n_opt else 'transparent'};"> (auto)</span>
 </div>""", unsafe_allow_html=True)
 
-        slider_n = st.slider("Max Holdings (N)", min_value=2, max_value=20,
-                             value=sn if n_opt else st.session_state.max_assets_val, step=1, disabled=n_opt)
+        slider_n = st.slider("Max Holdings (N)", min_value=2, max_value=_hard_max_n,
+                             value=sn if n_opt else _stored_n, step=1, disabled=n_opt)
         if n_opt:
             max_assets = sn
         else:
             max_assets = slider_n
             st.session_state.max_assets_val = slider_n
 
-        # ── Constraint linkage ────────────────────────────────────────────────
-        # Rule 1: min_weight × max_assets ≤ 1.0
-        # Rule 2: min_weight ≤ max_weight
-        # When either rule is violated, clamp silently and show a warning.
-        if not wt_opt and not n_opt:
-            _clamped = False
-            if min_weight > 0 and min_weight * max_assets > 1.0:
-                max_assets = int(np.floor(1.0 / min_weight))
-                max_assets = max(2, max_assets)
-                st.session_state.max_assets_val = max_assets
-                _clamped = True
-            if min_weight > max_weight:
-                min_weight = max_weight
-                _clamped = True
-            if _clamped:
-                st.markdown(f"""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#b5873a;
-            background:rgba(181,135,58,0.08);border:1px solid rgba(181,135,58,0.3);
-            border-radius:3px;padding:0.45rem 0.65rem;margin-top:0.4rem;">
-  ⚠ Auto-adjusted to stay feasible<br>
-  min={min_weight:.2f} · max={max_weight:.2f} · N={max_assets}<br>
-  <span style="opacity:0.7;">min × N cannot exceed 100%</span>
-</div>""", unsafe_allow_html=True)
-            else:
-                _floor_used = min_weight * max_assets * 100
-                _color = "#2d6a4f" if _floor_used <= 80 else "#b5873a"
-                st.markdown(f"""
+        # Final safety clamp (covers edge cases like wt_opt/n_opt combos)
+        if min_weight > 0 and min_weight * max_assets > 1.0:
+            max_assets = max(2, int(np.floor(1.0 / min_weight)))
+        if min_weight > max_weight:
+            min_weight = max_weight
+
+        # Feasibility indicator
+        if not wt_opt:
+            _floor_used = min_weight * max_assets * 100
+            _color = "#2d6a4f" if _floor_used <= 80 else "#b5873a"
+            _icon  = "✓" if _floor_used <= 80 else "⚠"
+            st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:{_color};
             background:rgba(45,106,79,0.05);border:1px solid rgba(45,106,79,0.2);
             border-radius:3px;padding:0.45rem 0.65rem;margin-top:0.4rem;">
-  ✓ Feasible · floor locks {_floor_used:.0f}% · {100-_floor_used:.0f}% free to optimize
+  {_icon} floor locks {_floor_used:.0f}% · {100-_floor_used:.0f}% free to optimize
 </div>""", unsafe_allow_html=True)
 
         # ── Risk Tolerance ────────────────────────────────────────────────────
