@@ -852,23 +852,33 @@ No guarantee of global optimality. Results vary across runs.
 # ── Header ─────────────────────────────────────────────────────────────────
 col_title, col_badge = st.columns([5, 1])
 with col_title:
-    st.markdown('<div class="app-title">Quant<span>Frame</span></div>', unsafe_allow_html=True)
-    st.markdown('<div class="app-subtitle">Modern Portfolio Theory · Factor Risk · Decision Analytics</div>', unsafe_allow_html=True)
     st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;
-            color:#b0a898;margin-top:0.35rem;letter-spacing:0.04em;">
-  Created by <span style="color:#2d6a4f;font-weight:500;">Fulton Pace</span>
-  <span style="color:#d6cfc4;margin:0 0.5rem;">·</span>
-  Market data via <span style="color:#b5873a;font-weight:500;">Yahoo Finance</span>
-  <span style="color:#d6cfc4;margin:0 0.5rem;">·</span>
-  <a href="https://github.com/fultonpace/quantframe" target="_blank"
-     style="color:#4a7c9e;text-decoration:none;font-weight:500;">
-    Open source code ↗
-  </a>
+<div style="margin-bottom:0.5rem;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:3rem;font-weight:600;
+              color:#1a1a18;letter-spacing:-0.03em;line-height:1;">
+    Quant<span style="color:#2d6a4f;">Frame</span>
+  </div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.85rem;
+              color:#8a8072;letter-spacing:0.18em;text-transform:uppercase;
+              margin-top:0.4rem;">
+    Modern Portfolio Theory &nbsp;·&nbsp; Factor Risk &nbsp;·&nbsp; Decision Analytics
+  </div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;
+              color:#b0a898;margin-top:0.5rem;letter-spacing:0.04em;">
+    Built by&nbsp;
+    <span style="color:#2d6a4f;font-weight:600;font-size:0.85rem;">Fulton Pace</span>
+    <span style="color:#d6cfc4;margin:0 0.6rem;">·</span>
+    Market data via&nbsp;<span style="color:#b5873a;font-weight:500;">Yahoo Finance</span>
+    <span style="color:#d6cfc4;margin:0 0.6rem;">·</span>
+    <a href="https://github.com/fultonpace/quantframe" target="_blank"
+       style="color:#4a7c9e;text-decoration:none;font-weight:500;">
+      Open source ↗
+    </a>
+  </div>
 </div>
 """, unsafe_allow_html=True)
 with col_badge:
-    st.markdown('<br><span class="badge">v1.0</span>', unsafe_allow_html=True)
+    st.markdown('<div style="padding-top:1.6rem;text-align:right;"><span class="badge" style="font-size:0.65rem;padding:0.25rem 0.75rem;">v1.0</span></div>', unsafe_allow_html=True)
 
 st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
