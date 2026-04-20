@@ -987,136 +987,120 @@ if st.session_state.get("show_about", False):
 }
 </style>
 """, unsafe_allow_html=True)
-    st.markdown("""
-<div class="about-modal">
-  <div class="about-modal-title">About QuantFrame v2</div>
-  <div class="about-modal-sub">Modern Portfolio Theory &nbsp;·&nbsp; Factor Risk &nbsp;·&nbsp; Decision Analytics</div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;">
-
-    <div>
-
-      <div class="about-concept">
-        <div class="about-concept-label" style="color:#2d6a4f;">Modern Portfolio Theory</div>
-        <div class="about-concept-body">
-          Imagine you're packing a lunch. You could bring three bags of chips (same food, same risk), 
-          or bring chips, an apple, and a sandwich — things that don't all go stale at the same time.
-          <br><br>
-          Modern Portfolio Theory (Markowitz, 1952) is that lunch logic applied to stocks. 
-          The key insight: <strong>combining assets that don't move in lockstep reduces overall risk 
-          without sacrificing return</strong>. The math finds the exact weights that maximize your 
-          reward per unit of risk — the Sharpe ratio — tracing a curve called the 
-          <strong>Efficient Frontier</strong>. Every portfolio on that curve is "optimal"; 
-          everything below it is wasteful.
-        </div>
-        <div class="about-concept-formula">max Sharpe = (Rₚ − Rᶠ) / σₚ &nbsp;·&nbsp; Markowitz (1952)</div>
-      </div>
-
-      <div class="about-concept">
-        <div class="about-concept-label" style="color:#b5873a;">Factor Risk Analytics</div>
-        <div class="about-concept-body">
-          Not all risk is the same. Some risk comes from the whole market moving (you can't 
-          avoid this — it's called <em>systematic</em> risk). Other risk is specific to one company 
-          going wrong (this you <em>can</em> diversify away).
-          <br><br>
-          Factor risk analytics breaks your portfolio's risk into these parts. 
-          <strong>Beta</strong> measures how much your portfolio amplifies market swings — a beta of 1.2 
-          means when the S&P 500 drops 10%, you drop 12%. <strong>VaR</strong> answers "on a bad day, 
-          how much could I lose?" and <strong>CVaR</strong> asks "on the worst days, what's my 
-          average loss?" Together they let you stress-test a portfolio before you're in it.
-        </div>
-        <div class="about-concept-formula">β = Cov(Rₚ, Rₘ) / Var(Rₘ) &nbsp;·&nbsp; CVaR = E[loss | loss > VaR]</div>
-      </div>
-
-      <div class="about-concept">
-        <div class="about-concept-label" style="color:#4a7c9e;">Decision Analytics</div>
-        <div class="about-concept-body">
-          Even with a perfect frontier and full risk breakdown, you still face a human question: 
-          <em>how much risk should I take?</em> Decision analytics brings your preference into the math.
-          <br><br>
-          QuantFrame encodes risk tolerance with a single number — <strong>λ (lambda)</strong> — 
-          from the Arrow-Pratt utility function. Low λ means you chase returns; high λ means you 
-          prefer safety. The optimizer uses your λ to select the one point on the frontier that 
-          matches your actual preference, turning subjective comfort into an objective weight vector.
-        </div>
-        <div class="about-concept-formula">U = μₚ − (λ/2)σₚ² &nbsp;·&nbsp; Arrow-Pratt utility</div>
-      </div>
-
-    </div>
-
-    <div>
-      <div class="about-concept-label" style="color:#2d6a4f;margin-bottom:0.75rem;">How QuantFrame Addresses Each</div>
-
-      <div class="about-app-addresses">
-
-        <div class="about-app-row">
-          <div class="about-app-row-dot" style="background:#2d6a4f;box-shadow:0 0 5px #2d6a4f;"></div>
-          <div class="about-app-row-text">
-            <div class="about-app-row-label" style="color:#2d6a4f;">MPT → Efficient Frontier + Optimizer</div>
-            Solves the full Markowitz optimization via SLSQP to find the tangency portfolio (max Sharpe), 
-            minimum variance portfolio, and utility-optimal portfolio. Visualizes the entire frontier so 
-            you can see where your allocation sits versus the theoretical best.
-          </div>
-        </div>
-
-        <div class="about-app-row">
-          <div class="about-app-row-dot" style="background:#b5873a;box-shadow:0 0 5px #b5873a;"></div>
-          <div class="about-app-row-text">
-            <div class="about-app-row-label" style="color:#b5873a;">Factor Risk → Live Risk Decomposition</div>
-            Computes VaR and CVaR from actual daily return distributions (no distributional assumptions). 
-            Rolling 60-day beta against SPY shows how your market exposure changes over time. 
-            Sortino and Calmar ratios isolate downside risk specifically.
-          </div>
-        </div>
-
-        <div class="about-app-row">
-          <div class="about-app-row-dot" style="background:#4a7c9e;box-shadow:0 0 5px #4a7c9e;"></div>
-          <div class="about-app-row-text">
-            <div class="about-app-row-label" style="color:#4a7c9e;">Decision Analytics → Risk Profile Selector</div>
-            Six named risk presets (No Guts → High Roller) map directly to λ values from the utility 
-            function. The Custom λ slider lets you dial in any preference. The optimizer then 
-            automatically selects the mathematically correct portfolio for that exact risk tolerance.
-          </div>
-        </div>
-
-        <div class="about-app-row">
-          <div class="about-app-row-dot" style="background:#6b3fa0;box-shadow:0 0 5px #6b3fa0;"></div>
-          <div class="about-app-row-text">
-            <div class="about-app-row-label" style="color:#6b3fa0;">Discovery Mode → Portfolio Search</div>
-            When you don't know which stocks to use, Discovery samples thousands of random combinations 
-            from the S&P 500 and runs optimization on each — surfacing the combination with the highest 
-            Sharpe ratio. It's a brute-force search through the combinatorial space of portfolios.
-          </div>
-        </div>
-
-        <div class="about-app-row">
-          <div class="about-app-row-dot" style="background:#c0392b;box-shadow:0 0 5px #c0392b;"></div>
-          <div class="about-app-row-text">
-            <div class="about-app-row-label" style="color:#c0392b;">⚠ Important Limitations</div>
-            All results are backward-looking. Sample covariance is noisy; short lookback windows 
-            amplify estimation error. Transaction costs, taxes, and slippage are not modeled. 
-            Past performance does not predict future returns. This is an analytical tool, not 
-            investment advice.
-          </div>
-        </div>
-
-      </div>
-
-      <div style="margin-top:1.5rem;">
-        <div class="about-concept-label" style="color:#8a8072;margin-bottom:0.6rem;">Data & Sources</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#8a8072;line-height:2;">
-          Prices &nbsp;·&nbsp; <span style="color:#b5873a;">Yahoo Finance</span> via yfinance — adjusted close (splits + dividends)<br>
-          Benchmark &nbsp;·&nbsp; <span style="color:#1a1a18;">SPY</span> (SPDR S&P 500 ETF Trust)<br>
-          Optimization &nbsp;·&nbsp; <span style="color:#1a1a18;">SciPy SLSQP</span> — Markowitz (1952)<br>
-          Universe &nbsp;·&nbsp; ~490 S&P 500 tickers from public GitHub dataset<br>
-          Cache &nbsp;·&nbsp; 1 hour per session
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown(
+        '<div class="about-modal">'
+        '<div class="about-modal-title">About QuantFrame v2</div>'
+        '<div class="about-modal-sub">Modern Portfolio Theory &nbsp;·&nbsp; Factor Risk &nbsp;·&nbsp; Decision Analytics</div>'
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;">'
+        '<div>'
+        '<div class="about-concept">'
+        '<div class="about-concept-label" style="color:#2d6a4f;">Modern Portfolio Theory</div>'
+        '<div class="about-concept-body">'
+        "Imagine you're packing a lunch. You could bring three bags of chips (same food, same risk), "
+        "or bring chips, an apple, and a sandwich — things that don't all go stale at the same time."
+        '<br><br>'
+        'Modern Portfolio Theory (Markowitz, 1952) is that lunch logic applied to stocks. '
+        'The key insight: <strong>combining assets that don\'t move in lockstep reduces overall risk '
+        'without sacrificing return</strong>. The math finds the exact weights that maximize your '
+        'reward per unit of risk — the Sharpe ratio — tracing a curve called the '
+        '<strong>Efficient Frontier</strong>. Every portfolio on that curve is "optimal"; '
+        'everything below it is wasteful.'
+        '</div>'
+        '<div class="about-concept-formula">max Sharpe = (R\u209a \u2212 R\u1da0) / \u03c3\u209a &nbsp;\u00b7&nbsp; Markowitz (1952)</div>'
+        '</div>'
+        '<div class="about-concept">'
+        '<div class="about-concept-label" style="color:#b5873a;">Factor Risk Analytics</div>'
+        '<div class="about-concept-body">'
+        "Not all risk is the same. Some risk comes from the whole market moving (you can't "
+        'avoid this — it\'s called <em>systematic</em> risk). Other risk is specific to one company '
+        'going wrong (this you <em>can</em> diversify away).'
+        '<br><br>'
+        "Factor risk analytics breaks your portfolio's risk into these parts. "
+        '<strong>Beta</strong> measures how much your portfolio amplifies market swings — a beta of 1.2 '
+        'means when the S&amp;P 500 drops 10%, you drop 12%. <strong>VaR</strong> answers "on a bad day, '
+        'how much could I lose?" and <strong>CVaR</strong> asks "on the worst days, what\'s my '
+        'average loss?" Together they let you stress-test a portfolio before you\'re in it.'
+        '</div>'
+        '<div class="about-concept-formula">\u03b2 = Cov(R\u209a, R\u2098) / Var(R\u2098) &nbsp;\u00b7&nbsp; CVaR = E[loss | loss &gt; VaR]</div>'
+        '</div>'
+        '<div class="about-concept">'
+        '<div class="about-concept-label" style="color:#4a7c9e;">Decision Analytics</div>'
+        '<div class="about-concept-body">'
+        'Even with a perfect frontier and full risk breakdown, you still face a human question: '
+        '<em>how much risk should I take?</em> Decision analytics brings your preference into the math.'
+        '<br><br>'
+        'QuantFrame encodes risk tolerance with a single number — <strong>\u03bb (lambda)</strong> — '
+        'from the Arrow-Pratt utility function. Low \u03bb means you chase returns; high \u03bb means you '
+        'prefer safety. The optimizer uses your \u03bb to select the one point on the frontier that '
+        'matches your actual preference, turning subjective comfort into an objective weight vector.'
+        '</div>'
+        '<div class="about-concept-formula">U = \u03bc\u209a \u2212 (\u03bb/2)\u03c3\u209a\u00b2 &nbsp;\u00b7&nbsp; Arrow-Pratt utility</div>'
+        '</div>'
+        '</div>'
+        '<div>'
+        '<div class="about-concept-label" style="color:#2d6a4f;margin-bottom:0.75rem;">How QuantFrame Addresses Each</div>'
+        '<div class="about-app-addresses">'
+        '<div class="about-app-row">'
+        '<div class="about-app-row-dot" style="background:#2d6a4f;box-shadow:0 0 5px #2d6a4f;"></div>'
+        '<div class="about-app-row-text">'
+        '<div class="about-app-row-label" style="color:#2d6a4f;">MPT \u2192 Efficient Frontier + Optimizer</div>'
+        'Solves the full Markowitz optimization via SLSQP to find the tangency portfolio (max Sharpe), '
+        'minimum variance portfolio, and utility-optimal portfolio. Visualizes the entire frontier so '
+        'you can see where your allocation sits versus the theoretical best.'
+        '</div>'
+        '</div>'
+        '<div class="about-app-row">'
+        '<div class="about-app-row-dot" style="background:#b5873a;box-shadow:0 0 5px #b5873a;"></div>'
+        '<div class="about-app-row-text">'
+        '<div class="about-app-row-label" style="color:#b5873a;">Factor Risk \u2192 Live Risk Decomposition</div>'
+        'Computes VaR and CVaR from actual daily return distributions (no distributional assumptions). '
+        'Rolling 60-day beta against SPY shows how your market exposure changes over time. '
+        'Sortino and Calmar ratios isolate downside risk specifically.'
+        '</div>'
+        '</div>'
+        '<div class="about-app-row">'
+        '<div class="about-app-row-dot" style="background:#4a7c9e;box-shadow:0 0 5px #4a7c9e;"></div>'
+        '<div class="about-app-row-text">'
+        '<div class="about-app-row-label" style="color:#4a7c9e;">Decision Analytics \u2192 Risk Profile Selector</div>'
+        'Six named risk presets (No Guts \u2192 High Roller) map directly to \u03bb values from the utility '
+        'function. The Custom \u03bb slider lets you dial in any preference. The optimizer then '
+        'automatically selects the mathematically correct portfolio for that exact risk tolerance.'
+        '</div>'
+        '</div>'
+        '<div class="about-app-row">'
+        '<div class="about-app-row-dot" style="background:#6b3fa0;box-shadow:0 0 5px #6b3fa0;"></div>'
+        '<div class="about-app-row-text">'
+        '<div class="about-app-row-label" style="color:#6b3fa0;">Discovery Mode \u2192 Portfolio Search</div>'
+        "When you don't know which stocks to use, Discovery samples thousands of random combinations "
+        'from the S&amp;P 500 and runs optimization on each \u2014 surfacing the combination with the highest '
+        "Sharpe ratio. It's a brute-force search through the combinatorial space of portfolios."
+        '</div>'
+        '</div>'
+        '<div class="about-app-row">'
+        '<div class="about-app-row-dot" style="background:#c0392b;box-shadow:0 0 5px #c0392b;"></div>'
+        '<div class="about-app-row-text">'
+        '<div class="about-app-row-label" style="color:#c0392b;">\u26a0 Important Limitations</div>'
+        'All results are backward-looking. Sample covariance is noisy; short lookback windows '
+        'amplify estimation error. Transaction costs, taxes, and slippage are not modeled. '
+        'Past performance does not predict future returns. This is an analytical tool, not investment advice.'
+        '</div>'
+        '</div>'
+        '</div>'
+        '<div style="margin-top:1.5rem;">'
+        '<div class="about-concept-label" style="color:#8a8072;margin-bottom:0.6rem;">Data &amp; Sources</div>'
+        '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;color:#8a8072;line-height:2;">'
+        'Prices &nbsp;\u00b7&nbsp; <span style="color:#b5873a;">Yahoo Finance</span> via yfinance \u2014 adjusted close (splits + dividends)<br>'
+        'Benchmark &nbsp;\u00b7&nbsp; <span style="color:#1a1a18;">SPY</span> (SPDR S&amp;P 500 ETF Trust)<br>'
+        'Optimization &nbsp;\u00b7&nbsp; <span style="color:#1a1a18;">SciPy SLSQP</span> \u2014 Markowitz (1952)<br>'
+        'Universe &nbsp;\u00b7&nbsp; ~490 S&amp;P 500 tickers from public GitHub dataset<br>'
+        'Cache &nbsp;\u00b7&nbsp; 1 hour per session'
+        '</div>'
+        '</div>'
+        '</div>'
+        '</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
 # ── Mode badge + run button ───────────────────────────────────────────────────
 if "app_mode_radio" not in st.session_state:
