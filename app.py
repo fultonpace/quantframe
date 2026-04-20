@@ -986,14 +986,14 @@ if st.session_state.get("show_about", False):
     text-transform: uppercase;
 }
 </style>
-
+""", unsafe_allow_html=True)
+    st.markdown("""
 <div class="about-modal">
   <div class="about-modal-title">About QuantFrame v2</div>
   <div class="about-modal-sub">Modern Portfolio Theory &nbsp;·&nbsp; Factor Risk &nbsp;·&nbsp; Decision Analytics</div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;">
 
-    <!-- LEFT COLUMN -->
     <div>
 
       <div class="about-concept">
@@ -1044,7 +1044,6 @@ if st.session_state.get("show_about", False):
 
     </div>
 
-    <!-- RIGHT COLUMN -->
     <div>
       <div class="about-concept-label" style="color:#2d6a4f;margin-bottom:0.75rem;">How QuantFrame Addresses Each</div>
 
