@@ -1,5 +1,5 @@
 """
-QuantFrame — Portfolio Intelligence Dashboard
+QuantFrame v2 — Portfolio Intelligence Dashboard
 Modern Portfolio Theory + Factor Risk Analytics
 Author: [Your Name]
 """
@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore")
 
 # ── Page Config ─────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="QuantFrame | Portfolio Intelligence",
+    page_title="QuantFrame v2 | Portfolio Intelligence",
     page_icon="logo.svg",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -481,9 +481,11 @@ def utility_obj(w, mu, cov, lam):
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## ⬡ QuantFrame")
+    st.markdown("## ⬡ QuantFrame v2")
     st.markdown('<p class="app-subtitle">Portfolio Intelligence</p>', unsafe_allow_html=True)
 
+    if "show_about" not in st.session_state:
+        st.session_state.show_about = False
     if "app_mode" not in st.session_state:
         st.session_state.app_mode = "Portfolio Lab"
     if "app_mode_radio" not in st.session_state:
@@ -856,7 +858,7 @@ with col_title:
 <div style="margin-bottom:0.5rem;">
   <div style="font-family:'IBM Plex Mono',monospace;font-size:3rem;font-weight:600;
               color:#1a1a18;letter-spacing:-0.03em;line-height:1;">
-    Quant<span style="color:#2d6a4f;">Frame</span>
+    Quant<span style="color:#2d6a4f;">Frame</span><span style="color:#8a8072;font-size:1.4rem;font-weight:400;letter-spacing:0;vertical-align:super;margin-left:0.15em;">v2</span>
   </div>
   <div style="font-family:'IBM Plex Mono',monospace;font-size:0.85rem;
               color:#8a8072;letter-spacing:0.18em;text-transform:uppercase;
@@ -878,9 +880,244 @@ with col_title:
 </div>
 """, unsafe_allow_html=True)
 with col_badge:
-    st.markdown('<div style="padding-top:1.6rem;text-align:right;"><span class="badge" style="font-size:0.65rem;padding:0.25rem 0.75rem;">v1.0</span></div>', unsafe_allow_html=True)
+    st.markdown('<div style="padding-top:1.4rem;text-align:right;"><span class="badge" style="font-size:0.65rem;padding:0.25rem 0.75rem;">v2.0</span></div>', unsafe_allow_html=True)
+    if st.button("ℹ  About", key="btn_about_open"):
+        st.session_state.show_about = True
 
 st.markdown('<hr class="divider">', unsafe_allow_html=True)
+
+# ── About Modal ───────────────────────────────────────────────────────────────
+if st.session_state.get("show_about", False):
+    if st.button("✕  Close", key="btn_about_close"):
+        st.session_state.show_about = False
+        st.rerun()
+    st.markdown("""
+<style>
+.about-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2rem 2.5rem 2rem 2.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+}
+.about-modal-title {
+    font-family: var(--mono);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin-bottom: 0.3rem;
+}
+.about-modal-sub {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 1.75rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+}
+.about-concept {
+    margin-bottom: 1.5rem;
+}
+.about-concept-label {
+    font-family: var(--mono);
+    font-size: 0.63rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+}
+.about-concept-body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.875rem;
+    color: #4a4a45;
+    line-height: 1.8;
+}
+.about-concept-formula {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--accent2);
+    margin-top: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    background: #f7f5f0;
+    border-left: 2px solid var(--accent2);
+    border-radius: 0 3px 3px 0;
+    display: inline-block;
+}
+.about-divider-col {
+    border-right: 1px solid var(--border);
+    padding-right: 2rem;
+    margin-right: 2rem;
+}
+.about-app-addresses {
+    background: #f7f5f0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+    margin-top: 0.5rem;
+}
+.about-app-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #ede7dc;
+}
+.about-app-row:last-child { border-bottom: none; }
+.about-app-row-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    margin-top: 0.45rem; flex-shrink: 0;
+}
+.about-app-row-text {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.82rem;
+    color: #4a4a45;
+    line-height: 1.65;
+}
+.about-app-row-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+</style>
+
+<div class="about-modal">
+  <div class="about-modal-title">About QuantFrame v2</div>
+  <div class="about-modal-sub">Modern Portfolio Theory &nbsp;·&nbsp; Factor Risk &nbsp;·&nbsp; Decision Analytics</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;">
+
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <div class="about-concept">
+        <div class="about-concept-label" style="color:#2d6a4f;">Modern Portfolio Theory</div>
+        <div class="about-concept-body">
+          Imagine you're packing a lunch. You could bring three bags of chips (same food, same risk), 
+          or bring chips, an apple, and a sandwich — things that don't all go stale at the same time.
+          <br><br>
+          Modern Portfolio Theory (Markowitz, 1952) is that lunch logic applied to stocks. 
+          The key insight: <strong>combining assets that don't move in lockstep reduces overall risk 
+          without sacrificing return</strong>. The math finds the exact weights that maximize your 
+          reward per unit of risk — the Sharpe ratio — tracing a curve called the 
+          <strong>Efficient Frontier</strong>. Every portfolio on that curve is "optimal"; 
+          everything below it is wasteful.
+        </div>
+        <div class="about-concept-formula">max Sharpe = (Rₚ − Rᶠ) / σₚ &nbsp;·&nbsp; Markowitz (1952)</div>
+      </div>
+
+      <div class="about-concept">
+        <div class="about-concept-label" style="color:#b5873a;">Factor Risk Analytics</div>
+        <div class="about-concept-body">
+          Not all risk is the same. Some risk comes from the whole market moving (you can't 
+          avoid this — it's called <em>systematic</em> risk). Other risk is specific to one company 
+          going wrong (this you <em>can</em> diversify away).
+          <br><br>
+          Factor risk analytics breaks your portfolio's risk into these parts. 
+          <strong>Beta</strong> measures how much your portfolio amplifies market swings — a beta of 1.2 
+          means when the S&P 500 drops 10%, you drop 12%. <strong>VaR</strong> answers "on a bad day, 
+          how much could I lose?" and <strong>CVaR</strong> asks "on the worst days, what's my 
+          average loss?" Together they let you stress-test a portfolio before you're in it.
+        </div>
+        <div class="about-concept-formula">β = Cov(Rₚ, Rₘ) / Var(Rₘ) &nbsp;·&nbsp; CVaR = E[loss | loss > VaR]</div>
+      </div>
+
+      <div class="about-concept">
+        <div class="about-concept-label" style="color:#4a7c9e;">Decision Analytics</div>
+        <div class="about-concept-body">
+          Even with a perfect frontier and full risk breakdown, you still face a human question: 
+          <em>how much risk should I take?</em> Decision analytics brings your preference into the math.
+          <br><br>
+          QuantFrame encodes risk tolerance with a single number — <strong>λ (lambda)</strong> — 
+          from the Arrow-Pratt utility function. Low λ means you chase returns; high λ means you 
+          prefer safety. The optimizer uses your λ to select the one point on the frontier that 
+          matches your actual preference, turning subjective comfort into an objective weight vector.
+        </div>
+        <div class="about-concept-formula">U = μₚ − (λ/2)σₚ² &nbsp;·&nbsp; Arrow-Pratt utility</div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <div class="about-concept-label" style="color:#2d6a4f;margin-bottom:0.75rem;">How QuantFrame Addresses Each</div>
+
+      <div class="about-app-addresses">
+
+        <div class="about-app-row">
+          <div class="about-app-row-dot" style="background:#2d6a4f;box-shadow:0 0 5px #2d6a4f;"></div>
+          <div class="about-app-row-text">
+            <div class="about-app-row-label" style="color:#2d6a4f;">MPT → Efficient Frontier + Optimizer</div>
+            Solves the full Markowitz optimization via SLSQP to find the tangency portfolio (max Sharpe), 
+            minimum variance portfolio, and utility-optimal portfolio. Visualizes the entire frontier so 
+            you can see where your allocation sits versus the theoretical best.
+          </div>
+        </div>
+
+        <div class="about-app-row">
+          <div class="about-app-row-dot" style="background:#b5873a;box-shadow:0 0 5px #b5873a;"></div>
+          <div class="about-app-row-text">
+            <div class="about-app-row-label" style="color:#b5873a;">Factor Risk → Live Risk Decomposition</div>
+            Computes VaR and CVaR from actual daily return distributions (no distributional assumptions). 
+            Rolling 60-day beta against SPY shows how your market exposure changes over time. 
+            Sortino and Calmar ratios isolate downside risk specifically.
+          </div>
+        </div>
+
+        <div class="about-app-row">
+          <div class="about-app-row-dot" style="background:#4a7c9e;box-shadow:0 0 5px #4a7c9e;"></div>
+          <div class="about-app-row-text">
+            <div class="about-app-row-label" style="color:#4a7c9e;">Decision Analytics → Risk Profile Selector</div>
+            Six named risk presets (No Guts → High Roller) map directly to λ values from the utility 
+            function. The Custom λ slider lets you dial in any preference. The optimizer then 
+            automatically selects the mathematically correct portfolio for that exact risk tolerance.
+          </div>
+        </div>
+
+        <div class="about-app-row">
+          <div class="about-app-row-dot" style="background:#6b3fa0;box-shadow:0 0 5px #6b3fa0;"></div>
+          <div class="about-app-row-text">
+            <div class="about-app-row-label" style="color:#6b3fa0;">Discovery Mode → Portfolio Search</div>
+            When you don't know which stocks to use, Discovery samples thousands of random combinations 
+            from the S&P 500 and runs optimization on each — surfacing the combination with the highest 
+            Sharpe ratio. It's a brute-force search through the combinatorial space of portfolios.
+          </div>
+        </div>
+
+        <div class="about-app-row">
+          <div class="about-app-row-dot" style="background:#c0392b;box-shadow:0 0 5px #c0392b;"></div>
+          <div class="about-app-row-text">
+            <div class="about-app-row-label" style="color:#c0392b;">⚠ Important Limitations</div>
+            All results are backward-looking. Sample covariance is noisy; short lookback windows 
+            amplify estimation error. Transaction costs, taxes, and slippage are not modeled. 
+            Past performance does not predict future returns. This is an analytical tool, not 
+            investment advice.
+          </div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:1.5rem;">
+        <div class="about-concept-label" style="color:#8a8072;margin-bottom:0.6rem;">Data & Sources</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#8a8072;line-height:2;">
+          Prices &nbsp;·&nbsp; <span style="color:#b5873a;">Yahoo Finance</span> via yfinance — adjusted close (splits + dividends)<br>
+          Benchmark &nbsp;·&nbsp; <span style="color:#1a1a18;">SPY</span> (SPDR S&P 500 ETF Trust)<br>
+          Optimization &nbsp;·&nbsp; <span style="color:#1a1a18;">SciPy SLSQP</span> — Markowitz (1952)<br>
+          Universe &nbsp;·&nbsp; ~490 S&P 500 tickers from public GitHub dataset<br>
+          Cache &nbsp;·&nbsp; 1 hour per session
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ── Mode badge + run button ───────────────────────────────────────────────────
 if "app_mode_radio" not in st.session_state:
@@ -2126,65 +2363,9 @@ Historical returns are not indicative of future performance. Transaction costs a
 """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.caption("QuantFrame · Built with Streamlit + yfinance + SciPy · Created by Fulton Pace")
+    st.caption("QuantFrame v2 · Built with Streamlit + yfinance + SciPy · Created by Fulton Pace")
 
-    # ── About QuantFrame — collapsed by default, lives at the bottom ──────────
     st.markdown("<br>", unsafe_allow_html=True)
-    with st.expander("ℹ  About QuantFrame", expanded=False):
-        _col_a, _col_b = st.columns(2)
-        with _col_a:
-            st.markdown("""
-<div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.95rem;font-weight:600;
-            color:#1a1a18;margin-bottom:0.6rem;">What is QuantFrame?</div>
-<div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;color:#4a4a45;line-height:1.8;margin-bottom:1rem;">
-  You give it a list of stocks and how much risk you're willing to take.
-  It finds the <span style="color:#2d6a4f;font-weight:600;">exact allocation</span>
-  that maximizes return for that risk level — then breaks down every metric you'd want to know.
-</div>""", unsafe_allow_html=True)
-            for _color, _title, _body, _formula in [
-                ("#2d6a4f","Mean-Variance Optimization","Finds exact weights that maximize Sharpe ratio via SLSQP. Nobel Prize math (Markowitz, 1952).","max (Rₚ − Rᶠ) / σₚ"),
-                ("#2d6a4f","Efficient Frontier","The curve of every optimal portfolio. Anything below it is suboptimal.",""),
-                ("#b5873a","Utility Function (λ)","Expresses risk tolerance mathematically. Higher λ = more conservative.","max U = μ − (λ/2)σ²"),
-                ("#b5873a","VaR & CVaR","Worst loss on bad 5% of days (VaR) and average loss when those days hit (CVaR). From real data.","CVaR = E[loss | loss > VaR]"),
-                ("#4a7c9e","Rolling Beta","How much your portfolio moves vs S&P 500, recalculated every 60 days.","β = Cov(Rₚ, Rₘ) / Var(Rₘ)"),
-                ("#4a7c9e","Effective N","True diversification count. Equal-weight 8-stock portfolio has N_eff = 8.","N_eff = 1 / Σwᵢ²"),
-            ]:
-                st.markdown(f"""
-<div style="background:#f7f5f0;border-left:3px solid {_color};border-radius:0 3px 3px 0;
-            padding:0.65rem 1rem;margin-bottom:0.5rem;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.67rem;font-weight:600;
-              color:{_color};margin-bottom:0.15rem;">{_title}</div>
-  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.79rem;color:#4a4a45;line-height:1.6;">{_body}</div>
-  {f'<div style="font-family:IBM Plex Mono,monospace;font-size:0.7rem;color:#b5873a;margin-top:0.2rem;">{_formula}</div>' if _formula else ''}
-</div>""", unsafe_allow_html=True)
-
-        with _col_b:
-            for _label, _val in [
-                ("Source","Yahoo Finance via yfinance — fetched live on every run"),
-                ("Type","Adjusted Close prices — corrected for splits & dividends"),
-                ("Frequency","Daily · 252 trading days per year"),
-                ("Lookback","1 year up to full ticker history"),
-                ("Benchmark","SPY for Beta calculations"),
-                ("Discovery","~490 S&P 500 tickers from a public GitHub dataset"),
-            ]:
-                st.markdown(f"""
-<div style="display:flex;gap:0.6rem;padding:0.4rem 0;border-bottom:1px solid #f0ece4;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.08em;
-              text-transform:uppercase;color:#8a8072;min-width:80px;padding-top:0.15rem;">{_label}</div>
-  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:#1a1a18;line-height:1.6;">{_val}</div>
-</div>""", unsafe_allow_html=True)
-
-            st.markdown("<div style='margin-top:0.9rem;'></div>", unsafe_allow_html=True)
-            for _color, _title, _body in [
-                ("#c0392b","Past ≠ Future","Historical returns drive everything. The future may differ."),
-                ("#c0392b","Estimation error","Returns & covariances are noisy, especially with short windows."),
-                ("#c0392b","No trading costs","Fees, spreads, taxes, and market impact are ignored."),
-                ("#c0392b","N constraint is heuristic","True cardinality MVO is NP-hard. We threshold and renormalize."),
-                ("#c0392b","Discovery is sampling","5,000 iterations covers a tiny slice of ~10¹² combinations."),
-            ]:
-                st.markdown(f"""
-<div style="padding:0.4rem 0;border-bottom:1px solid #f0ece4;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.63rem;font-weight:600;
-              color:{_color};margin-bottom:0.1rem;">⚠ {_title}</div>
-  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.79rem;color:#4a4a45;line-height:1.55;">{_body}</div>
-</div>""", unsafe_allow_html=True)
+    if st.button("ℹ  About QuantFrame v2", key="btn_about_footer"):
+        st.session_state.show_about = True
+        st.rerun()
