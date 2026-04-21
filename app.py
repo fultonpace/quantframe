@@ -494,8 +494,8 @@ with st.sidebar:
         st.session_state.optimize_weights = False
     if "optimize_n" not in st.session_state:
         st.session_state.optimize_n     = False
-        st.session_state.suggested_n    = 20
-        st.session_state.max_assets_val = 20
+        st.session_state.suggested_n    = 8
+        st.session_state.max_assets_val = 8
 
     _cur_mode = st.session_state.app_mode_radio
     _analyze_active = _cur_mode == "analyze"
@@ -601,173 +601,92 @@ with st.sidebar:
         slider_wt = st.slider("Max Single Asset Weight", 0.10, 1.0, value=1.0 if wt_opt else 0.40, step=0.05, format="%.2f", disabled=wt_opt)
         max_weight = 1.0 if wt_opt else slider_wt
 
+        slider_min_wt = st.slider("Min Single Asset Weight", 0.00, 0.20, value=0.0, step=0.01, format="%.2f", disabled=wt_opt,
+                                  help="Forces each active holding to carry at least this weight. Prevents token allocations.")
+        min_weight = 0.0 if wt_opt else slider_min_wt
+
         # ── Diversification ───────────────────────────────────────────────────
         st.markdown("---")
         st.markdown("## Diversification")
+        st.caption("Max assets with nonzero weight in optimal portfolio")
 
-        _n_universe = len(tickers)
-        _stored_n     = int(st.session_state.get("max_assets_val", min(20, _n_universe)))
-        _stored_minwt = float(st.session_state.get("min_weight_val", 0.0))
-        # Clamp to feasible on load
-        _stored_n     = max(2, min(_stored_n, _n_universe))
-        _max_minwt0   = round(1.0 / _stored_n, 4)
-        _stored_minwt = min(_stored_minwt, _max_minwt0)
+        n_opt = st.session_state.optimize_n
+        st.markdown(f"""<style>
+[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"]:nth-of-type(3) div[data-testid="stColumn"]:nth-child({'1' if n_opt else '2'}) button {{
+    background: #2d6a4f !important; color: #f7f5f0 !important;
+    border-color: #1a5c3a !important;
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.4) !important;
+    transform: translateY(2px) !important;
+}}
+</style>""", unsafe_allow_html=True)
+        col_n1, col_n2 = st.columns([1, 1])
+        with col_n1:
+            if st.button("OPTIMIZE", key="btn_optimize_n", use_container_width=True):
+                st.session_state.optimize_n = True
+        with col_n2:
+            if st.button("MANUAL", key="btn_manual_n", use_container_width=True):
+                st.session_state.optimize_n = False
+        n_opt = st.session_state.optimize_n
+        st.markdown(f"""
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.1rem;margin-bottom:0.4rem;">
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if n_opt else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if n_opt else 'none'};"></div></div>
+  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'transparent' if n_opt else '#2d6a4f'};box-shadow:{'none' if n_opt else '0 0 6px #2d6a4f'};"></div></div>
+</div>""", unsafe_allow_html=True)
+        st.markdown("""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;line-height:1.55;margin:0.4rem 0 0.6rem 0;padding:0.5rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;">
+  <b style="color:#1a1a18;">OPTIMIZE N</b> sets holdings to the portfolio's
+  <b style="color:#2d6a4f;">effective N</b> = 1/Σwᵢ² — the number of assets the optimizer naturally concentrates into.
+</div>""", unsafe_allow_html=True)
 
-        import streamlit.components.v1 as _components
-        _linked_html = f"""
-<style>
-  .ld-wrap {{
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.72rem;
-    color: #1a1a18;
-    padding: 2px 0 6px 0;
-  }}
-  .ld-row {{
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 3px;
-  }}
-  .ld-label {{ color: #8a8072; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; }}
-  .ld-val   {{ color: #2d6a4f; font-weight: 600; font-size: 0.78rem; }}
-  input[type=range] {{
-    -webkit-appearance: none;
-    width: 100%;
-    height: 4px;
-    border-radius: 2px;
-    background: #e0d9ce;
-    outline: none;
-    margin: 6px 0 14px 0;
-    cursor: pointer;
-  }}
-  input[type=range]::-webkit-slider-thumb {{
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: #2d6a4f;
-    border: 2px solid #f7f5f0;
-    box-shadow: 0 0 0 2px #2d6a4f;
-    cursor: pointer;
-  }}
-  input[type=range]:disabled {{ opacity: 0.4; cursor: default; }}
-  .ld-bar-bg {{
-    background: #f0ece4; border-radius: 3px; height: 6px; margin: 4px 0 10px 0;
-    position: relative; overflow: hidden;
-  }}
-  .ld-bar-fill {{
-    height: 6px; border-radius: 3px;
-    background: linear-gradient(90deg, #2d6a4f, #b5873a);
-    transition: width 0.08s;
-  }}
-  .ld-indicator {{
-    font-size: 0.6rem; padding: 0.4rem 0.6rem; border-radius: 3px;
-    border: 1px solid rgba(45,106,79,0.25);
-    background: rgba(45,106,79,0.05);
-    margin-top: 2px;
-  }}
-</style>
-<div class="ld-wrap" id="ld">
-  <div class="ld-row">
-    <span class="ld-label">Holdings (N)</span>
-    <span class="ld-val" id="disp-n">{_stored_n}</span>
-  </div>
-  <input type="range" id="sl-n" min="2" max="{_n_universe}" step="1" value="{_stored_n}" {'disabled' if wt_opt else ''}>
+        n_opt = st.session_state.optimize_n
+        sn    = st.session_state.suggested_n
 
-  <div class="ld-row">
-    <span class="ld-label">Min Single Asset Weight</span>
-    <span class="ld-val" id="disp-mw">{_stored_minwt:.2f}</span>
-  </div>
-  <input type="range" id="sl-mw" min="0" max="{_max_minwt0:.4f}" step="0.01" value="{_stored_minwt:.4f}" {'disabled' if wt_opt else ''}>
+        # ── Constraint linkage: compute hard cap on N BEFORE the slider renders
+        # so the slider's max_value physically prevents infeasible combinations.
+        # Rule: min_weight × N ≤ 1.0  →  N ≤ floor(1 / min_weight)
+        if not wt_opt and not n_opt and min_weight > 0:
+            _hard_max_n = max(2, int(np.floor(1.0 / min_weight)))
+        else:
+            _hard_max_n = 20
 
-  <div class="ld-row" style="margin-top:2px;">
-    <span class="ld-label">Floor locks</span>
-    <span class="ld-val" id="disp-floor">{_stored_minwt*_stored_n*100:.0f}%</span>
-  </div>
-  <div class="ld-bar-bg"><div class="ld-bar-fill" id="bar-fill" style="width:{min(_stored_minwt*_stored_n*100,100):.1f}%"></div></div>
-  <div class="ld-indicator" id="indicator" style="color:#2d6a4f;">
-    ✓ floor locks {_stored_minwt*_stored_n*100:.0f}% · {100-_stored_minwt*_stored_n*100:.0f}% free to optimize
-  </div>
-</div>
+        # Also clamp the stored value so the slider doesn't open above its new max
+        _stored_n = st.session_state.max_assets_val
+        if _stored_n > _hard_max_n:
+            st.session_state.max_assets_val = _hard_max_n
+            _stored_n = _hard_max_n
 
-<script>
-(function() {{
-  const slN  = document.getElementById('sl-n');
-  const slMW = document.getElementById('sl-mw');
-  const dispN  = document.getElementById('disp-n');
-  const dispMW = document.getElementById('disp-mw');
-  const dispFloor = document.getElementById('disp-floor');
-  const barFill   = document.getElementById('bar-fill');
-  const indicator = document.getElementById('indicator');
-  const N_MAX = {_n_universe};
+        st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:0.3rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;margin-bottom:0.25rem;min-height:1.55rem;">
+  <span style="color:{'#8a8072' if n_opt else 'transparent'};">Effective N = </span>
+  <span style="color:{'#2d6a4f' if n_opt else 'transparent'};font-weight:600;">{sn}</span>
+  <span style="color:{'#8a8072' if n_opt else 'transparent'};"> (auto)</span>
+</div>""", unsafe_allow_html=True)
 
-  function update() {{
-    const N   = parseInt(slN.value);
-    const mw  = parseFloat(slMW.value);
-    const maxMW = parseFloat((1.0 / N).toFixed(4));
+        slider_n = st.slider("Max Holdings (N)", min_value=2, max_value=_hard_max_n,
+                             value=sn if n_opt else _stored_n, step=1, disabled=n_opt)
+        if n_opt:
+            max_assets = sn
+        else:
+            max_assets = slider_n
+            st.session_state.max_assets_val = slider_n
 
-    // Clamp min weight to 1/N
-    if (mw > maxMW) {{
-      slMW.value = maxMW;
-    }}
-    slMW.max = maxMW;
+        # Final safety clamp (covers edge cases like wt_opt/n_opt combos)
+        if min_weight > 0 and min_weight * max_assets > 1.0:
+            max_assets = max(2, int(np.floor(1.0 / min_weight)))
+        if min_weight > max_weight:
+            min_weight = max_weight
 
-    const mwFinal = parseFloat(slMW.value);
-    const floor   = Math.round(mwFinal * N * 100);
-    const free    = 100 - floor;
-
-    dispN.textContent  = N;
-    dispMW.textContent = mwFinal.toFixed(2);
-    dispFloor.textContent = floor + '%';
-    barFill.style.width = Math.min(floor, 100) + '%';
-
-    if (free >= 20) {{
-      indicator.style.color = '#2d6a4f';
-      indicator.textContent = '✓ floor locks ' + floor + '% · ' + free + '% free to optimize';
-    }} else if (free >= 0) {{
-      indicator.style.color = '#b5873a';
-      indicator.textContent = '⚠ floor locks ' + floor + '% · ' + free + '% free to optimize';
-    }} else {{
-      indicator.style.color = '#c0392b';
-      indicator.textContent = '✗ infeasible — reduce min weight or N';
-    }}
-  }}
-
-  function postValues() {{
-    const N  = parseInt(slN.value);
-    const mw = parseFloat(slMW.value);
-    // Send to Streamlit via query param trick → parent reads via st.query_params
-    const msg = JSON.stringify({{n: N, mw: parseFloat(mw.toFixed(4))}});
-    window.parent.postMessage({{type: 'streamlit:setComponentValue', value: msg}}, '*');
-  }}
-
-  slN.addEventListener('input',  update);
-  slMW.addEventListener('input', update);
-  slN.addEventListener('change',  postValues);
-  slMW.addEventListener('change', postValues);
-
-  update();
-}})();
-</script>
-"""
-        result = _components.html(_linked_html, height=185, scrolling=False)
-
-        # Read back values — component returns JSON string on change
-        import json as _json
-        _raw = result  # will be None until user interacts
-        if isinstance(_raw, str):
-            try:
-                _parsed = _json.loads(_raw)
-                st.session_state.max_assets_val = int(_parsed["n"])
-                st.session_state.min_weight_val = float(_parsed["mw"])
-            except Exception:
-                pass
-
-        max_assets = int(st.session_state.get("max_assets_val", _stored_n))
-        min_weight = float(st.session_state.get("min_weight_val", _stored_minwt)) if not wt_opt else 0.0
-        max_assets = max(2, min(max_assets, _n_universe))
-        min_weight = max(0.0, min(min_weight, 1.0 / max_assets))
-
-        st.session_state.optimize_n = False
+        # Feasibility indicator
+        if not wt_opt:
+            _floor_used = min_weight * max_assets * 100
+            _color = "#2d6a4f" if _floor_used <= 80 else "#b5873a"
+            _icon  = "✓" if _floor_used <= 80 else "⚠"
+            st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:{_color};
+            background:rgba(45,106,79,0.05);border:1px solid rgba(45,106,79,0.2);
+            border-radius:3px;padding:0.45rem 0.65rem;margin-top:0.4rem;">
+  {_icon} floor locks {_floor_used:.0f}% · {100-_floor_used:.0f}% free to optimize
+</div>""", unsafe_allow_html=True)
 
         # ── Risk Tolerance ────────────────────────────────────────────────────
         st.markdown("---")
@@ -1602,56 +1521,63 @@ n       = len(valid_tickers)
 
 # ── Optimization ──────────────────────────────────────────────────────────────
 with st.spinner("Running optimization…"):
-    n_keep  = min(max_assets, n)
-    ceil_w  = min(max_weight, 1.0)
-    floor_w = 1.0 / n_keep   # minimum floor guarantees exactly N stocks
+    # Guard: min_weight × effective holdings must be ≤ 1
+    _effective_n_check = min(max_assets, n)
+    if min_weight > 0 and min_weight * _effective_n_check > 1.0:
+        max_assets = int(np.floor(1.0 / min_weight))
+        st.warning(f"Min weight × holdings would exceed 100%. Holdings cap reduced to {max_assets} to maintain feasibility.")
 
-    # Run optimizer unconstrained (only ceil) so it can rank assets freely,
-    # then project to exactly n_keep via _force_n_stocks.
-    bounds_unc  = tuple((0.0, ceil_w) for _ in range(n))
+    bounds      = tuple((min_weight, max_weight) for _ in range(n))
     constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1}]
     w0          = np.ones(n) / n
+    n_keep      = min(max_assets, n)
 
-    def _force_n_stocks(w_raw, k, floor, ceil):
-        """Project w_raw to exactly k stocks with weights in [floor, ceil], sum=1."""
-        k   = min(k, len(w_raw))
-        w   = np.zeros(len(w_raw))
-        idx = np.argsort(w_raw)[-k:]
-        w[idx] = w_raw[idx]
-        s = w[idx].sum()
-        w[idx] = w[idx] / s if s > 0 else np.ones(k) / k
-        # Iterative clamp-and-renormalize until stable
-        for _ in range(100):
-            prev = w[idx].copy()
-            w[idx] = np.clip(w[idx], floor, ceil)
-            s = w[idx].sum()
-            w[idx] = w[idx] / s
-            if np.max(np.abs(w[idx] - prev)) < 1e-10:
-                break
-        return w
+    def _apply_cardinality(w_full, k):
+        top = np.argsort(w_full)[-k:]
+        w   = np.zeros(len(w_full))
+        w[top] = w_full[top]
+        # Enforce min_weight on retained positions
+        if min_weight > 0:
+            for idx in top:
+                if w[idx] < min_weight:
+                    w[idx] = min_weight
+        total = w.sum()
+        return w / total if total > 0 else w
 
     # ── Max Sharpe (Optimal Risky / Tangency) ─────────────────────────────────
-    res_sharpe = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
-                          method="SLSQP", bounds=bounds_unc, constraints=constraints)
-    w_sharpe   = _force_n_stocks(res_sharpe.x, n_keep, floor_w, ceil_w)
+    # Run UNCONSTRAINED first to compute Effective N
+    bounds_free   = tuple((0.0, 1.0) for _ in range(n))
+    res_sharpe_uc = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
+                             method="SLSQP", bounds=bounds_free, constraints=constraints)
+    w_sharpe_uc   = res_sharpe_uc.x / res_sharpe_uc.x.sum()
 
-    n_eff = int(round(1.0 / float(np.sum(w_sharpe ** 2))))
+    # Effective N = inverse Herfindahl index
+    n_eff = int(round(1.0 / float(np.sum(w_sharpe_uc ** 2))))
     n_eff = max(2, min(n_eff, n))
     st.session_state.suggested_n = n_eff
 
-    # ── Min Volatility ────────────────────────────────────────────────────────
-    res_minvol = minimize(min_vol_obj, w0, args=(mu, cov / 252),
-                          method="SLSQP", bounds=bounds_unc, constraints=constraints)
-    w_minvol   = _force_n_stocks(res_minvol.x, n_keep, floor_w, ceil_w)
+    # If OPTIMIZE N mode, override n_keep with effective N
+    if st.session_state.get("optimize_n", False):
+        n_keep = n_eff
 
-    # ── Utility-based portfolio ───────────────────────────────────────────────
+    res_sharpe    = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
+                             method="SLSQP", bounds=bounds, constraints=constraints)
+    w_sharpe      = _apply_cardinality(res_sharpe.x / res_sharpe.x.sum(), n_keep)
+
+    # ── Min Volatility (No Guts / Min Variance) ───────────────────────────────
+    res_minvol    = minimize(min_vol_obj, w0, args=(mu, cov / 252),
+                             method="SLSQP", bounds=bounds, constraints=constraints)
+    w_minvol      = _apply_cardinality(res_minvol.x / res_minvol.x.sum(), n_keep)
+
+    # ── Utility-based portfolio (risk tolerance selection) ────────────────────
     if lambda_source == "minvar" or lambda_source == "optimal":
+        # Preset maps directly to an already-computed portfolio
         w_utility = w_minvol.copy() if lambda_source == "minvar" else w_sharpe.copy()
     else:
-        lam_eff  = effective_lambda if effective_lambda is not None else 4.0
+        lam_eff = effective_lambda if effective_lambda is not None else 4.0
         res_util = minimize(utility_obj, w0, args=(mu, cov / 252, lam_eff),
-                            method="SLSQP", bounds=bounds_unc, constraints=constraints)
-        w_utility = _force_n_stocks(res_util.x, n_keep, floor_w, ceil_w)
+                            method="SLSQP", bounds=bounds, constraints=constraints)
+        w_utility = _apply_cardinality(res_util.x / res_util.x.sum(), n_keep)
 
     # ── Equal Weight baseline ─────────────────────────────────────────────────
     w_eq = np.ones(n) / n
@@ -1659,7 +1585,8 @@ with st.spinner("Running optimization…"):
     # ── Efficient Frontier ────────────────────────────────────────────────────
     frontier_vols, frontier_rets, _ = compute_efficient_frontier(mu, cov / 252)
 
-    # ── Primary display portfolio ─────────────────────────────────────────────
+    # ── Primary display portfolio = utility selection ─────────────────────────
+    # (used in risk analytics, rolling metrics, report tabs)
     w_primary = w_utility
 
 # ── Data Source Panel ─────────────────────────────────────────────────────────
@@ -1804,7 +1731,7 @@ with tab1:
             name="Capital Market Line",
         ))
 
-    # Portfolio markers — always show Min Var + Optimal Risky, then highlight user's selection
+    # Portfolio markers — markers only, no text
     port_points = [
         (v_sh, r_sh, "Optimal Risky (Max Sharpe)", "#7b2d8b", "star",    18),
         (v_mv, r_mv, "Min Variance Portfolio",      "#2e86ab", "diamond", 16),
@@ -1901,11 +1828,6 @@ with tab1:
     # ── Numerical weights table
     st.markdown(f'<div class="section-header">Exact Weights · {_preset_lbl} (your selection)</div>', unsafe_allow_html=True)
 
-    # Build label for each column based on whether it matches the user's selection
-    def _wt_col_label(base, w_check):
-        return f"{base} ★" if np.allclose(w_check, w_primary, atol=1e-4) else base
-
-    # ── Build weight data ─────────────────────────────────────────────────────
     _wt_cols = [
         ("Min Variance",  w_minvol,  "#2e86ab",  False),
         ("Equal Weight",  w_eq,      "#e07b39",  False),
@@ -1914,12 +1836,11 @@ with tab1:
     if is_custom:
         _wt_cols.insert(0, (_preset_lbl, w_primary, _preset_col, True))
 
-    # Sort rows by first weight column descending
-    _sort_w = _wt_cols[0][1]
+    _sort_w   = _wt_cols[0][1]
     _sort_idx = np.argsort(_sort_w)[::-1]
     _sorted_tickers = [valid_tickers[i] for i in _sort_idx]
+    _max_wt = max(w.max() * 100 for _, w, _, _ in _wt_cols)
 
-    # HTML table
     def _bar_html(val, max_val, color, is_active):
         pct = min(val / max_val * 100, 100) if max_val > 0 else 0
         opacity = "1" if is_active else "0.55"
@@ -1933,9 +1854,7 @@ with tab1:
             f'</div>'
         )
 
-    _max_wt = max(w.max() * 100 for _, w, _, _ in _wt_cols)
-
-    _header_cells = '<th style="width:72px;text-align:left;padding:10px 14px;background:#f0ece4;border-bottom:2px solid #c8bfb2;font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;font-weight:500;">Ticker</th>'
+    _header_cells = '<th style="width:72px;text-align:left;padding:10px 14px;background:#f0ece4;border-bottom:2px solid #c8bfb2;font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;font-weight:500;position:sticky;top:0;z-index:3;">Ticker</th>'
     for lbl, _, color, is_active in _wt_cols:
         _active_badge = f' <span style="font-size:0.55rem;background:{color}22;color:{color};border:1px solid {color}55;border-radius:2px;padding:1px 5px;letter-spacing:0.06em;">ACTIVE</span>' if is_active else ""
         _header_cells += (
@@ -1943,7 +1862,7 @@ with tab1:
             f'border-bottom:2px solid {""+color if is_active else "#c8bfb2"};'
             f'border-left:{"3px solid "+color if is_active else "1px solid #e0d9ce"};'
             f'font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;letter-spacing:0.1em;'
-            f'text-transform:uppercase;color:{color};font-weight:600;">'
+            f'text-transform:uppercase;color:{color};font-weight:600;position:sticky;top:0;z-index:3;">'
             f'{lbl}{_active_badge}</th>'
         )
 
@@ -1970,21 +1889,21 @@ with tab1:
         _row_html += "</tr>"
         _rows_html += _row_html
 
-    _wt_table_html = f"""
+    st.markdown(f"""
 <div style="overflow-x:auto;overflow-y:auto;max-height:340px;border:1px solid #e0d9ce;border-radius:6px;margin-bottom:1rem;">
   <table style="width:100%;border-collapse:collapse;">
-    <thead style="position:sticky;top:0;z-index:2;">
-      <tr>{_header_cells}</tr>
-    </thead>
+    <thead><tr>{_header_cells}</tr></thead>
     <tbody>{_rows_html}</tbody>
   </table>
 </div>
-"""
-    st.markdown(_wt_table_html, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-    # ── Weights bar chart — scrollable horizontally for large N
+    # ── Weights bar chart — no duplicate bars
+    # If user's selection matches a named portfolio, just rename that bar.
+    # Only show 4 distinct portfolios max; never show same weights twice.
     st.markdown(f'<div class="section-header">Portfolio Weights · Visual Comparison</div>', unsafe_allow_html=True)
 
+    # Build deduplicated bar list
     def _bar_label(base, w_check):
         if np.allclose(w_check, w_primary, atol=1e-4):
             return f"{base} (your pick)"
@@ -1995,6 +1914,7 @@ with tab1:
         (_bar_label("Equal Weight",  w_eq),     w_eq,     "#e07b39"),
         (_bar_label("Optimal Risky", w_sharpe), w_sharpe, "#7b2d8b"),
     ]
+    # Add custom utility bar only if it's not identical to any named portfolio
     if is_custom:
         bar_entries.insert(0, (f"{_preset_lbl} (your pick)", w_primary, _preset_col))
 
@@ -2002,10 +1922,6 @@ with tab1:
     for lbl, w_arr, _ in bar_entries:
         df_bar[lbl] = w_arr * 100
     df_bar = df_bar.sort_values(bar_entries[0][0], ascending=False)
-
-    # Dynamic width: at least 80px per ticker group, min 700px
-    _bar_chart_w = max(700, n_keep * 80)
-    _n_portfolios = len(bar_entries)
 
     fig2 = go.Figure()
     for lbl, _, color in bar_entries:
@@ -2016,24 +1932,10 @@ with tab1:
         ))
     fig2.update_layout(**{**PLOT_LAYOUT,
         "barmode": "group", "height": 340,
-        "width": _bar_chart_w,
         "yaxis_title": "Weight (%)",
         "title": dict(text="Portfolio Weight Comparison", font=dict(size=12, color="#1a1a18")),
-        "xaxis": dict(gridcolor="#e0d9ce", zerolinecolor="#e0d9ce", linecolor="#e0d9ce",
-                      fixedrange=True),
-        "yaxis": dict(gridcolor="#e0d9ce", zerolinecolor="#e0d9ce", linecolor="#e0d9ce",
-                      fixedrange=True),
     })
-
-    # Wrap in scrollable div so axes stay fixed and bars scroll
-    import plotly.io as pio
-    _chart_html = pio.to_html(fig2, full_html=False, include_plotlyjs=False,
-                               config={"displayModeBar": False, "scrollZoom": False})
-    st.markdown(f"""
-<div style="overflow-x:auto;overflow-y:hidden;border:1px solid #e0d9ce;border-radius:6px;padding:4px 0;">
-  {_chart_html}
-</div>
-""", unsafe_allow_html=True)
+    st.plotly_chart(fig2, use_container_width=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
