@@ -1156,7 +1156,7 @@ st.markdown('<hr class="divider" style="margin-top:0.5rem;">', unsafe_allow_html
 # ══════════════════════════════════════════════════════════════════════════════
 # DISCOVERY MODE
 # ══════════════════════════════════════════════════════════════════════════════
-if _cur_mode == "discover":
+if _cur_mode == "discover" and st.session_state.get("app_mode_radio", "analyze") == "discover":
     st.session_state.run_optimization = False
 
     SECTORS = {
@@ -1526,15 +1526,34 @@ div[data-testid="stButton"]:has(> button[key="btn_analyze_disc"]) > button {
 }
 </style>""", unsafe_allow_html=True)
 
+        # Green button — inject style targeting the next button rendered in main content
+        st.markdown("""
+<style>
+/* Target any button in main content whose text contains Analyze */
+section.main div[data-testid="stButton"] button p {
+    pointer-events: none;
+}
+section.main div[data-testid="column"]:first-child div[data-testid="stButton"] button {
+    background: #2d6a4f !important;
+    color: #f7f5f0 !important;
+    border-color: #1a5c3a !important;
+    box-shadow: 0 4px 0 rgba(20,90,60,0.6) !important;
+    font-weight: 600 !important;
+}
+section.main div[data-testid="column"]:first-child div[data-testid="stButton"] button:hover {
+    background: #1e8f62 !important;
+    border-color: #1e8f62 !important;
+}
+</style>""", unsafe_allow_html=True)
         _col_btn, _col_gap = st.columns([1, 3])
         with _col_btn:
             if st.button("▶  Analyze This Portfolio", key="btn_analyze_disc", use_container_width=True):
-                # Clear discovery state so it doesn't re-run on next render
-                st.session_state.run_discovery  = False
-                st.session_state.app_mode_radio = "analyze"
-                st.session_state.app_mode       = "  ⬡  Lab  "
-                st.session_state._app_mode      = "  ⬡  Lab  "
-                st.session_state._disc_tickers  = _carry_str
+                st.session_state.run_discovery        = False
+                st.session_state.app_mode_radio       = "analyze"
+                st.session_state.app_mode             = "  ⬡  Lab  "
+                st.session_state._app_mode            = "  ⬡  Lab  "
+                st.session_state._disc_tickers        = _carry_str
+                st.session_state.run_optimization     = False
                 st.rerun()
 
     st.stop()
