@@ -494,8 +494,8 @@ with st.sidebar:
         st.session_state.optimize_weights = False
     if "optimize_n" not in st.session_state:
         st.session_state.optimize_n     = False
-        st.session_state.suggested_n    = 8
-        st.session_state.max_assets_val = 8
+        st.session_state.suggested_n    = 20
+        st.session_state.max_assets_val = 20
 
     _cur_mode = st.session_state.app_mode_radio
     _analyze_active = _cur_mode == "analyze"
@@ -606,7 +606,7 @@ with st.sidebar:
         st.markdown("## Diversification")
 
         _n_universe = len(tickers)
-        _stored_n     = int(st.session_state.get("max_assets_val", min(8, _n_universe)))
+        _stored_n     = int(st.session_state.get("max_assets_val", min(20, _n_universe)))
         _stored_minwt = float(st.session_state.get("min_weight_val", 0.0))
         # Clamp to feasible on load
         _stored_n     = max(2, min(_stored_n, _n_universe))
