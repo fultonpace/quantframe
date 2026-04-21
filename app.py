@@ -1435,34 +1435,54 @@ if _cur_mode == "discover":
             })
             st.plotly_chart(fig_hist, use_container_width=True)
 
-        # Full allocation table
+        # Full allocation table — HTML style matching Analyze mode
         st.markdown('<div class="section-header">Optimal Allocation</div>', unsafe_allow_html=True)
-        fig_disc_tbl = go.Figure(go.Table(
-            columnwidth=[80, 100, 100, 100],
-            header=dict(
-                values=["<b>Ticker</b>", "<b>Weight (%)</b>", "<b>Sector Filter</b>", "<b>Start Date</b>"],
-                fill_color="#f0ece4", line_color="#c8bfb2",
-                font=dict(family="IBM Plex Mono", size=11, color="#2d6a4f"),
-                align="center", height=32,
-            ),
-            cells=dict(
-                values=[
-                    df_disc["Ticker"].tolist(),
-                    df_disc["Weight (%)"].tolist(),
-                    [disc_sector] * len(df_disc),
-                    [disc_start] * len(df_disc),
-                ],
-                fill_color="#ffffff",
-                line_color="#e0d9ce",
-                font=dict(family="IBM Plex Mono", size=11, color="#1a1a18"),
-                align="center", height=28,
+
+        _disc_max_wt = df_disc["Weight (%)"].max()
+        def _disc_bar(val, max_val):
+            pct = min(val / max_val * 100, 100) if max_val > 0 else 0
+            return (
+                f'<div style="display:flex;align-items:center;gap:6px;">'
+                f'<div style="flex:1;background:#f0ece4;border-radius:2px;height:6px;">'
+                f'<div style="width:{pct:.1f}%;height:6px;border-radius:2px;background:#2d6a4f;opacity:0.85;"></div>'
+                f'</div>'
+                f'<span style="min-width:42px;text-align:right;font-weight:600;color:#1a1a18;">{val:.2f}%</span>'
+                f'</div>'
             )
-        ))
-        fig_disc_tbl.update_layout(**{**PLOT_LAYOUT,
-            "height": 60 + 28 * len(df_disc) + 32,
-            "margin": dict(l=0, r=0, t=0, b=0)
-        })
-        st.plotly_chart(fig_disc_tbl, use_container_width=True)
+
+        _disc_header = (
+            '<th style="width:80px;text-align:left;padding:10px 14px;background:#f0ece4;'
+            'border-bottom:2px solid #c8bfb2;font-family:\'IBM Plex Mono\',monospace;'
+            'font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;font-weight:500;">Ticker</th>'
+            '<th style="text-align:left;padding:10px 14px;background:#f7f5f2;'
+            'border-bottom:2px solid #2d6a4f;border-left:3px solid #2d6a4f;'
+            'font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;letter-spacing:0.1em;'
+            'text-transform:uppercase;color:#2d6a4f;font-weight:600;">Weight'
+            ' <span style="font-size:0.55rem;background:#2d6a4f22;color:#2d6a4f;border:1px solid #2d6a4f55;'
+            'border-radius:2px;padding:1px 5px;">OPTIMAL</span></th>'
+        )
+
+        _disc_rows = ""
+        for row_i, row in enumerate(df_disc.itertuples()):
+            _bg = "#ffffff" if row_i % 2 == 0 else "#faf8f5"
+            _disc_rows += (
+                f'<tr style="background:{_bg};">'
+                f'<td style="padding:9px 14px;font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;'
+                f'font-weight:600;color:#1a1a18;border-bottom:1px solid #ede8e0;border-right:1px solid #e0d9ce;">'
+                f'{row.Ticker}</td>'
+                f'<td style="padding:9px 14px;border-bottom:1px solid #ede8e0;border-left:3px solid #2d6a4f;'
+                f'background:rgba(45,106,79,0.04);">'
+                f'{_disc_bar(row._2, _disc_max_wt)}</td>'
+                f'</tr>'
+            )
+
+        st.markdown(f"""
+<div style="overflow-x:auto;border:1px solid #e0d9ce;border-radius:6px;margin-bottom:1rem;">
+  <table style="width:100%;border-collapse:collapse;">
+    <thead><tr>{_disc_header}</tr></thead>
+    <tbody>{_disc_rows}</tbody>
+  </table>
+</div>""", unsafe_allow_html=True)
 
         st.markdown(f"""
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#8a8072;
@@ -1476,7 +1496,7 @@ if _cur_mode == "discover":
 
         # ── Analyze This Portfolio button ─────────────────────────────────────
         st.markdown("<br>", unsafe_allow_html=True)
-        _n_carry = len(_carry_tickers)
+        _n_carry   = len(_carry_tickers)
         _carry_str = ", ".join(_carry_tickers) if _carry_tickers else ", ".join(best["stocks"])
 
         st.markdown(f"""
@@ -1486,11 +1506,32 @@ if _cur_mode == "discover":
   &nbsp;{_carry_str}
 </div>""", unsafe_allow_html=True)
 
-        if st.button("▶  Analyze This Portfolio", key="btn_analyze_disc", use_container_width=False):
-            st.session_state.app_mode_radio  = "analyze"
-            st.session_state._disc_tickers   = _carry_str
-            st.session_state._disc_preset    = "Custom"
+        # Green button via targeted CSS
+        st.markdown("""<style>
+div[data-testid="stButton"] > button[kind="secondary"]:last-of-type,
+div[data-testid="column"] > div[data-testid="stButton"] > button {
+    background: transparent;
+}
+#analyze-btn-container > div > button {
+    background: #2d6a4f !important;
+    color: #f7f5f0 !important;
+    border-color: #2d6a4f !important;
+    font-size: 0.78rem !important;
+    padding: 0.6rem 1.5rem !important;
+    width: auto !important;
+}
+</style>""", unsafe_allow_html=True)
+        st.markdown('<div id="analyze-btn-container">', unsafe_allow_html=True)
+        if st.button("▶  Analyze This Portfolio", key="btn_analyze_disc"):
+            st.session_state.app_mode_radio = "analyze"
+            st.session_state.run_discovery  = False
+            st.session_state._disc_tickers  = _carry_str
+            st.session_state._disc_preset   = "Custom"
+            # Also reset the mode vars the sidebar reads
+            st.session_state.app_mode       = "  ⬡  Lab  "
+            st.session_state._app_mode      = "  ⬡  Lab  "
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
 
