@@ -35,7 +35,7 @@ st.markdown("""
     --border:    #e0d9ce;
     --accent:    #2d6a4f;
     --accent2:   #b5873a;
-    --accent3:   #c9a84c;
+    --accent3:   #e07b39;
     --text:      #1a1a18;
     --muted:     #8a8072;
     --danger:    #c0392b;
@@ -702,11 +702,11 @@ Lower λ → closer to Max Sharpe (Optimal Risky).
 """, unsafe_allow_html=True)
 
         RISK_PRESETS = [
-            ("NO GUTS — Min Variance Portfolio",      "minvar",   None,  "#4a7c9e"),
+            ("NO GUTS — Min Variance Portfolio",      "minvar",   None,  "#2e86ab"),
             ("STEADY — Low Risk  (λ=10)",             "steady",   10.0,  "#2d6a4f"),
             ("AVERAGE — Moderate  (λ=4)",             "average",  4.0,   "#b5873a"),
             ("HIGH ROLLER — Aggressive  (λ=1.5)",     "roller",   1.5,   "#c0392b"),
-            ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal",  None,  "#6b3fa0"),
+            ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal",  None,  "#7b2d8b"),
             ("VARIABLE — Custom λ",                   "custom",   4.0,   "#5a7a6a"),
         ]
         PRESET_LABELS = [p[0] for p in RISK_PRESETS]
@@ -795,7 +795,7 @@ Downside-adjusted return ratios.
         period = "2y"; confidence = 0.95; rf = RF_RATE
         max_weight = 1.0; min_weight = 0.0; max_assets = 10
         effective_lambda = None; lambda_source = "optimal"
-        active_preset = ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal", None, "#6b3fa0")
+        active_preset = ("OPTIMAL RISKY — Tangency / Max Sharpe", "optimal", None, "#7b2d8b")
         run_btn = False
 
         st.markdown("## Discovery")
@@ -873,7 +873,7 @@ with col_title:
     Market data via&nbsp;<span style="color:#b5873a;font-weight:500;">Yahoo Finance</span>
     <span style="color:#d6cfc4;margin:0 0.6rem;">·</span>
     <a href="https://github.com/fultonpace/quantframe" target="_blank"
-       style="color:#4a7c9e;text-decoration:none;font-weight:500;">
+       style="color:#2e86ab;text-decoration:none;font-weight:500;">
       Open source ↗
     </a>
   </div>
@@ -1024,7 +1024,7 @@ if st.session_state.get("show_about", False):
         '<div class="about-concept-formula">\u03b2 = Cov(R\u209a, R\u2098) / Var(R\u2098) &nbsp;\u00b7&nbsp; CVaR = E[loss | loss &gt; VaR]</div>'
         '</div>'
         '<div class="about-concept">'
-        '<div class="about-concept-label" style="color:#4a7c9e;">Decision Analytics</div>'
+        '<div class="about-concept-label" style="color:#2e86ab;">Decision Analytics</div>'
         '<div class="about-concept-body">'
         'Even with a perfect frontier and full risk breakdown, you still face a human question: '
         '<em>how much risk should I take?</em> Decision analytics brings your preference into the math.'
@@ -1059,18 +1059,18 @@ if st.session_state.get("show_about", False):
         '</div>'
         '</div>'
         '<div class="about-app-row">'
-        '<div class="about-app-row-dot" style="background:#4a7c9e;box-shadow:0 0 5px #4a7c9e;"></div>'
+        '<div class="about-app-row-dot" style="background:#2e86ab;box-shadow:0 0 5px #2e86ab;"></div>'
         '<div class="about-app-row-text">'
-        '<div class="about-app-row-label" style="color:#4a7c9e;">Decision Analytics \u2192 Risk Profile Selector</div>'
+        '<div class="about-app-row-label" style="color:#2e86ab;">Decision Analytics \u2192 Risk Profile Selector</div>'
         'Six named risk presets (No Guts \u2192 High Roller) map directly to \u03bb values from the utility '
         'function. The Custom \u03bb slider lets you dial in any preference. The optimizer then '
         'automatically selects the mathematically correct portfolio for that exact risk tolerance.'
         '</div>'
         '</div>'
         '<div class="about-app-row">'
-        '<div class="about-app-row-dot" style="background:#6b3fa0;box-shadow:0 0 5px #6b3fa0;"></div>'
+        '<div class="about-app-row-dot" style="background:#7b2d8b;box-shadow:0 0 5px #7b2d8b;"></div>'
         '<div class="about-app-row-text">'
-        '<div class="about-app-row-label" style="color:#6b3fa0;">Discovery Mode \u2192 Portfolio Search</div>'
+        '<div class="about-app-row-label" style="color:#7b2d8b;">Discovery Mode \u2192 Portfolio Search</div>'
         "When you don't know which stocks to use, Discovery samples thousands of random combinations "
         'from the S&amp;P 500 and runs optimization on each \u2014 surfacing the combination with the highest '
         "Sharpe ratio. It's a brute-force search through the combinatorial space of portfolios."
@@ -1113,7 +1113,7 @@ st.session_state._app_mode = app_mode
 
 _is_discovery = _cur_mode == "discover"
 _mode_label   = "🔍  Discover" if _is_discovery else "⬡  Analyze"
-_mode_color   = "#4a7c9e" if _is_discovery else "#2d6a4f"
+_mode_color   = "#2e86ab" if _is_discovery else "#2d6a4f"
 
 _col_badge, _col_run = st.columns([6, 1])
 with _col_badge:
@@ -1215,9 +1215,9 @@ if _cur_mode == "discover":
 
     # ── Sector Legend ─────────────────────────────────────────────────────────
     SECTOR_COLORS = {
-        "Technology": "#4a7c9e", "Healthcare": "#2d6a4f", "Financials": "#6b3fa0",
+        "Technology": "#2e86ab", "Healthcare": "#2d6a4f", "Financials": "#7b2d8b",
         "Energy": "#c0392b", "Consumer Staples": "#b5873a",
-        "Industrials": "#5a7a6a", "Consumer Discret": "#c9a84c",
+        "Industrials": "#5a7a6a", "Consumer Discret": "#e07b39",
     }
     with st.expander("📋  Sector Universe Reference", expanded=False):
         st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:#8a8072;margin-bottom:1rem;">Tickers in each sector filter. Selecting a sector dramatically reduces runtime by narrowing the search universe from ~490 to ~20–30 stocks.</div>', unsafe_allow_html=True)
@@ -1405,7 +1405,7 @@ if _cur_mode == "discover":
             fig_hist = go.Figure()
             fig_hist.add_trace(go.Scatter(
                 x=df_hist["iter"], y=df_hist["sharpe"],
-                mode="markers", marker=dict(size=4, color="#c9a84c", opacity=0.5),
+                mode="markers", marker=dict(size=4, color="#e07b39", opacity=0.5),
                 name="Each Iteration",
             ))
             fig_hist.add_trace(go.Scatter(
@@ -1491,9 +1491,9 @@ if not run_btn:
         'The optimizer will find the allocation across your selected universe that maximizes '
         'risk-adjusted return — specifically, the <b style="color:#2d6a4f;">Sharpe ratio</b>. '
         'It will respect your weight bounds and holdings limit, then deliver three portfolios for comparison: '
-        'the <b style="color:#6b3fa0;">tangency portfolio</b> that sits on the efficient frontier at maximum Sharpe, '
-        'the <b style="color:#4a7c9e;">minimum variance</b> portfolio that takes the least risk for any given return, '
-        'and an <b style="color:#c9a84c;">equal-weight baseline</b>. '
+        'the <b style="color:#7b2d8b;">tangency portfolio</b> that sits on the efficient frontier at maximum Sharpe, '
+        'the <b style="color:#2e86ab;">minimum variance</b> portfolio that takes the least risk for any given return, '
+        'and an <b style="color:#e07b39;">equal-weight baseline</b>. '
         f'Your <b style="color:{_preset_color};">selected risk profile</b> determines which of these '
         'is highlighted as your primary portfolio across all tabs.'
         '</div>'
@@ -1734,9 +1734,9 @@ with tab1:
 
     # Portfolio markers — always show Min Var + Optimal Risky, then highlight user's selection
     port_points = [
-        (v_sh, r_sh, "Optimal Risky (Max Sharpe)", "#6b3fa0", "star",    18),
-        (v_mv, r_mv, "Min Variance Portfolio",      "#4a7c9e", "diamond", 16),
-        (v_eq, r_eq, "Equal Weight",                "#c9a84c", "circle",  12),
+        (v_sh, r_sh, "Optimal Risky (Max Sharpe)", "#7b2d8b", "star",    18),
+        (v_mv, r_mv, "Min Variance Portfolio",      "#2e86ab", "diamond", 16),
+        (v_eq, r_eq, "Equal Weight",                "#e07b39", "circle",  12),
     ]
     for v_, r_, name_, color_, sym_, sz_ in port_points:
         fig.add_trace(go.Scatter(
@@ -1779,9 +1779,9 @@ with tab1:
         return f"{base_name}\n(your pick)" if is_sel else base_name
 
     card_list = [
-        (_card_label("Min Variance",  w_minvol), w_minvol, r_mv, v_mv, s_mv, "#4a7c9e"),
-        (_card_label("Equal Weight",  w_eq),     w_eq,     r_eq, v_eq, s_eq, "#c9a84c"),
-        (_card_label("Optimal Risky", w_sharpe), w_sharpe, r_sh, v_sh, s_sh, "#6b3fa0"),
+        (_card_label("Min Variance",  w_minvol), w_minvol, r_mv, v_mv, s_mv, "#2e86ab"),
+        (_card_label("Equal Weight",  w_eq),     w_eq,     r_eq, v_eq, s_eq, "#e07b39"),
+        (_card_label("Optimal Risky", w_sharpe), w_sharpe, r_sh, v_sh, s_sh, "#7b2d8b"),
     ]
     # Only add a separate "Your Portfolio" card if it is a custom utility portfolio
     # (i.e. not identical to any of the three named ones)
@@ -1835,9 +1835,9 @@ with tab1:
 
     # ── Build weight data ─────────────────────────────────────────────────────
     _wt_cols = [
-        ("Min Variance",  w_minvol,  "#4a7c9e",  False),
-        ("Equal Weight",  w_eq,      "#c9a84c",  False),
-        ("Optimal Risky", w_sharpe,  "#6b3fa0",  np.allclose(w_sharpe, w_primary, atol=1e-4)),
+        ("Min Variance",  w_minvol,  "#2e86ab",  False),
+        ("Equal Weight",  w_eq,      "#e07b39",  False),
+        ("Optimal Risky", w_sharpe,  "#7b2d8b",  np.allclose(w_sharpe, w_primary, atol=1e-4)),
     ]
     if is_custom:
         _wt_cols.insert(0, (_preset_lbl, w_primary, _preset_col, True))
@@ -1920,9 +1920,9 @@ with tab1:
         return base
 
     bar_entries = [
-        (_bar_label("Min Variance",  w_minvol), w_minvol, "#4a7c9e"),
-        (_bar_label("Equal Weight",  w_eq),     w_eq,     "#c9a84c"),
-        (_bar_label("Optimal Risky", w_sharpe), w_sharpe, "#6b3fa0"),
+        (_bar_label("Min Variance",  w_minvol), w_minvol, "#2e86ab"),
+        (_bar_label("Equal Weight",  w_eq),     w_eq,     "#e07b39"),
+        (_bar_label("Optimal Risky", w_sharpe), w_sharpe, "#7b2d8b"),
     ]
     # Add custom utility bar only if it's not identical to any named portfolio
     if is_custom:
@@ -2009,8 +2009,8 @@ with tab2:
         fig3.add_vline(x=-var_h*100, line_color="#c0392b", line_dash="dash", line_width=1.5,
                        annotation_text=f"VaR {confidence:.0%}", annotation_font_color="#c0392b",
                        annotation_font_size=10)
-        fig3.add_vline(x=-cvar_h*100, line_color="#c9a84c", line_dash="dot", line_width=1.5,
-                       annotation_text="CVaR", annotation_font_color="#c9a84c",
+        fig3.add_vline(x=-cvar_h*100, line_color="#e07b39", line_dash="dot", line_width=1.5,
+                       annotation_text="CVaR", annotation_font_color="#e07b39",
                        annotation_font_size=10, annotation_position="bottom right")
         fig3.update_layout(**{**PLOT_LAYOUT,
             "height":340,"title":dict(text="Return Distribution (Max Sharpe Portfolio)",
@@ -2145,12 +2145,12 @@ with tab3:
         name="SPY", line=dict(color="#8a8072", width=1.5, dash="dash")), row=1, col=1)
 
     fig6.add_trace(go.Scatter(x=roll_beta.index, y=roll_beta["beta"],
-        name="Beta", line=dict(color="#4a7c9e", width=1.8),
+        name="Beta", line=dict(color="#2e86ab", width=1.8),
         fill="tozeroy", fillcolor="rgba(74,124,158,0.1)"), row=2, col=1)
     fig6.add_hline(y=1.0, line_color="#8a8072", line_dash="dot", line_width=1, row=2, col=1)
 
     fig6.add_trace(go.Scatter(x=roll_sharpe.index, y=roll_sharpe.values,
-        name="Sharpe", line=dict(color="#6b3fa0", width=1.8),
+        name="Sharpe", line=dict(color="#7b2d8b", width=1.8),
         fill="tozeroy", fillcolor="rgba(107,63,160,0.08)"), row=3, col=1)
     fig6.add_hline(y=0, line_color="#8a8072", line_dash="dot", line_width=1, row=3, col=1)
 
@@ -2301,7 +2301,7 @@ with tab4:
             fill_color="#f0ece4",
             line_color="#c8bfb2",
             font=dict(family="IBM Plex Mono", size=11, color=[
-                "#8a8072", _preset_col, "#6b3fa0", "#4a7c9e", "#c9a84c"
+                "#8a8072", _preset_col, "#7b2d8b", "#2e86ab", "#e07b39"
             ]),
             align="center", height=32,
         ),
@@ -2338,7 +2338,7 @@ Beta estimated via 60-day rolling OLS covariance ratio against SPY.
 Omega ratio = E[gains above Rf] / E[losses below Rf].
 
 <br><br>
-<span style="color:#c9a84c;">DATA</span>  
+<span style="color:#e07b39;">DATA</span>  
 Source: Yahoo Finance via yfinance. Adjusted close prices (splits + dividends).  
 Lookback options: 1Y through Max (full history). Cached 1 hour per session.  
 Benchmark: SPY (SPDR S&P 500 ETF Trust).
