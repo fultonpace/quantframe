@@ -1854,7 +1854,7 @@ with tab1:
             f'</div>'
         )
 
-    _header_cells = '<th style="width:72px;text-align:left;padding:10px 14px;background:#f0ece4;border-bottom:2px solid #c8bfb2;font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;font-weight:500;position:sticky;top:0;z-index:3;">Ticker</th>'
+    _header_cells = '<th style="width:72px;text-align:left;padding:10px 14px;background:#f0ece4;border-bottom:2px solid #c8bfb2;font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;font-weight:500">Ticker</th>'
     for lbl, _, color, is_active in _wt_cols:
         _active_badge = f' <span style="font-size:0.55rem;background:{color}22;color:{color};border:1px solid {color}55;border-radius:2px;padding:1px 5px;letter-spacing:0.06em;">ACTIVE</span>' if is_active else ""
         _header_cells += (
@@ -1862,7 +1862,7 @@ with tab1:
             f'border-bottom:2px solid {""+color if is_active else "#c8bfb2"};'
             f'border-left:{"3px solid "+color if is_active else "1px solid #e0d9ce"};'
             f'font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;letter-spacing:0.1em;'
-            f'text-transform:uppercase;color:{color};font-weight:600;position:sticky;top:0;z-index:3;">'
+            f'text-transform:uppercase;color:{color};font-weight:600">'
             f'{lbl}{_active_badge}</th>'
         )
 
@@ -1890,7 +1890,7 @@ with tab1:
         _rows_html += _row_html
 
     st.markdown(f"""
-<div style="overflow-x:auto;overflow-y:auto;max-height:340px;border:1px solid #e0d9ce;border-radius:6px;margin-bottom:1rem;">
+<div style="overflow-x:auto;border:1px solid #e0d9ce;border-radius:6px;margin-bottom:1rem;">
   <table style="width:100%;border-collapse:collapse;">
     <thead><tr>{_header_cells}</tr></thead>
     <tbody>{_rows_html}</tbody>
