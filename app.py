@@ -600,93 +600,51 @@ with st.sidebar:
 </div>""", unsafe_allow_html=True)
         slider_wt = st.slider("Max Single Asset Weight", 0.10, 1.0, value=1.0 if wt_opt else 0.40, step=0.05, format="%.2f", disabled=wt_opt)
         max_weight = 1.0 if wt_opt else slider_wt
-
-        slider_min_wt = st.slider("Min Single Asset Weight", 0.00, 0.20, value=0.0, step=0.01, format="%.2f", disabled=wt_opt,
-                                  help="Forces each active holding to carry at least this weight. Prevents token allocations.")
-        min_weight = 0.0 if wt_opt else slider_min_wt
+        min_weight = 0.0  # placeholder; overridden after N input below
 
         # ── Diversification ───────────────────────────────────────────────────
         st.markdown("---")
-        st.markdown("## Diversification")
-        st.caption("Max assets with nonzero weight in optimal portfolio")
-
-        n_opt = st.session_state.optimize_n
-        st.markdown(f"""<style>
-[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"]:nth-of-type(3) div[data-testid="stColumn"]:nth-child({'1' if n_opt else '2'}) button {{
-    background: #2d6a4f !important; color: #f7f5f0 !important;
-    border-color: #1a5c3a !important;
-    box-shadow: inset 0 3px 6px rgba(0,0,0,0.4) !important;
-    transform: translateY(2px) !important;
-}}
-</style>""", unsafe_allow_html=True)
-        col_n1, col_n2 = st.columns([1, 1])
-        with col_n1:
-            if st.button("OPTIMIZE", key="btn_optimize_n", use_container_width=True):
-                st.session_state.optimize_n = True
-        with col_n2:
-            if st.button("MANUAL", key="btn_manual_n", use_container_width=True):
-                st.session_state.optimize_n = False
-        n_opt = st.session_state.optimize_n
-        st.markdown(f"""
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:0.1rem;margin-bottom:0.4rem;">
-  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'#2d6a4f' if n_opt else 'transparent'};box-shadow:{'0 0 6px #2d6a4f' if n_opt else 'none'};"></div></div>
-  <div style="text-align:center;"><div style="width:5px;height:5px;border-radius:50%;margin:0 auto;background:{'transparent' if n_opt else '#2d6a4f'};box-shadow:{'none' if n_opt else '0 0 6px #2d6a4f'};"></div></div>
-</div>""", unsafe_allow_html=True)
+        st.markdown("## Holdings (N)")
         st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;line-height:1.55;margin:0.4rem 0 0.6rem 0;padding:0.5rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;">
-  <b style="color:#1a1a18;">OPTIMIZE N</b> sets holdings to the portfolio's
-  <b style="color:#2d6a4f;">effective N</b> = 1/Σwᵢ² — the number of assets the optimizer naturally concentrates into.
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;line-height:1.55;
+            margin:0.2rem 0 0.6rem 0;padding:0.5rem 0.65rem;background:#f7f5f0;
+            border:1px solid #d6cfc4;border-radius:3px;">
+  Exactly <b style="color:#1a1a18;">N</b> stocks will receive nonzero weight.
+  Each gets a minimum floor of <b style="color:#2d6a4f;">1/N</b>, leaving the rest free to optimize.
 </div>""", unsafe_allow_html=True)
 
-        n_opt = st.session_state.optimize_n
-        sn    = st.session_state.suggested_n
+        _n_universe = len(tickers)
+        _stored_n = st.session_state.get("max_assets_val", min(8, _n_universe))
+        _stored_n = max(2, min(_stored_n, _n_universe))
 
-        # ── Constraint linkage: compute hard cap on N BEFORE the slider renders
-        # so the slider's max_value physically prevents infeasible combinations.
-        # Rule: min_weight × N ≤ 1.0  →  N ≤ floor(1 / min_weight)
-        if not wt_opt and not n_opt and min_weight > 0:
-            _hard_max_n = max(2, int(np.floor(1.0 / min_weight)))
-        else:
-            _hard_max_n = 20
+        exact_n = st.number_input(
+            "Number of Holdings", min_value=2, max_value=_n_universe,
+            value=_stored_n, step=1, label_visibility="collapsed"
+        )
+        st.session_state.max_assets_val = exact_n
+        max_assets = exact_n
 
-        # Also clamp the stored value so the slider doesn't open above its new max
-        _stored_n = st.session_state.max_assets_val
-        if _stored_n > _hard_max_n:
-            st.session_state.max_assets_val = _hard_max_n
-            _stored_n = _hard_max_n
+        # Force min_weight = 1/N so exactly N stocks are always active
+        # (overrides manual min weight slider — floor is implicit from N)
+        forced_min = 1.0 / exact_n
+        min_weight = forced_min if not wt_opt else 0.0
 
-        st.markdown(f"""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:0.3rem 0.65rem;background:#f7f5f0;border:1px solid #d6cfc4;border-radius:3px;margin-bottom:0.25rem;min-height:1.55rem;">
-  <span style="color:{'#8a8072' if n_opt else 'transparent'};">Effective N = </span>
-  <span style="color:{'#2d6a4f' if n_opt else 'transparent'};font-weight:600;">{sn}</span>
-  <span style="color:{'#8a8072' if n_opt else 'transparent'};"> (auto)</span>
-</div>""", unsafe_allow_html=True)
-
-        slider_n = st.slider("Max Holdings (N)", min_value=2, max_value=_hard_max_n,
-                             value=sn if n_opt else _stored_n, step=1, disabled=n_opt)
-        if n_opt:
-            max_assets = sn
-        else:
-            max_assets = slider_n
-            st.session_state.max_assets_val = slider_n
-
-        # Final safety clamp (covers edge cases like wt_opt/n_opt combos)
-        if min_weight > 0 and min_weight * max_assets > 1.0:
-            max_assets = max(2, int(np.floor(1.0 / min_weight)))
+        # Safety: ensure max_weight >= min_weight
         if min_weight > max_weight:
-            min_weight = max_weight
+            max_weight = min(1.0, min_weight * 2)
 
-        # Feasibility indicator
-        if not wt_opt:
-            _floor_used = min_weight * max_assets * 100
-            _color = "#2d6a4f" if _floor_used <= 80 else "#b5873a"
-            _icon  = "✓" if _floor_used <= 80 else "⚠"
-            st.markdown(f"""
+        _floor_used = min_weight * max_assets * 100
+        _free       = 100 - _floor_used
+        _color = "#2d6a4f" if _free >= 20 else "#b5873a"
+        st.markdown(f"""
 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:{_color};
             background:rgba(45,106,79,0.05);border:1px solid rgba(45,106,79,0.2);
-            border-radius:3px;padding:0.45rem 0.65rem;margin-top:0.4rem;">
-  {_icon} floor locks {_floor_used:.0f}% · {100-_floor_used:.0f}% free to optimize
+            border-radius:3px;padding:0.45rem 0.65rem;margin-top:0.2rem;">
+  ✓ floor locks {_floor_used:.0f}% · {_free:.0f}% free to optimize
 </div>""", unsafe_allow_html=True)
+
+        # Keep session state in sync (n_opt flag no longer used but keep for safety)
+        st.session_state.optimize_n = False
 
         # ── Risk Tolerance ────────────────────────────────────────────────────
         st.markdown("---")
@@ -1521,53 +1479,27 @@ n       = len(valid_tickers)
 
 # ── Optimization ──────────────────────────────────────────────────────────────
 with st.spinner("Running optimization…"):
-    # Guard: min_weight × effective holdings must be ≤ 1
-    _effective_n_check = min(max_assets, n)
-    if min_weight > 0 and min_weight * _effective_n_check > 1.0:
-        max_assets = int(np.floor(1.0 / min_weight))
-        st.warning(f"Min weight × holdings would exceed 100%. Holdings cap reduced to {max_assets} to maintain feasibility.")
-
+    n_keep  = min(max_assets, n)
+    # With min_weight = 1/N, the floor constraint guarantees exactly N active positions.
+    # No post-hoc truncation needed — the optimizer enforces it directly.
     bounds      = tuple((min_weight, max_weight) for _ in range(n))
     constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1}]
     w0          = np.ones(n) / n
-    n_keep      = min(max_assets, n)
-
-    def _apply_cardinality(w_full, k):
-        top = np.argsort(w_full)[-k:]
-        w   = np.zeros(len(w_full))
-        w[top] = w_full[top]
-        # Enforce min_weight on retained positions
-        if min_weight > 0:
-            for idx in top:
-                if w[idx] < min_weight:
-                    w[idx] = min_weight
-        total = w.sum()
-        return w / total if total > 0 else w
 
     # ── Max Sharpe (Optimal Risky / Tangency) ─────────────────────────────────
-    # Run UNCONSTRAINED first to compute Effective N
-    bounds_free   = tuple((0.0, 1.0) for _ in range(n))
-    res_sharpe_uc = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
-                             method="SLSQP", bounds=bounds_free, constraints=constraints)
-    w_sharpe_uc   = res_sharpe_uc.x / res_sharpe_uc.x.sum()
+    res_sharpe  = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
+                           method="SLSQP", bounds=bounds, constraints=constraints)
+    w_sharpe    = res_sharpe.x / res_sharpe.x.sum()
 
-    # Effective N = inverse Herfindahl index
-    n_eff = int(round(1.0 / float(np.sum(w_sharpe_uc ** 2))))
+    # Effective N = inverse Herfindahl (informational only)
+    n_eff = int(round(1.0 / float(np.sum(w_sharpe ** 2))))
     n_eff = max(2, min(n_eff, n))
     st.session_state.suggested_n = n_eff
 
-    # If OPTIMIZE N mode, override n_keep with effective N
-    if st.session_state.get("optimize_n", False):
-        n_keep = n_eff
-
-    res_sharpe    = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
-                             method="SLSQP", bounds=bounds, constraints=constraints)
-    w_sharpe      = _apply_cardinality(res_sharpe.x / res_sharpe.x.sum(), n_keep)
-
     # ── Min Volatility (No Guts / Min Variance) ───────────────────────────────
-    res_minvol    = minimize(min_vol_obj, w0, args=(mu, cov / 252),
-                             method="SLSQP", bounds=bounds, constraints=constraints)
-    w_minvol      = _apply_cardinality(res_minvol.x / res_minvol.x.sum(), n_keep)
+    res_minvol  = minimize(min_vol_obj, w0, args=(mu, cov / 252),
+                           method="SLSQP", bounds=bounds, constraints=constraints)
+    w_minvol    = res_minvol.x / res_minvol.x.sum()
 
     # ── Utility-based portfolio (risk tolerance selection) ────────────────────
     if lambda_source == "minvar" or lambda_source == "optimal":
@@ -1577,7 +1509,7 @@ with st.spinner("Running optimization…"):
         lam_eff = effective_lambda if effective_lambda is not None else 4.0
         res_util = minimize(utility_obj, w0, args=(mu, cov / 252, lam_eff),
                             method="SLSQP", bounds=bounds, constraints=constraints)
-        w_utility = _apply_cardinality(res_util.x / res_util.x.sum(), n_keep)
+        w_utility = res_util.x / res_util.x.sum()
 
     # ── Equal Weight baseline ─────────────────────────────────────────────────
     w_eq = np.ones(n) / n
