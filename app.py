@@ -1325,8 +1325,7 @@ if _cur_mode == "discover":
                     return -(r - rf_disc) / v if v > 0 else 1e6
 
                 w0_d     = np.ones(noa) / noa
-                floor_d  = 1.0 / noa          # each stock gets at least 1/N
-                bounds_d = tuple((0, 1) for _ in range(noa))   # unconstrained for ranking
+                bounds_d = tuple((0, 1) for _ in range(noa))
                 cons_d   = ({"type": "eq", "fun": lambda x: np.sum(x) - 1},)
                 res_d    = minimize(_neg_sharpe_d, w0_d, method="SLSQP",
                                     bounds=bounds_d, constraints=cons_d)
@@ -1334,18 +1333,7 @@ if _cur_mode == "discover":
                 if not res_d.success:
                     continue
 
-                # Project to exactly noa stocks with floor 1/N so no ghost allocations
-                raw_w  = res_d.x / res_d.x.sum()
-                idx_d  = np.argsort(raw_w)[-noa:]
-                w_d    = np.zeros(noa)
-                w_d[idx_d] = raw_w[idx_d]
-                w_d[idx_d] = w_d[idx_d] / w_d[idx_d].sum()
-                for _ in range(50):
-                    prev = w_d[idx_d].copy()
-                    w_d[idx_d] = np.clip(w_d[idx_d], floor_d, 1.0)
-                    w_d[idx_d] = w_d[idx_d] / w_d[idx_d].sum()
-                    if np.max(np.abs(w_d[idx_d] - prev)) < 1e-10:
-                        break
+                w_d    = res_d.x / res_d.x.sum()
                 p_ret  = float(w_d @ mu_d) * 252
                 p_vol  = float(np.sqrt(w_d @ cov_d @ w_d)) * np.sqrt(252)
                 sr     = (p_ret - rf_disc) / p_vol if p_vol > 0 else -np.inf
