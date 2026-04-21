@@ -496,6 +496,25 @@ with st.sidebar:
     st.markdown("## ⬡ QuantFrame v2")
     st.markdown('<p class="app-subtitle">Portfolio Intelligence</p>', unsafe_allow_html=True)
 
+    # ── Query-param-driven mode switching (used by Discovery → Analyze handoff) ──
+    _qp_mode    = st.query_params.get("mode", None)
+    _qp_tickers = st.query_params.get("tickers", None)
+    if _qp_mode == "analyze":
+        st.session_state.app_mode_radio   = "analyze"
+        st.session_state.app_mode         = "  ⬡  Lab  "
+        st.session_state._app_mode        = "  ⬡  Lab  "
+        st.session_state.run_discovery    = False
+        st.session_state.run_optimization = False
+        if _qp_tickers:
+            st.session_state._disc_tickers = _qp_tickers
+        # Clear params so they don't re-fire on subsequent reruns
+        try:
+            del st.query_params["mode"]
+            if "tickers" in st.query_params:
+                del st.query_params["tickers"]
+        except Exception:
+            pass
+
     if "show_about" not in st.session_state:
         st.session_state.show_about = False
     if "app_mode" not in st.session_state:
@@ -1518,43 +1537,45 @@ if _cur_mode == "discover" and st.session_state.get("app_mode_radio", "analyze")
   &nbsp;{_carry_str}
 </div>""", unsafe_allow_html=True)
 
-        st.markdown("""<style>
-button[data-testid="baseButton-secondary"][kind="secondary"]#analyze-disc-btn,
-div[data-testid="stButton"]:has(> button[key="btn_analyze_disc"]) > button {
-    background: #2d6a4f !important; color: #f7f5f0 !important;
-    border-color: #2d6a4f !important;
-}
-</style>""", unsafe_allow_html=True)
-
-        # Green button — inject style targeting the next button rendered in main content
+        # Wrap button in uniquely-classed div — CSS targets descendants reliably
         st.markdown("""
 <style>
-/* Target any button in main content whose text contains Analyze */
-section.main div[data-testid="stButton"] button p {
-    pointer-events: none;
-}
-section.main div[data-testid="column"]:first-child div[data-testid="stButton"] button {
+.qf-analyze-btn-wrap div[data-testid="stButton"] button {
     background: #2d6a4f !important;
     color: #f7f5f0 !important;
     border-color: #1a5c3a !important;
-    box-shadow: 0 4px 0 rgba(20,90,60,0.6) !important;
+    box-shadow: 0 4px 0 rgba(20,90,60,0.6), 0 2px 8px rgba(45,106,79,0.2) !important;
     font-weight: 600 !important;
 }
-section.main div[data-testid="column"]:first-child div[data-testid="stButton"] button:hover {
+.qf-analyze-btn-wrap div[data-testid="stButton"] button:hover {
     background: #1e8f62 !important;
     border-color: #1e8f62 !important;
+    color: #f7f5f0 !important;
 }
-</style>""", unsafe_allow_html=True)
+.qf-analyze-btn-wrap div[data-testid="stButton"] button:active {
+    background: #1a7a52 !important;
+    transform: translateY(2px);
+}
+</style>
+<div class="qf-analyze-btn-wrap">
+""", unsafe_allow_html=True)
+
         _col_btn, _col_gap = st.columns([1, 3])
         with _col_btn:
-            if st.button("▶  Analyze This Portfolio", key="btn_analyze_disc", use_container_width=True):
-                st.session_state.run_discovery        = False
-                st.session_state.app_mode_radio       = "analyze"
-                st.session_state.app_mode             = "  ⬡  Lab  "
-                st.session_state._app_mode            = "  ⬡  Lab  "
-                st.session_state._disc_tickers        = _carry_str
-                st.session_state.run_optimization     = False
-                st.rerun()
+            _clicked_analyze = st.button(
+                "▶  Analyze This Portfolio",
+                key="btn_analyze_disc",
+                use_container_width=True,
+            )
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # Use query_params as the bulletproof signal — they persist across reruns
+        # and are read at the VERY top of the script before any widget renders
+        if _clicked_analyze:
+            st.query_params["mode"]    = "analyze"
+            st.query_params["tickers"] = _carry_str
+            st.rerun()
 
     st.stop()
 
