@@ -536,10 +536,18 @@ with st.sidebar:
         # ══════════════════════════════════════════════════════════════════════
 
         st.markdown("## Universe")
-        preset = st.selectbox("Asset Universe", list(PRESET_UNIVERSES.keys()), index=0, label_visibility="collapsed")
+
+        # If arriving from Discovery, pre-select Custom and pre-fill tickers
+        _disc_default = st.session_state.pop("_disc_tickers", None)
+        _disc_preset  = st.session_state.pop("_disc_preset",  None)
+        _preset_keys  = list(PRESET_UNIVERSES.keys())
+        _default_idx  = _preset_keys.index("Custom") if _disc_default else 0
+
+        preset = st.selectbox("Asset Universe", _preset_keys, index=_default_idx, label_visibility="collapsed")
 
         if preset == "Custom":
-            custom_raw = st.text_input("Enter tickers (comma-separated)", "AAPL, MSFT, GOOGL, AMZN")
+            _default_custom = _disc_default if _disc_default else "AAPL, MSFT, GOOGL, AMZN"
+            custom_raw = st.text_input("Enter tickers (comma-separated)", _default_custom)
             tickers = [t.strip().upper() for t in custom_raw.split(",") if t.strip()]
             n_typed = len(tickers)
             if n_typed > 20:
@@ -1354,11 +1362,16 @@ if _cur_mode == "discover":
             iter_display.metric("Iterations", f"{i+1} / {disc_iterations}")
 
         progress_bar.progress(1.0, text="Discovery complete!")
-        st.session_state.run_discovery = False  # reset so it doesn't re-run on next interaction
+        st.session_state.run_discovery = False
 
         if best["stocks"] is None:
             st.error("No valid portfolios found. Try increasing iterations or changing the sector.")
             st.stop()
+
+        # ── 5% threshold filter for carryover ────────────────────────────────
+        CARRY_THRESHOLD = 0.05
+        _carry_pairs = [(t, w) for t, w in zip(best["stocks"], best["weights"]) if w >= CARRY_THRESHOLD]
+        _carry_tickers = [t for t, _ in _carry_pairs]
 
         # ── Results ────────────────────────────────────────────────────────────
         st.markdown('<div class="section-header">Discovery Results · Best Portfolio Found</div>', unsafe_allow_html=True)
@@ -1460,6 +1473,24 @@ if _cur_mode == "discover":
       <b style="color:#1a1a18;">Vol:</b> {best['vol']*100:.2f}% &nbsp;·&nbsp;
       {disc_iterations} iterations over {disc_sector}
     </div>""", unsafe_allow_html=True)
+
+        # ── Analyze This Portfolio button ─────────────────────────────────────
+        st.markdown("<br>", unsafe_allow_html=True)
+        _n_carry = len(_carry_tickers)
+        _carry_str = ", ".join(_carry_tickers) if _carry_tickers else ", ".join(best["stocks"])
+
+        st.markdown(f"""
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:#8a8072;
+            padding:0.6rem 1rem;background:#f7f5f0;border:1px solid #e0d9ce;border-radius:4px;margin-bottom:0.75rem;">
+  <b style="color:#1a1a18;">→ Carrying forward {_n_carry} stock{"s" if _n_carry != 1 else ""} with ≥5% weight:</b>
+  &nbsp;{_carry_str}
+</div>""", unsafe_allow_html=True)
+
+        if st.button("▶  Analyze This Portfolio", key="btn_analyze_disc", use_container_width=False):
+            st.session_state.app_mode_radio  = "analyze"
+            st.session_state._disc_tickers   = _carry_str
+            st.session_state._disc_preset    = "Custom"
+            st.rerun()
 
     st.stop()
 
