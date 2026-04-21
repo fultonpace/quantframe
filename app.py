@@ -600,50 +600,173 @@ with st.sidebar:
 </div>""", unsafe_allow_html=True)
         slider_wt = st.slider("Max Single Asset Weight", 0.10, 1.0, value=1.0 if wt_opt else 0.40, step=0.05, format="%.2f", disabled=wt_opt)
         max_weight = 1.0 if wt_opt else slider_wt
-        min_weight = 0.0  # placeholder; overridden after N input below
 
         # ── Diversification ───────────────────────────────────────────────────
         st.markdown("---")
-        st.markdown("## Holdings (N)")
-        st.markdown("""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#8a8072;line-height:1.55;
-            margin:0.2rem 0 0.6rem 0;padding:0.5rem 0.65rem;background:#f7f5f0;
-            border:1px solid #d6cfc4;border-radius:3px;">
-  Exactly <b style="color:#1a1a18;">N</b> stocks will receive nonzero weight.
-  Each gets a minimum floor of <b style="color:#2d6a4f;">1/N</b>, leaving the rest free to optimize.
-</div>""", unsafe_allow_html=True)
+        st.markdown("## Diversification")
 
         _n_universe = len(tickers)
-        _stored_n = st.session_state.get("max_assets_val", min(8, _n_universe))
-        _stored_n = max(2, min(_stored_n, _n_universe))
+        _stored_n     = int(st.session_state.get("max_assets_val", min(8, _n_universe)))
+        _stored_minwt = float(st.session_state.get("min_weight_val", 0.0))
+        # Clamp to feasible on load
+        _stored_n     = max(2, min(_stored_n, _n_universe))
+        _max_minwt0   = round(1.0 / _stored_n, 4)
+        _stored_minwt = min(_stored_minwt, _max_minwt0)
 
-        exact_n = st.number_input(
-            "Number of Holdings", min_value=2, max_value=_n_universe,
-            value=_stored_n, step=1, label_visibility="collapsed"
-        )
-        st.session_state.max_assets_val = exact_n
-        max_assets = exact_n
+        import streamlit.components.v1 as _components
+        _linked_html = f"""
+<style>
+  .ld-wrap {{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: #1a1a18;
+    padding: 2px 0 6px 0;
+  }}
+  .ld-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 3px;
+  }}
+  .ld-label {{ color: #8a8072; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; }}
+  .ld-val   {{ color: #2d6a4f; font-weight: 600; font-size: 0.78rem; }}
+  input[type=range] {{
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: #e0d9ce;
+    outline: none;
+    margin: 6px 0 14px 0;
+    cursor: pointer;
+  }}
+  input[type=range]::-webkit-slider-thumb {{
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #2d6a4f;
+    border: 2px solid #f7f5f0;
+    box-shadow: 0 0 0 2px #2d6a4f;
+    cursor: pointer;
+  }}
+  input[type=range]:disabled {{ opacity: 0.4; cursor: default; }}
+  .ld-bar-bg {{
+    background: #f0ece4; border-radius: 3px; height: 6px; margin: 4px 0 10px 0;
+    position: relative; overflow: hidden;
+  }}
+  .ld-bar-fill {{
+    height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, #2d6a4f, #b5873a);
+    transition: width 0.08s;
+  }}
+  .ld-indicator {{
+    font-size: 0.6rem; padding: 0.4rem 0.6rem; border-radius: 3px;
+    border: 1px solid rgba(45,106,79,0.25);
+    background: rgba(45,106,79,0.05);
+    margin-top: 2px;
+  }}
+</style>
+<div class="ld-wrap" id="ld">
+  <div class="ld-row">
+    <span class="ld-label">Holdings (N)</span>
+    <span class="ld-val" id="disp-n">{_stored_n}</span>
+  </div>
+  <input type="range" id="sl-n" min="2" max="{_n_universe}" step="1" value="{_stored_n}" {'disabled' if wt_opt else ''}>
 
-        # Force min_weight = 1/N so exactly N stocks are always active
-        # (overrides manual min weight slider — floor is implicit from N)
-        forced_min = 1.0 / exact_n
-        min_weight = forced_min if not wt_opt else 0.0
+  <div class="ld-row">
+    <span class="ld-label">Min Single Asset Weight</span>
+    <span class="ld-val" id="disp-mw">{_stored_minwt:.2f}</span>
+  </div>
+  <input type="range" id="sl-mw" min="0" max="{_max_minwt0:.4f}" step="0.01" value="{_stored_minwt:.4f}" {'disabled' if wt_opt else ''}>
 
-        # Safety: ensure max_weight >= min_weight
-        if min_weight > max_weight:
-            max_weight = min(1.0, min_weight * 2)
+  <div class="ld-row" style="margin-top:2px;">
+    <span class="ld-label">Floor locks</span>
+    <span class="ld-val" id="disp-floor">{_stored_minwt*_stored_n*100:.0f}%</span>
+  </div>
+  <div class="ld-bar-bg"><div class="ld-bar-fill" id="bar-fill" style="width:{min(_stored_minwt*_stored_n*100,100):.1f}%"></div></div>
+  <div class="ld-indicator" id="indicator" style="color:#2d6a4f;">
+    ✓ floor locks {_stored_minwt*_stored_n*100:.0f}% · {100-_stored_minwt*_stored_n*100:.0f}% free to optimize
+  </div>
+</div>
 
-        _floor_used = min_weight * max_assets * 100
-        _free       = 100 - _floor_used
-        _color = "#2d6a4f" if _free >= 20 else "#b5873a"
-        st.markdown(f"""
-<div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:{_color};
-            background:rgba(45,106,79,0.05);border:1px solid rgba(45,106,79,0.2);
-            border-radius:3px;padding:0.45rem 0.65rem;margin-top:0.2rem;">
-  ✓ floor locks {_floor_used:.0f}% · {_free:.0f}% free to optimize
-</div>""", unsafe_allow_html=True)
+<script>
+(function() {{
+  const slN  = document.getElementById('sl-n');
+  const slMW = document.getElementById('sl-mw');
+  const dispN  = document.getElementById('disp-n');
+  const dispMW = document.getElementById('disp-mw');
+  const dispFloor = document.getElementById('disp-floor');
+  const barFill   = document.getElementById('bar-fill');
+  const indicator = document.getElementById('indicator');
+  const N_MAX = {_n_universe};
 
-        # Keep session state in sync (n_opt flag no longer used but keep for safety)
+  function update() {{
+    const N   = parseInt(slN.value);
+    const mw  = parseFloat(slMW.value);
+    const maxMW = parseFloat((1.0 / N).toFixed(4));
+
+    // Clamp min weight to 1/N
+    if (mw > maxMW) {{
+      slMW.value = maxMW;
+    }}
+    slMW.max = maxMW;
+
+    const mwFinal = parseFloat(slMW.value);
+    const floor   = Math.round(mwFinal * N * 100);
+    const free    = 100 - floor;
+
+    dispN.textContent  = N;
+    dispMW.textContent = mwFinal.toFixed(2);
+    dispFloor.textContent = floor + '%';
+    barFill.style.width = Math.min(floor, 100) + '%';
+
+    if (free >= 20) {{
+      indicator.style.color = '#2d6a4f';
+      indicator.textContent = '✓ floor locks ' + floor + '% · ' + free + '% free to optimize';
+    }} else if (free >= 0) {{
+      indicator.style.color = '#b5873a';
+      indicator.textContent = '⚠ floor locks ' + floor + '% · ' + free + '% free to optimize';
+    }} else {{
+      indicator.style.color = '#c0392b';
+      indicator.textContent = '✗ infeasible — reduce min weight or N';
+    }}
+  }}
+
+  function postValues() {{
+    const N  = parseInt(slN.value);
+    const mw = parseFloat(slMW.value);
+    // Send to Streamlit via query param trick → parent reads via st.query_params
+    const msg = JSON.stringify({{n: N, mw: parseFloat(mw.toFixed(4))}});
+    window.parent.postMessage({{type: 'streamlit:setComponentValue', value: msg}}, '*');
+  }}
+
+  slN.addEventListener('input',  update);
+  slMW.addEventListener('input', update);
+  slN.addEventListener('change',  postValues);
+  slMW.addEventListener('change', postValues);
+
+  update();
+}})();
+</script>
+"""
+        result = _components.html(_linked_html, height=185, scrolling=False)
+
+        # Read back values — component returns JSON string on change
+        import json as _json
+        _raw = result  # will be None until user interacts
+        if isinstance(_raw, str):
+            try:
+                _parsed = _json.loads(_raw)
+                st.session_state.max_assets_val = int(_parsed["n"])
+                st.session_state.min_weight_val = float(_parsed["mw"])
+            except Exception:
+                pass
+
+        max_assets = int(st.session_state.get("max_assets_val", _stored_n))
+        min_weight = float(st.session_state.get("min_weight_val", _stored_minwt)) if not wt_opt else 0.0
+        max_assets = max(2, min(max_assets, _n_universe))
+        min_weight = max(0.0, min(min_weight, 1.0 / max_assets))
+
         st.session_state.optimize_n = False
 
         # ── Risk Tolerance ────────────────────────────────────────────────────
