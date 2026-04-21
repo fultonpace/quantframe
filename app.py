@@ -1480,46 +1480,63 @@ n       = len(valid_tickers)
 # ── Optimization ──────────────────────────────────────────────────────────────
 with st.spinner("Running optimization…"):
     n_keep  = min(max_assets, n)
-    # With min_weight = 1/N, the floor constraint guarantees exactly N active positions.
-    # No post-hoc truncation needed — the optimizer enforces it directly.
-    bounds      = tuple((min_weight, max_weight) for _ in range(n))
+    ceil_w  = min(max_weight, 1.0)
+    floor_w = 1.0 / n_keep   # minimum floor guarantees exactly N stocks
+
+    # Run optimizer unconstrained (only ceil) so it can rank assets freely,
+    # then project to exactly n_keep via _force_n_stocks.
+    bounds_unc  = tuple((0.0, ceil_w) for _ in range(n))
     constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1}]
     w0          = np.ones(n) / n
 
-    # ── Max Sharpe (Optimal Risky / Tangency) ─────────────────────────────────
-    res_sharpe  = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
-                           method="SLSQP", bounds=bounds, constraints=constraints)
-    w_sharpe    = res_sharpe.x / res_sharpe.x.sum()
+    def _force_n_stocks(w_raw, k, floor, ceil):
+        """Project w_raw to exactly k stocks with weights in [floor, ceil], sum=1."""
+        k   = min(k, len(w_raw))
+        w   = np.zeros(len(w_raw))
+        idx = np.argsort(w_raw)[-k:]
+        w[idx] = w_raw[idx]
+        s = w[idx].sum()
+        w[idx] = w[idx] / s if s > 0 else np.ones(k) / k
+        # Iterative clamp-and-renormalize until stable
+        for _ in range(100):
+            prev = w[idx].copy()
+            w[idx] = np.clip(w[idx], floor, ceil)
+            s = w[idx].sum()
+            w[idx] = w[idx] / s
+            if np.max(np.abs(w[idx] - prev)) < 1e-10:
+                break
+        return w
 
-    # Effective N = inverse Herfindahl (informational only)
+    # ── Max Sharpe (Optimal Risky / Tangency) ─────────────────────────────────
+    res_sharpe = minimize(neg_sharpe, w0, args=(mu, cov / 252, rf),
+                          method="SLSQP", bounds=bounds_unc, constraints=constraints)
+    w_sharpe   = _force_n_stocks(res_sharpe.x, n_keep, floor_w, ceil_w)
+
     n_eff = int(round(1.0 / float(np.sum(w_sharpe ** 2))))
     n_eff = max(2, min(n_eff, n))
     st.session_state.suggested_n = n_eff
 
-    # ── Min Volatility (No Guts / Min Variance) ───────────────────────────────
-    res_minvol  = minimize(min_vol_obj, w0, args=(mu, cov / 252),
-                           method="SLSQP", bounds=bounds, constraints=constraints)
-    w_minvol    = res_minvol.x / res_minvol.x.sum()
+    # ── Min Volatility ────────────────────────────────────────────────────────
+    res_minvol = minimize(min_vol_obj, w0, args=(mu, cov / 252),
+                          method="SLSQP", bounds=bounds_unc, constraints=constraints)
+    w_minvol   = _force_n_stocks(res_minvol.x, n_keep, floor_w, ceil_w)
 
-    # ── Utility-based portfolio (risk tolerance selection) ────────────────────
+    # ── Utility-based portfolio ───────────────────────────────────────────────
     if lambda_source == "minvar" or lambda_source == "optimal":
-        # Preset maps directly to an already-computed portfolio
         w_utility = w_minvol.copy() if lambda_source == "minvar" else w_sharpe.copy()
     else:
-        lam_eff = effective_lambda if effective_lambda is not None else 4.0
+        lam_eff  = effective_lambda if effective_lambda is not None else 4.0
         res_util = minimize(utility_obj, w0, args=(mu, cov / 252, lam_eff),
-                            method="SLSQP", bounds=bounds, constraints=constraints)
-        w_utility = res_util.x / res_util.x.sum()
+                            method="SLSQP", bounds=bounds_unc, constraints=constraints)
+        w_utility = _force_n_stocks(res_util.x, n_keep, floor_w, ceil_w)
 
     # ── Equal Weight baseline ─────────────────────────────────────────────────
     w_eq = np.ones(n) / n
 
     # ── Efficient Frontier ────────────────────────────────────────────────────
-    # mu is daily mean returns; cov is annualized → divide back to daily for consistency
     frontier_vols, frontier_rets, _ = compute_efficient_frontier(mu, cov / 252)
 
-    # ── Primary display portfolio = utility selection ─────────────────────────
-    # (used in risk analytics, rolling metrics, report tabs)
+    # ── Primary display portfolio ─────────────────────────────────────────────
     w_primary = w_utility
 
 # ── Data Source Panel ─────────────────────────────────────────────────────────
@@ -1831,21 +1848,20 @@ with tab1:
         _rows_html += _row_html
 
     _wt_table_html = f"""
-<div style="overflow-x:auto;border:1px solid #e0d9ce;border-radius:6px;margin-bottom:1rem;">
+<div style="overflow-x:auto;overflow-y:auto;max-height:340px;border:1px solid #e0d9ce;border-radius:6px;margin-bottom:1rem;">
   <table style="width:100%;border-collapse:collapse;">
-    <thead><tr>{_header_cells}</tr></thead>
+    <thead style="position:sticky;top:0;z-index:2;">
+      <tr>{_header_cells}</tr>
+    </thead>
     <tbody>{_rows_html}</tbody>
   </table>
 </div>
 """
     st.markdown(_wt_table_html, unsafe_allow_html=True)
 
-    # ── Weights bar chart — no duplicate bars
-    # If user's selection matches a named portfolio, just rename that bar.
-    # Only show 4 distinct portfolios max; never show same weights twice.
+    # ── Weights bar chart — scrollable horizontally for large N
     st.markdown(f'<div class="section-header">Portfolio Weights · Visual Comparison</div>', unsafe_allow_html=True)
 
-    # Build deduplicated bar list
     def _bar_label(base, w_check):
         if np.allclose(w_check, w_primary, atol=1e-4):
             return f"{base} (your pick)"
@@ -1856,7 +1872,6 @@ with tab1:
         (_bar_label("Equal Weight",  w_eq),     w_eq,     "#e07b39"),
         (_bar_label("Optimal Risky", w_sharpe), w_sharpe, "#7b2d8b"),
     ]
-    # Add custom utility bar only if it's not identical to any named portfolio
     if is_custom:
         bar_entries.insert(0, (f"{_preset_lbl} (your pick)", w_primary, _preset_col))
 
@@ -1864,6 +1879,10 @@ with tab1:
     for lbl, w_arr, _ in bar_entries:
         df_bar[lbl] = w_arr * 100
     df_bar = df_bar.sort_values(bar_entries[0][0], ascending=False)
+
+    # Dynamic width: at least 80px per ticker group, min 700px
+    _bar_chart_w = max(700, n_keep * 80)
+    _n_portfolios = len(bar_entries)
 
     fig2 = go.Figure()
     for lbl, _, color in bar_entries:
@@ -1874,10 +1893,24 @@ with tab1:
         ))
     fig2.update_layout(**{**PLOT_LAYOUT,
         "barmode": "group", "height": 340,
+        "width": _bar_chart_w,
         "yaxis_title": "Weight (%)",
         "title": dict(text="Portfolio Weight Comparison", font=dict(size=12, color="#1a1a18")),
+        "xaxis": dict(gridcolor="#e0d9ce", zerolinecolor="#e0d9ce", linecolor="#e0d9ce",
+                      fixedrange=True),
+        "yaxis": dict(gridcolor="#e0d9ce", zerolinecolor="#e0d9ce", linecolor="#e0d9ce",
+                      fixedrange=True),
     })
-    st.plotly_chart(fig2, use_container_width=True)
+
+    # Wrap in scrollable div so axes stay fixed and bars scroll
+    import plotly.io as pio
+    _chart_html = pio.to_html(fig2, full_html=False, include_plotlyjs=False,
+                               config={"displayModeBar": False, "scrollZoom": False})
+    st.markdown(f"""
+<div style="overflow-x:auto;overflow-y:hidden;border:1px solid #e0d9ce;border-radius:6px;padding:4px 0;">
+  {_chart_html}
+</div>
+""", unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
