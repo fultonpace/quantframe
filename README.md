@@ -1,5 +1,7 @@
 # ⬡ QuantFrame v2 — Portfolio Intelligence Dashboard
 
+https://quantframe.streamlit.app/
+
 > **Mean-Variance Optimization · Historical VaR/CVaR · Rolling Factor Exposure · Risk Decomposition · S&P 500 Discovery**  
 > Built with Python · Streamlit · yfinance · SciPy · Plotly
 
