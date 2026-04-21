@@ -1583,7 +1583,8 @@ with st.spinner("Running optimization…"):
     w_eq = np.ones(n) / n
 
     # ── Efficient Frontier ────────────────────────────────────────────────────
-    frontier_vols, frontier_rets, _ = compute_efficient_frontier(mu / 252, cov / 252)
+    # mu is daily mean returns; cov is annualized → divide back to daily for consistency
+    frontier_vols, frontier_rets, _ = compute_efficient_frontier(mu, cov / 252)
 
     # ── Primary display portfolio = utility selection ─────────────────────────
     # (used in risk analytics, rolling metrics, report tabs)
@@ -1713,11 +1714,11 @@ with tab1:
         hovertemplate="<b>%{text}</b><br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
     ))
 
-    # Frontier
+    # Frontier — smooth curve wrapping the portfolio opportunity set
     fig.add_trace(go.Scatter(
         x=frontier_vols * 100, y=frontier_rets * 100,
         mode="lines",
-        line=dict(color="rgba(45,106,79,0.4)", width=2),
+        line=dict(color="rgba(45,106,79,0.85)", width=2.5),
         name="Efficient Frontier",
         hovertemplate="Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
     ))
