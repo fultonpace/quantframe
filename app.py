@@ -1702,13 +1702,11 @@ with tab1:
 
     fig = go.Figure()
 
-    # Individual assets scatter
+    # Individual assets scatter — labels in legend/hover only, no on-chart text
     fig.add_trace(go.Scatter(
         x=asset_ann_vol * 100, y=asset_ann_ret * 100,
-        mode="markers+text",
+        mode="markers",
         text=valid_tickers,
-        textposition="top center",
-        textfont=dict(size=10, color="#8a8072", family="IBM Plex Mono"),
         marker=dict(size=9, color="#e0d9ce", line=dict(color="#8a8072", width=1.5)),
         name="Individual Assets",
         hovertemplate="<b>%{text}</b><br>Vol: %{x:.1f}%<br>Return: %{y:.1f}%<extra></extra>",
@@ -1743,10 +1741,7 @@ with tab1:
     for v_, r_, name_, color_, sym_, sz_ in port_points:
         fig.add_trace(go.Scatter(
             x=[v_ * 100], y=[r_ * 100],
-            mode="markers+text",
-            text=[name_],
-            textposition="top right",
-            textfont=dict(size=9, color=color_, family="IBM Plex Mono"),
+            mode="markers",
             marker=dict(size=sz_, color=color_, symbol=sym_,
                         line=dict(color="#f7f5f0", width=1)),
             name=name_,
@@ -1758,10 +1753,7 @@ with tab1:
     if is_custom:
         fig.add_trace(go.Scatter(
             x=[v_ut * 100], y=[r_ut * 100],
-            mode="markers+text",
-            text=[f"YOUR PORTFOLIO ({_preset_lbl})"],
-            textposition="bottom right",
-            textfont=dict(size=9, color=_preset_col, family="IBM Plex Mono"),
+            mode="markers",
             marker=dict(size=16, color=_preset_col, symbol="pentagon",
                         line=dict(color="#f7f5f0", width=1.5)),
             name=f"Selected: {_preset_lbl}",
