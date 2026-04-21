@@ -323,6 +323,18 @@ html, body, [class*="css"] {
     transform: translateY(3px);
     box-shadow: 0 1px 0 rgba(15,70,45,0.5);
 }
+/* Analyze This Portfolio button — green in main content */
+div[data-testid="stButton"]:has(button[data-testid="btn_analyze_disc"]) > button,
+button[key="btn_analyze_disc"] {
+    background: var(--accent) !important;
+    color: var(--bg) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 4px 0 rgba(20,90,60,0.6), 0 2px 8px rgba(45,106,79,0.2) !important;
+}
+div[data-testid="stButton"]:has(button[data-testid="btn_analyze_disc"]) > button:hover {
+    background: #1e8f62 !important;
+    border-color: #1e8f62 !important;
+}
 /* Toggle */
 [data-testid="stToggle"] { accent-color: var(--accent) !important; }
 [data-testid="stExpander"] {
@@ -1506,32 +1518,24 @@ if _cur_mode == "discover":
   &nbsp;{_carry_str}
 </div>""", unsafe_allow_html=True)
 
-        # Green button via targeted CSS
         st.markdown("""<style>
-div[data-testid="stButton"] > button[kind="secondary"]:last-of-type,
-div[data-testid="column"] > div[data-testid="stButton"] > button {
-    background: transparent;
-}
-#analyze-btn-container > div > button {
-    background: #2d6a4f !important;
-    color: #f7f5f0 !important;
+button[data-testid="baseButton-secondary"][kind="secondary"]#analyze-disc-btn,
+div[data-testid="stButton"]:has(> button[key="btn_analyze_disc"]) > button {
+    background: #2d6a4f !important; color: #f7f5f0 !important;
     border-color: #2d6a4f !important;
-    font-size: 0.78rem !important;
-    padding: 0.6rem 1.5rem !important;
-    width: auto !important;
 }
 </style>""", unsafe_allow_html=True)
-        st.markdown('<div id="analyze-btn-container">', unsafe_allow_html=True)
-        if st.button("▶  Analyze This Portfolio", key="btn_analyze_disc"):
-            st.session_state.app_mode_radio = "analyze"
-            st.session_state.run_discovery  = False
-            st.session_state._disc_tickers  = _carry_str
-            st.session_state._disc_preset   = "Custom"
-            # Also reset the mode vars the sidebar reads
-            st.session_state.app_mode       = "  ⬡  Lab  "
-            st.session_state._app_mode      = "  ⬡  Lab  "
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+
+        _col_btn, _col_gap = st.columns([1, 3])
+        with _col_btn:
+            if st.button("▶  Analyze This Portfolio", key="btn_analyze_disc", use_container_width=True):
+                # Clear discovery state so it doesn't re-run on next render
+                st.session_state.run_discovery  = False
+                st.session_state.app_mode_radio = "analyze"
+                st.session_state.app_mode       = "  ⬡  Lab  "
+                st.session_state._app_mode      = "  ⬡  Lab  "
+                st.session_state._disc_tickers  = _carry_str
+                st.rerun()
 
     st.stop()
 
