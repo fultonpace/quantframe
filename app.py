@@ -1833,65 +1833,80 @@ with tab1:
     def _wt_col_label(base, w_check):
         return f"{base} ★" if np.allclose(w_check, w_primary, atol=1e-4) else base
 
-    df_wt = pd.DataFrame({
-        "Ticker":                                        valid_tickers,
-        _wt_col_label("Min Variance",  w_minvol) + " %": (w_minvol * 100).round(2),
-        _wt_col_label("Equal Weight",  w_eq)     + " %": (w_eq     * 100).round(2),
-        _wt_col_label("Optimal Risky", w_sharpe) + " %": (w_sharpe * 100).round(2),
-    })
+    # ── Build weight data ─────────────────────────────────────────────────────
+    _wt_cols = [
+        ("Min Variance",  w_minvol,  "#4a7c9e",  False),
+        ("Equal Weight",  w_eq,      "#c9a84c",  False),
+        ("Optimal Risky", w_sharpe,  "#6b3fa0",  np.allclose(w_sharpe, w_primary, atol=1e-4)),
+    ]
     if is_custom:
-        df_wt.insert(1, f"{_preset_lbl} (your pick) %", (w_primary * 100).round(2))
-    df_wt = df_wt.sort_values(df_wt.columns[1], ascending=False)
+        _wt_cols.insert(0, (_preset_lbl, w_primary, _preset_col, True))
 
-    # Determine which column is the user's selection for coloring
-    user_col_idx = 1  # always column index 1 after sort
+    # Sort rows by first weight column descending
+    _sort_w = _wt_cols[0][1]
+    _sort_idx = np.argsort(_sort_w)[::-1]
+    _sorted_tickers = [valid_tickers[i] for i in _sort_idx]
 
-    n_cols = len(df_wt.columns)
-    col_widths = [50] + [90] * (n_cols - 1)
-
-    # Build per-cell color arrays
-    def _wt_cell_color(v):
-        if v > 0.5:
-            t = min(v / 40, 1.0)
-            return f"rgba(0,{int(180*t+40)},{int(120*t+50)},0.22)"
-        return "#ffffff"
-
-    cell_colors_wt = [["#ffffff"] * len(df_wt)]  # Ticker column
-    for ci, col_name in enumerate(df_wt.columns[1:]):
-        is_user = ("your pick" in col_name or "★" in col_name)
-        bg = f"rgba(45,106,79,0.06)" if is_user else "#ffffff"
-        cell_colors_wt.append([_wt_cell_color(v) if is_user else _wt_cell_color(v) for v in df_wt[col_name]])
-
-    # Header colors: highlight user column
-    header_colors = []
-    for col_name in df_wt.columns:
-        if "your pick" in col_name or "★" in col_name:
-            header_colors.append(_preset_col)
-        else:
-            header_colors.append("#8a8072")
-
-    fig_wt = go.Figure(go.Table(
-        columnwidth=col_widths,
-        header=dict(
-            values=[f"<b>{c}</b>" for c in df_wt.columns],
-            fill_color="#f0ece4",
-            line_color="#c8bfb2",
-            font=dict(family="IBM Plex Mono", size=11, color=header_colors),
-            align="center", height=32,
-        ),
-        cells=dict(
-            values=[df_wt[c].tolist() for c in df_wt.columns],
-            fill_color=cell_colors_wt,
-            line_color="#e0d9ce",
-            font=dict(family="IBM Plex Mono", size=11, color="#1a1a18"),
-            align="center", height=28,
+    # HTML table
+    def _bar_html(val, max_val, color, is_active):
+        pct = min(val / max_val * 100, 100) if max_val > 0 else 0
+        opacity = "1" if is_active else "0.55"
+        return (
+            f'<div style="display:flex;align-items:center;gap:6px;">'
+            f'<div style="flex:1;background:#f0ece4;border-radius:2px;height:6px;">'
+            f'<div style="width:{pct:.1f}%;height:6px;border-radius:2px;background:{color};opacity:{opacity};"></div>'
+            f'</div>'
+            f'<span style="min-width:38px;text-align:right;font-weight:{"600" if is_active else "400"};'
+            f'color:{"#1a1a18" if is_active else "#5a5248"};">{val:.2f}%</span>'
+            f'</div>'
         )
-    ))
-    fig_wt.update_layout(**{**PLOT_LAYOUT,
-        "height": 60 + 28 * len(df_wt) + 32,
-        "margin": dict(l=0, r=0, t=0, b=0),
-    })
-    st.plotly_chart(fig_wt, use_container_width=True)
+
+    _max_wt = max(w.max() * 100 for _, w, _, _ in _wt_cols)
+
+    _header_cells = '<th style="width:72px;text-align:left;padding:10px 14px;background:#f0ece4;border-bottom:2px solid #c8bfb2;font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8a8072;font-weight:500;">Ticker</th>'
+    for lbl, _, color, is_active in _wt_cols:
+        _active_badge = f' <span style="font-size:0.55rem;background:{color}22;color:{color};border:1px solid {color}55;border-radius:2px;padding:1px 5px;letter-spacing:0.06em;">ACTIVE</span>' if is_active else ""
+        _header_cells += (
+            f'<th style="text-align:left;padding:10px 14px;background:{"#f7f5f2" if is_active else "#f0ece4"};'
+            f'border-bottom:2px solid {""+color if is_active else "#c8bfb2"};'
+            f'border-left:{"3px solid "+color if is_active else "1px solid #e0d9ce"};'
+            f'font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;letter-spacing:0.1em;'
+            f'text-transform:uppercase;color:{color};font-weight:600;">'
+            f'{lbl}{_active_badge}</th>'
+        )
+
+    _rows_html = ""
+    for row_i, ticker in enumerate(_sorted_tickers):
+        orig_i = valid_tickers.index(ticker)
+        _row_bg = "#ffffff" if row_i % 2 == 0 else "#faf8f5"
+        _row_html = (
+            f'<tr style="background:{_row_bg};">'
+            f'<td style="padding:9px 14px;font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;'
+            f'font-weight:600;color:#1a1a18;border-bottom:1px solid #ede8e0;'
+            f'border-right:1px solid #e0d9ce;white-space:nowrap;">{ticker}</td>'
+        )
+        for lbl, w_arr, color, is_active in _wt_cols:
+            val = w_arr[orig_i] * 100
+            _cell_bg = f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.06)" if is_active else _row_bg
+            _row_html += (
+                f'<td style="padding:9px 14px;border-bottom:1px solid #ede8e0;'
+                f'border-left:{"3px solid "+color if is_active else "1px solid #e8e2d8"};'
+                f'background:{_cell_bg};">'
+                f'{_bar_html(val, _max_wt, color, is_active)}'
+                f'</td>'
+            )
+        _row_html += "</tr>"
+        _rows_html += _row_html
+
+    _wt_table_html = f"""
+<div style="overflow-x:auto;border:1px solid #e0d9ce;border-radius:6px;margin-bottom:1rem;">
+  <table style="width:100%;border-collapse:collapse;">
+    <thead><tr>{_header_cells}</tr></thead>
+    <tbody>{_rows_html}</tbody>
+  </table>
+</div>
+"""
+    st.markdown(_wt_table_html, unsafe_allow_html=True)
 
     # ── Weights bar chart — no duplicate bars
     # If user's selection matches a named portfolio, just rename that bar.
